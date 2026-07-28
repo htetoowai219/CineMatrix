@@ -76,12 +76,15 @@ npm install
 Create a `.env` file in the `backend/` directory:
 
 ```env
-PORT=5000
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/cinematrix
-JWT_SECRET=your_super_secret_jwt_key
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+PORT=8000
+FRONTEND_CLIENT=http://localhost:5173/
+FRONTEND_ADMIN=http://localhost:5174/
+MONGO_URI=your_mongodb_connection_strnig
+
+ACCESS_TOKEN_SECRET=secret_for_access_token
+ACCESS_TOKEN_EXP=1d
+REFRESH_TOKEN_SECRET=secret_for_refresh_token
+REFRESH_TOKEN_EXP=7d
 ```
 
 Start the backend server:
