@@ -118,12 +118,12 @@ export const loginUserController = async (req: Request, res: Response) => {
 // --- Logout Controller ---
 export const logoutUserController = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res
-        .status(400)
-        .json({ message: "User ID is required to logout." });
+        .status(401)
+        .json({ message: `Unauthorized. Id : ${userId} and ${req.user}` });
     }
 
     // Clear the stored refresh token in MongoDB to invalidate the session
@@ -135,5 +135,105 @@ export const logoutUserController = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ message: "Internal server error during logout." });
+  }
+};
+
+// --- Update Profile Controller ---
+export const updateUserProfileController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const userId = req.body?.userId || (req as any).user?.id;
+    const { name, phone } = req.body || {};
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required." });
+    }
+
+    // Build update object only with fields that are provided
+    const updateData: { name?: string; phone?: string } = {};
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+
+    if (Object.keys(updateData).length === 0) {
+      return res
+        .status(400)
+        .json({ message: "No valid profile fields provided to update." });
+    }
+
+    // Update user and return the updated document
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true },
+    ).select("-password -refreshToken");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    return res.status(200).json({
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error updating profile." });
+  }
+};
+
+// --- Update Password Controller ---
+export const updateUserPasswordController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const userId = req.body?.userId || (req as any).user?.id;
+    const { currentPassword, newPassword } = req.body || {};
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required." });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Both current password and new password are required.",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "New password must be at least 6 characters long.",
+      });
+    }
+
+    // 1. Fetch user including password field
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // 2. Verify current password
+    const isPasswordCorrect = await verifyPassword(
+      currentPassword,
+      user.password,
+    );
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ message: "Incorrect current password." });
+    }
+
+    // 3. Hash new password and save
+    user.password = await hashPassword(newPassword);
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Update password error:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error updating password." });
   }
 };
