@@ -1,4 +1,4 @@
-# CineMatrix 🎬
+# CineMatrix
 
 **CineMatrix** is an end-to-end multi-tenant cinema booking and management platform built on the MERN stack (MongoDB, Express, React, Node.js).
 
@@ -6,9 +6,9 @@ The platform connects moviegoers with registered independent cinemas, enabling u
 
 ---
 
-## 🌟 Features
+## Features
 
-### 🍿 Public Moviegoers App (`frontend-client`)
+### Public Moviegoers App (`frontend-client`)
 
 - **Movie Discovery:** Explore currently showing and upcoming movies.
 - **Cinema Explorer:** Browse registered cinemas, view locations, photos, and active schedules.
@@ -17,7 +17,7 @@ The platform connects moviegoers with registered independent cinemas, enabling u
 - **Ticket Booking & Receipt Upload:** Reserve seats and attach payment screenshots for owner verification.
 - **Booking Status Tracker:** Monitor pending, confirmed, or rejected bookings.
 
-### 🛡️ Owner & Admin Portal (`frontend-admin`)
+### Owner & Admin Portal (`frontend-admin`)
 
 - **Cinema Owner Dashboard:**
   - **Room & Seat Layout Setup:** Define screen rooms and dynamic grid dimensions (rows, columns, disabled seats).
@@ -29,7 +29,7 @@ The platform connects moviegoers with registered independent cinemas, enabling u
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## Architecture & Tech Stack
 
 The repository is structured as a **monorepo with isolated frontends** sharing a central Express API server:
 
@@ -47,7 +47,7 @@ cinema-platform/
 
 ---
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -57,7 +57,7 @@ cinema-platform/
 
 ---
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the Repository
 
@@ -115,7 +115,71 @@ npm run dev
 
 ---
 
-## 🔒 Role-Based Access Control (RBAC)
+## 🐳 Docker Setup
+
+This project uses **Docker Compose** to run all services locally in isolated containers:
+
+- **MongoDB** (Port `27018` mapped to container `27017`)
+- **Express Backend** (Port `3000`)
+- **Frontend Client** (Port `5173`)
+- **Frontend Admin** (Port `5174`)
+
+---
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running on your machine.
+
+---
+
+### Getting Started with Docker
+
+#### 1. Configure Environment Variables
+
+Ensure your `backend/.env` file exists with the necessary environment configurations:
+
+```env
+PORT=3000
+MONGO_URI=mongodb://mongodb:27017/cinematrix
+FRONTEND_CLIENT=http://localhost:5173
+FRONTEND_ADMIN=http://localhost:5174
+ACCESS_TOKEN_SECRET=your_access_token_secret
+ACCESS_TOKEN_EXP=15m
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+REFRESH_TOKEN_EXP=7d
+```
+
+> **Note:** Inside Docker, `MONGO_URI` uses the container service hostname `mongodb` instead of `localhost`.
+
+#### 2. Run the Application
+
+Start all services in hot-reload development mode with a single command:
+
+```bash
+docker compose up --build
+```
+
+Access the applications in your browser:
+
+- **Frontend Client:** [http://localhost:5173](http://localhost:5173)
+- **Frontend Admin:** [http://localhost:5174](http://localhost:5174)
+- **Backend API:** [http://localhost:8000](http://localhost:8000)
+
+---
+
+### Useful Docker Commands
+
+| Action                      | Command                          |
+| :-------------------------- | :------------------------------- |
+| **Start in background**     | `docker compose up -d`           |
+| **Stop all services**       | `docker compose down`            |
+| **Stop and wipe DB volume** | `docker compose down -v`         |
+| **View logs for backend**   | `docker compose logs -f backend` |
+| **Rebuild containers**      | `docker compose up --build`      |
+
+--
+
+## Role-Based Access Control (RBAC)
 
 | Role               | Access Level  | Responsibilities                                                  |
 | :----------------- | :------------ | :---------------------------------------------------------------- |

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # --------------------------------------------------
+  # 1. Local MongoDB Database
+  # --------------------------------------------------
+  mongodb:
+    image: mongo:latest
+    container_name: cinematrix_mongodb
+    ports:
+      - "27017:27017" 
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - cinematrix_network
+
+  # --------------------------------------------------
+  # 2. Express Backend
+  # --------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cinematrix_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=8000
+      - MONGO_URI=mongodb://mongodb:27017/cinematrix
+      - FRONTEND_CLIENT=http://localhost:5173
+      - FRONTEND_ADMIN=http://localhost:5174
+      - ACCESS_TOKEN_SECRET=XfvCQ0EuXG2SSFglbD85g7ilX22XAr82
+      - ACCESS_TOKEN_EXP=1d
+      - REFRESH_TOKEN_SECRET=E34Iygiq78rKFMTYhCpaHmxoG0UlU6fX
+      - REFRESH_TOKEN_EXP=7d
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    networks:
+      - cinematrix_network
+
+  # --------------------------------------------------
+  # 3. Frontend Client
+  # --------------------------------------------------
+  frontend-client:
+    build:
+      context: ./frontend-client
+      dockerfile: Dockerfile
+    container_name: cinematrix_client
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    volumes:
+      - ./frontend-client:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - cinematrix_network
+
+  # --------------------------------------------------
+  # 4. Frontend Admin
+  # --------------------------------------------------
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
+    container_name: cinematrix_admin
+    ports:
+      - "5174:5173" # Maps host port 5174 to container port 5173
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    volumes:
+      - ./frontend-admin:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - cinematrix_network
+
+# Named volumes for persistent MongoDB storage
+volumes:
+  mongo_data:
+
+# Internal network for container communication
+networks:
+  cinematrix_network:
+    driver: bridge
