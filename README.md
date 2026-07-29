@@ -177,7 +177,7 @@ Access the applications in your browser:
 | **View logs for backend**   | `docker compose logs -f backend` |
 | **Rebuild containers**      | `docker compose up --build`      |
 
---
+---
 
 ## Role-Based Access Control (RBAC)
 
