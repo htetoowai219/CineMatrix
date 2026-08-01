@@ -10,28 +10,43 @@ import {
   Globe,
   ArrowLeft,
   Book,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import SectionLabel from "../components/SectionLabel";
+import { useUserStore } from "../stores/user.store";
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
+  // Zustand Store Hooks
+  const { loginAction, isLoading, error, clearError } = useUserStore();
+
+  // Form State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [remember, setRemember] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/profile");
+    try {
+      await loginAction({ email, password });
+      navigate("/profile");
+    } catch {
+      // Error is caught and stored in Zustand store state
+    }
   };
 
   return (
     <div className="h-screen w-screen overflow-hidden grid grid-cols-1 md:grid-cols-2 bg-slate-950 text-white selection:bg-red-600 selection:text-white relative">
-      {/* Top-Left Back to Home Link (Styled like MovieDetailPage's back button) */}
+      {/* Top-Left Back to Home Link */}
       <button
         type="button"
-        onClick={() => navigate("/")}
+        onClick={() => {
+          clearError();
+          navigate("/");
+        }}
         className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 flex items-center gap-2 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold transition-colors drop-shadow-md"
       >
         <ArrowLeft className="w-4 h-4" /> Back to Home
@@ -114,7 +129,10 @@ export default function LoginPage() {
               {"Don't have an account? "}
               <button
                 type="button"
-                onClick={() => navigate("/register")}
+                onClick={() => {
+                  clearError();
+                  navigate("/register");
+                }}
                 className="text-red-500 font-semibold hover:underline"
               >
                 Register free
@@ -147,6 +165,14 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-slate-800/80" />
           </div>
 
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-950/50 border border-red-600/50 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span className="flex-1">{error}</span>
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
             {/* Email Field */}
@@ -159,9 +185,13 @@ export default function LoginPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    if (error) clearError();
+                    setEmail(e.target.value);
+                  }}
                   placeholder="you@example.com"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
+                  disabled={isLoading}
                   required
                 />
               </div>
@@ -177,9 +207,13 @@ export default function LoginPage() {
                 <input
                   type={showPass ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    if (error) clearError();
+                    setPassword(e.target.value);
+                  }}
                   placeholder="••••••••"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-12 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-12 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
+                  disabled={isLoading}
                   required
                 />
                 <button
@@ -228,9 +262,17 @@ export default function LoginPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="mt-2 w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm py-2.5 rounded-lg transition-all shadow-lg shadow-red-600/25"
+              disabled={isLoading}
+              className="mt-2 w-full bg-red-600 hover:bg-red-700 active:scale-95 disabled:opacity-50 disabled:hover:bg-red-600 text-white font-semibold text-sm py-2.5 rounded-lg transition-all shadow-lg shadow-red-600/25 flex items-center justify-center gap-2"
             >
-              Sign In
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <span>Sign In</span>
+              )}
             </button>
           </form>
         </div>
