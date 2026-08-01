@@ -1,0 +1,619 @@
+import React, { useState } from "react";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Lock,
+  Eye,
+  EyeOff,
+  Download,
+  Share2,
+  QrCode,
+  Edit3,
+  X,
+} from "lucide-react";
+import SectionLabel from "../components/SectionLabel";
+
+// Types
+export interface Booking {
+  id: string;
+  movieTitle: string;
+  poster: string;
+  cinema: string;
+  date: string;
+  time: string;
+  format: string;
+  seats: string[];
+  total: number;
+}
+
+export interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  city: string;
+}
+
+// Sample Data
+const BOOKINGS: Booking[] = [
+  {
+    id: "CM-89201",
+    movieTitle: "Dune: Part Two",
+    poster:
+      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800",
+    cinema: "CineMatrix Downtown",
+    date: "Aug 12, 2026",
+    time: "7:45 PM",
+    format: "IMAX 3D",
+    seats: ["H12", "H13"],
+    total: 37,
+  },
+  {
+    id: "CM-77104",
+    movieTitle: "Oppenheimer",
+    poster:
+      "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800",
+    cinema: "CineMatrix Westside IMAX",
+    date: "Jul 28, 2026",
+    time: "4:30 PM",
+    format: "Dolby Atmos",
+    seats: ["F8"],
+    total: 16,
+  },
+];
+
+export default function ProfilePage() {
+  const [tab, setTab] = useState<"info" | "security" | "bookings">("bookings");
+
+  // Profile Information State
+  const [userInfo, setUserInfo] = useState<UserProfile>({
+    firstName: "Alex",
+    lastName: "Chen",
+    email: "alex.chen@example.com",
+    phone: "+1 (555) 012-3456",
+    city: "New York",
+  });
+
+  // Modal Visibility States
+  const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
+  const [isEditPassOpen, setIsEditPassOpen] = useState(false);
+
+  // Form Temp States
+  const [tempInfo, setTempInfo] = useState<UserProfile>(userInfo);
+  const [passData, setPassData] = useState({ current: "", new: "" });
+
+  // Password Visibility States
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+
+  const handleSaveInfo = (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserInfo(tempInfo);
+    setIsEditInfoOpen(false);
+  };
+
+  const handleSavePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPassData({ current: "", new: "" });
+    setIsEditPassOpen(false);
+  };
+
+  return (
+    <div className="bg-slate-950 min-h-screen text-white pt-24 pb-20 selection:bg-red-600 selection:text-white relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Page Section Heading */}
+        <div className="mb-6">
+          <SectionLabel>Account Overview</SectionLabel>
+          <h1 className="font-display font-black text-3xl sm:text-5xl text-white uppercase tracking-wide">
+            User Profile
+          </h1>
+        </div>
+
+        {/* Profile Header Card */}
+        <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-xl">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center shrink-0 border border-red-500/30 shadow-lg shadow-red-600/20">
+            <span className="font-display font-black text-2xl text-white uppercase tracking-wider">
+              {userInfo.firstName[0]}
+              {userInfo.lastName[0]}
+            </span>
+          </div>
+
+          <div className="flex-1">
+            <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-wide">
+              {userInfo.firstName} {userInfo.lastName}
+            </h2>
+            <p className="text-slate-400 text-sm mt-0.5">{userInfo.email}</p>
+            <div className="flex flex-wrap gap-2.5 mt-3">
+              <span className="text-xs bg-red-950/40 border border-red-600/40 text-red-500 px-3 py-1 rounded-full font-bold">
+                Premium Member
+              </span>
+              <span className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1 rounded-full">
+                {userInfo.city}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-6 sm:gap-8 text-center border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-8 w-full md:w-auto justify-around md:justify-start">
+            {[
+              ["3", "Bookings"],
+              ["2", "Watchlist"],
+              ["14", "Reviews"],
+            ].map(([n, l]) => (
+              <div key={l}>
+                <div className="font-display font-black text-2xl text-white">
+                  {n}
+                </div>
+                <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                  {l}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-1 bg-slate-900/90 border border-slate-800/90 rounded-xl p-1 mb-8 w-full sm:w-fit overflow-x-auto scrollbar-none">
+          {(["bookings", "info", "security"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold capitalize transition-all whitespace-nowrap ${
+                tab === t
+                  ? "bg-red-600 text-white shadow-md shadow-red-600/20 font-bold"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              {t === "bookings"
+                ? "My Bookings"
+                : t === "info"
+                  ? "Personal Info"
+                  : "Security"}
+            </button>
+          ))}
+        </div>
+
+        {/* Personal Info Tab (Read-Only View) */}
+        {tab === "info" && (
+          <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 max-w-2xl shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-display font-bold text-white uppercase tracking-wide text-xl">
+                Personal Information
+              </h3>
+              <button
+                onClick={() => {
+                  setTempInfo(userInfo);
+                  setIsEditInfoOpen(true);
+                }}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-700 transition-all"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-red-500" /> Edit Profile
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 p-5 rounded-xl border border-slate-800/80">
+              <div>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  First Name
+                </p>
+                <p className="text-slate-200 text-sm font-semibold">
+                  {userInfo.firstName}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  Last Name
+                </p>
+                <p className="text-slate-200 text-sm font-semibold">
+                  {userInfo.lastName}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  Email Address
+                </p>
+                <p className="text-slate-200 text-sm font-semibold">
+                  {userInfo.email}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  Phone Number
+                </p>
+                <p className="text-slate-200 text-sm font-semibold">
+                  {userInfo.phone}
+                </p>
+              </div>
+
+              <div className="col-span-1 md:col-span-2">
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  City / Location
+                </p>
+                <p className="text-slate-200 text-sm font-semibold">
+                  {userInfo.city}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Security Tab (Read-Only View) */}
+        {tab === "security" && (
+          <div className="max-w-2xl">
+            <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-display font-bold text-white uppercase tracking-wide text-xl">
+                    Account Security
+                  </h3>
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    Manage your password and security credentials
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsEditPassOpen(true)}
+                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-700 transition-all shrink-0"
+                >
+                  <Lock className="w-3.5 h-3.5 text-red-500" /> Change Password
+                </button>
+              </div>
+
+              <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-0.5">
+                    Password Status
+                  </p>
+                  <p className="text-slate-200 text-sm font-semibold">
+                    ••••••••••••
+                  </p>
+                </div>
+                <span className="text-[11px] text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded">
+                  Updated 3 months ago
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bookings Tab */}
+        {tab === "bookings" && (
+          <div className="flex flex-col gap-6">
+            {BOOKINGS.map((booking) => (
+              <div
+                key={booking.id}
+                className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl"
+              >
+                <div className="p-5 sm:p-6 flex flex-col lg:flex-row gap-6">
+                  {/* Poster */}
+                  <img
+                    src={booking.poster}
+                    alt={booking.movieTitle}
+                    className="w-24 h-36 object-cover rounded-xl bg-slate-950 border border-slate-800 shrink-0 mx-auto sm:mx-0"
+                  />
+
+                  {/* Booking Metadata */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+                      <h3 className="font-display font-bold text-white text-xl sm:text-2xl uppercase tracking-wide">
+                        {booking.movieTitle}
+                      </h3>
+                      <span className="text-xs bg-emerald-950/40 border border-emerald-600/40 text-emerald-400 px-3 py-1 rounded-full font-bold shrink-0">
+                        Confirmed
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 bg-slate-950/50 p-3.5 rounded-xl border border-slate-800/80">
+                      {[
+                        { label: "Cinema", value: booking.cinema },
+                        { label: "Date", value: booking.date },
+                        { label: "Time", value: booking.time },
+                        { label: "Format", value: booking.format },
+                      ].map(({ label, value }) => (
+                        <div key={label}>
+                          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-0.5">
+                            {label}
+                          </p>
+                          <p className="text-slate-200 text-xs sm:text-sm font-semibold truncate">
+                            {value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-6 flex-wrap">
+                      <div>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                          Seats
+                        </p>
+                        <div className="flex gap-1.5">
+                          {booking.seats.map((s) => (
+                            <span
+                              key={s}
+                              className="text-xs font-bold text-red-500 bg-red-950/30 border border-red-600/40 px-2.5 py-0.5 rounded"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                          Total Paid
+                        </p>
+                        <p className="text-white font-bold text-sm sm:text-base">
+                          ${booking.total}.00
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                          Booking Ref
+                        </p>
+                        <p className="text-slate-300 text-xs sm:text-sm font-mono font-semibold">
+                          {booking.id}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* E-Ticket / QR Block */}
+                  <div className="flex flex-col items-center justify-center gap-2.5 p-4 bg-slate-950/80 rounded-xl border border-slate-800 shrink-0 lg:w-44">
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                      E-Ticket
+                    </p>
+
+                    <div className="w-20 h-20 bg-white p-2 rounded-lg flex items-center justify-center">
+                      <QrCode className="w-full h-full text-slate-950" />
+                    </div>
+
+                    <p className="text-slate-400 text-[10px] font-mono text-center font-bold">
+                      {booking.id}
+                    </p>
+
+                    <div className="flex gap-2 w-full pt-1">
+                      <button className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 py-1.5 rounded-lg transition-all active:scale-95">
+                        <Download className="w-3 h-3" /> PDF
+                      </button>
+                      <button className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 py-1.5 rounded-lg transition-all active:scale-95">
+                        <Share2 className="w-3 h-3" /> Share
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Edit Personal Info Modal */}
+      {isEditInfoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 w-full max-w-lg shadow-2xl relative">
+            <button
+              onClick={() => setIsEditInfoOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="font-display font-bold text-white uppercase tracking-wide text-xl mb-6">
+              Update Personal Info
+            </h3>
+
+            <form onSubmit={handleSaveInfo} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                    First Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                      type="text"
+                      value={tempInfo.firstName}
+                      onChange={(e) =>
+                        setTempInfo({ ...tempInfo, firstName: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                    Last Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                      type="text"
+                      value={tempInfo.lastName}
+                      onChange={(e) =>
+                        setTempInfo({ ...tempInfo, lastName: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="email"
+                    value={tempInfo.email}
+                    onChange={(e) =>
+                      setTempInfo({ ...tempInfo, email: e.target.value })
+                    }
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="text"
+                    value={tempInfo.phone}
+                    onChange={(e) =>
+                      setTempInfo({ ...tempInfo, phone: e.target.value })
+                    }
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                  City
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="text"
+                    value={tempInfo.city}
+                    onChange={(e) =>
+                      setTempInfo({ ...tempInfo, city: e.target.value })
+                    }
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditInfoOpen(false)}
+                  className="px-4 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all shadow-md shadow-red-600/20"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Password Modal */}
+      {isEditPassOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative">
+            <button
+              onClick={() => setIsEditPassOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="font-display font-bold text-white uppercase tracking-wide text-xl mb-6">
+              Change Password
+            </h3>
+
+            <form onSubmit={handleSavePassword} className="space-y-4">
+              <div>
+                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showOldPass ? "text" : "password"}
+                    value={passData.current}
+                    onChange={(e) =>
+                      setPassData({ ...passData, current: e.target.value })
+                    }
+                    placeholder="••••••••"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-10 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPass(!showOldPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  >
+                    {showOldPass ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                  New Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showNewPass ? "text" : "password"}
+                    value={passData.new}
+                    onChange={(e) =>
+                      setPassData({ ...passData, new: e.target.value })
+                    }
+                    placeholder="••••••••"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-10 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPass(!showNewPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  >
+                    {showNewPass ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditPassOpen(false)}
+                  className="px-4 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all shadow-md shadow-red-600/20"
+                >
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
