@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   Play,
@@ -9,11 +9,14 @@ import {
   Heart,
   Share2,
   ArrowLeft,
+  Loader2,
+  Film,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 import SectionLabel from "../components/SectionLabel";
+import { useMovieStore } from "../stores/movie.store";
+import { type IMovie } from "../types/movie.type";
 
-// Types
 export interface Showtime {
   id: string | number;
   time: string;
@@ -46,30 +49,6 @@ export interface Cinema {
   distance: string;
 }
 
-// Mock Data
-const MOVIES: DetailedMovie[] = [
-  {
-    id: "1",
-    title: "Dune: Part Two",
-    tagline: "Long live the fighters.",
-    poster:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800",
-    backdrop:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600",
-    rating: "PG-13",
-    score: 8.6,
-    runtime: "2h 46m",
-    releaseDate: "Mar 1, 2024",
-    synopsis:
-      "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the universe, he endeavors to prevent a terrible future.",
-    director: "Denis Villeneuve",
-    language: "English",
-    cast: ["Timothée Chalamet", "Zendaya", "Rebecca Ferguson", "Javier Bardem"],
-    genres: ["Sci-Fi", "Adventure", "Action"],
-    comingSoon: false,
-  },
-];
-
 const CINEMAS: Cinema[] = [
   { id: "c1", name: "CineMatrix Downtown", distance: "1.2 mi" },
   { id: "c2", name: "CineMatrix Westside IMAX", distance: "3.5 mi" },
@@ -96,11 +75,49 @@ const SHOWTIMES: Showtime[] = [
   },
 ];
 
+// Maps backend IMovie data to frontend DetailedMovie shape
+const mapMovieToDetailed = (movie: IMovie): DetailedMovie => {
+  const isUpcoming = movie.status === "UPCOMING";
+  const releaseDateObj = movie.releaseDate ? new Date(movie.releaseDate) : null;
+  const formattedDate = releaseDateObj
+    ? releaseDateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "TBA";
+
+  return {
+    id: String(movie._id || ""),
+    title: movie.title,
+    tagline: movie.tagline || "",
+    poster: movie.posterUrl,
+    backdrop: movie.backdropUrl,
+    rating: movie.contentRating,
+    score: movie.averageScore ?? 0,
+    runtime: `${movie.durationMinutes}m`,
+    releaseDate: formattedDate,
+    synopsis: movie.synopsis,
+    director: movie.director,
+    language: movie.originalLanguage,
+    cast: movie.castMembers || [],
+    genres: movie.genres || [],
+    comingSoon: isUpcoming,
+  };
+};
+
 export default function MovieDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const movie = MOVIES.find((m) => m.id === id) ?? MOVIES[0];
+  // Zustand Movie Store
+  const {
+    selectedMovie,
+    isLoading,
+    error,
+    getMovieByIdAction,
+    clearSelectedMovie,
+  } = useMovieStore();
 
   const [selectedDate, setSelectedDate] = useState(0);
   const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(
@@ -109,7 +126,54 @@ export default function MovieDetailPage() {
   const [selectedCinema, setSelectedCinema] = useState<Cinema>(CINEMAS[0]);
   const [liked, setLiked] = useState(false);
 
+  useEffect(() => {
+    if (id) {
+      getMovieByIdAction(id);
+    }
+
+    return () => {
+      clearSelectedMovie();
+    };
+  }, [id, getMovieByIdAction, clearSelectedMovie]);
+
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
+
+  if (isLoading) {
+    return (
+      <div className="bg-slate-950 min-h-screen text-white flex flex-col items-center justify-center py-24">
+        <Loader2 className="w-10 h-10 animate-spin text-red-600 mb-4" />
+        <p className="text-slate-400 text-sm font-medium">
+          Loading movie details...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !selectedMovie) {
+    return (
+      <div className="bg-slate-950 min-h-screen text-white flex flex-col items-center justify-center px-6 py-24">
+        <div className="text-center max-w-md bg-slate-900/40 border border-slate-800 rounded-2xl p-8">
+          <Film className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-60" />
+          <h3 className="font-display font-bold text-lg text-white mb-2 uppercase tracking-wide">
+            Movie Not Found
+          </h3>
+          <p className="text-slate-400 text-sm mb-6">
+            {error ||
+              "The movie details you are looking for could not be retrieved."}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/movies")}
+            className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-all"
+          >
+            Back to Catalog
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const movie = mapMovieToDetailed(selectedMovie);
 
   const handleBookTickets = (showtimeId?: string | number) => {
     const stId = showtimeId ?? selectedShowtime?.id ?? SHOWTIMES[0].id;
@@ -132,6 +196,7 @@ export default function MovieDetailPage() {
 
         {/* Back Button */}
         <button
+          type="button"
           onClick={() => navigate("/movies")}
           className="absolute top-16 sm:top-24 left-4 sm:left-6 flex items-center gap-2 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold transition-colors z-20 drop-shadow-md"
         >
@@ -140,7 +205,10 @@ export default function MovieDetailPage() {
 
         {/* Trailer Play Button */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <button className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/25 transition-all group active:scale-95 shadow-2xl">
+          <button
+            type="button"
+            className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/25 transition-all group active:scale-95 shadow-2xl"
+          >
             <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
           </button>
         </div>
@@ -238,7 +306,7 @@ export default function MovieDetailPage() {
                   Cast
                 </p>
                 <p className="text-slate-300 text-sm">
-                  {movie.cast.join(", ")}
+                  {movie.cast.length > 0 ? movie.cast.join(", ") : "N/A"}
                 </p>
               </div>
             </div>
@@ -247,6 +315,7 @@ export default function MovieDetailPage() {
             <div className="flex items-center justify-center md:justify-start gap-3">
               {!movie.comingSoon && (
                 <button
+                  type="button"
                   onClick={() => handleBookTickets()}
                   className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm px-6 py-3 rounded-lg transition-all shadow-lg shadow-red-600/25"
                 >
@@ -255,6 +324,7 @@ export default function MovieDetailPage() {
               )}
 
               <button
+                type="button"
                 onClick={() => setLiked(!liked)}
                 className={`w-11 h-11 rounded-lg border flex items-center justify-center transition-all active:scale-95 ${
                   liked
@@ -265,7 +335,10 @@ export default function MovieDetailPage() {
                 <Heart className={`w-5 h-5 ${liked ? "fill-current" : ""}`} />
               </button>
 
-              <button className="w-11 h-11 rounded-lg border border-slate-800 bg-slate-900/80 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-700 transition-all active:scale-95">
+              <button
+                type="button"
+                className="w-11 h-11 rounded-lg border border-slate-800 bg-slate-900/80 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-700 transition-all active:scale-95"
+              >
                 <Share2 className="w-4 h-4" />
               </button>
             </div>
@@ -297,6 +370,7 @@ export default function MovieDetailPage() {
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none px-4 sm:px-0">
                 {dates.map((d, i) => (
                   <button
+                    type="button"
                     key={i}
                     onClick={() => setSelectedDate(i)}
                     className={`shrink-0 min-w-[85px] sm:min-w-[100px] px-3.5 py-2.5 rounded-xl border text-sm transition-all text-center ${
@@ -330,6 +404,7 @@ export default function MovieDetailPage() {
               <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none px-4 sm:px-0">
                 {CINEMAS.map((c) => (
                   <button
+                    type="button"
                     key={c.id}
                     onClick={() => setSelectedCinema(c)}
                     className={`shrink-0 px-4 py-2 rounded-lg border text-xs sm:text-sm transition-all whitespace-nowrap ${
@@ -351,6 +426,7 @@ export default function MovieDetailPage() {
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {SHOWTIMES.map((st) => (
                 <button
+                  type="button"
                   key={st.id}
                   onClick={() => {
                     setSelectedShowtime(st);
