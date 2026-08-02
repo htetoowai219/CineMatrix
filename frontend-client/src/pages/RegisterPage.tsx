@@ -12,24 +12,43 @@ import {
   ArrowLeft,
   User,
   Book,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import SectionLabel from "../components/SectionLabel";
+import { useUserStore } from "../stores/user.store";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  // Zustand Store Hooks
+  const { registerAction, isLoading, error, clearError } = useUserStore();
+
+  // Form State
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) return;
-    navigate("/profile");
+
+    try {
+      await registerAction({
+        name: name.trim(),
+        email,
+        password,
+        phone,
+      });
+      // Clear errors and redirect user to login page instead of profile page
+      clearError();
+      navigate("/login");
+    } catch {
+      // Error is caught and stored in Zustand store state
+    }
   };
 
   return (
@@ -37,13 +56,16 @@ export default function RegisterPage() {
       {/* Top-Left Back to Home Link */}
       <button
         type="button"
-        onClick={() => navigate("/")}
+        onClick={() => {
+          clearError();
+          navigate("/");
+        }}
         className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 flex items-center gap-2 text-slate-300 hover:text-white text-xs sm:text-sm font-semibold transition-colors drop-shadow-md"
       >
         <ArrowLeft className="w-4 h-4" /> Back to Home
       </button>
 
-      {/* Left: Cinematic Branding Side (Matching Login Page Background Image) */}
+      {/* Left: Cinematic Branding Side */}
       <div className="hidden md:block relative h-full overflow-hidden bg-slate-900">
         <img
           src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=900&h=1200&fit=crop&auto=format"
@@ -120,7 +142,10 @@ export default function RegisterPage() {
               {"Already a member? "}
               <button
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={() => {
+                  clearError();
+                  navigate("/login");
+                }}
                 className="text-red-500 font-semibold hover:underline"
               >
                 Sign in
@@ -153,42 +178,35 @@ export default function RegisterPage() {
             <div className="flex-1 h-px bg-slate-800/80" />
           </div>
 
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-3 p-2.5 bg-red-950/50 border border-red-600/50 rounded-lg flex items-center gap-2 text-red-400 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span className="flex-1">{error}</span>
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-            {/* First & Last Name Fields */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                  First Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Alex"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                  Last Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Chen"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
-                    required
-                  />
-                </div>
+            {/* Full Name Field */}
+            <div>
+              <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => {
+                    if (error) clearError();
+                    setName(e.target.value);
+                  }}
+                  placeholder="Alex Chen"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
+                  disabled={isLoading}
+                  required
+                />
               </div>
             </div>
 
@@ -202,9 +220,13 @@ export default function RegisterPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    if (error) clearError();
+                    setEmail(e.target.value);
+                  }}
                   placeholder="you@example.com"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
+                  disabled={isLoading}
                   required
                 />
               </div>
@@ -220,9 +242,13 @@ export default function RegisterPage() {
                 <input
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    if (error) clearError();
+                    setPhone(e.target.value);
+                  }}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
+                  disabled={isLoading}
                   required
                 />
               </div>
@@ -238,9 +264,13 @@ export default function RegisterPage() {
                 <input
                   type={showPass ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    if (error) clearError();
+                    setPassword(e.target.value);
+                  }}
                   placeholder="Min 8 characters"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-9 py-2 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
+                  disabled={isLoading}
                   required
                 />
                 <button
@@ -293,10 +323,17 @@ export default function RegisterPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={!agreed}
-              className="mt-1 w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 active:scale-95 text-white font-semibold text-xs py-2.5 rounded-lg transition-all shadow-lg shadow-red-600/25"
+              disabled={!agreed || isLoading}
+              className="mt-1 w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 active:scale-95 text-white font-semibold text-xs py-2.5 rounded-lg transition-all shadow-lg shadow-red-600/25 flex items-center justify-center gap-2"
             >
-              Create Account
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <span>Create Account</span>
+              )}
             </button>
           </form>
         </div>

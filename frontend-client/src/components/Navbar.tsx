@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link, NavLink } from "react-router";
-import { Film, Search, Ticket, User, Menu, X } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router";
+import { Film, Search, Ticket, User, Menu, X, LogOut } from "lucide-react";
+import { useUserStore } from "../stores/user.store";
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Zustand User Store
+  const { user, isAuthenticated, logoutAction } = useUserStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +23,12 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await logoutAction();
+    setMobileMenuOpen(false);
+    navigate("/login");
+  };
 
   const navLinks = [
     { label: "Home", to: "/" },
@@ -86,20 +97,53 @@ const Navbar = () => {
             <span className="sm:hidden">Tickets</span>
           </Link>
 
-          <Link
-            to="/login"
-            className="hidden sm:block text-sm text-slate-300 hover:text-white transition-colors"
-          >
-            Sign In
-          </Link>
+          {/* Conditional Auth Actions (Desktop) */}
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              {/* Username Link */}
+              <Link
+                to="/profile"
+                className="hidden sm:block text-sm font-semibold text-white hover:text-red-500 transition-colors max-w-[120px] truncate"
+                title={user?.name}
+              >
+                {user?.name}
+              </Link>
 
-          <Link
-            to="/profile"
-            className="p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 transition-colors backdrop-blur-sm"
-            title="Profile"
-          >
-            <User className="w-4 h-4 text-slate-200" />
-          </Link>
+              {/* Profile Icon Button */}
+              <Link
+                to="/profile"
+                className="p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 transition-colors backdrop-blur-sm"
+                title="Profile"
+              >
+                <User className="w-4 h-4 text-slate-200" />
+              </Link>
+
+              {/* Sign Out Button (Right of Profile) */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="p-2 rounded-full bg-slate-800/80 hover:bg-red-950/40 hover:text-red-500 text-slate-300 transition-colors border border-transparent hover:border-red-600/40"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center gap-3">
+              <Link
+                to="/login"
+                className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/register"
+                className="text-sm font-semibold text-red-500 hover:text-red-400 transition-colors"
+              >
+                Register
+              </Link>
+            </div>
+          )}
 
           {/* Mobile Menu Toggle Button */}
           <button
@@ -149,22 +193,45 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Mobile Sign In */}
+          {/* Mobile Conditional Auth Drawer */}
           <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between px-3">
-            <Link
-              to="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-sm font-medium text-slate-300 hover:text-white"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/register"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-sm font-semibold text-red-500 hover:text-red-400"
-            >
-              Register
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-sm font-semibold text-white hover:text-red-500 transition-colors"
+                >
+                  <User className="w-4 h-4 text-red-500" />
+                  <span>{user?.name}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-medium text-slate-300 hover:text-white"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-semibold text-red-500 hover:text-red-400"
+                >
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
