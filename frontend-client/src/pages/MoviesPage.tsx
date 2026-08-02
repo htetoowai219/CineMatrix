@@ -1,67 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Search, Filter, Film, X } from "lucide-react";
+import { Search, Filter, Film, X, Loader2 } from "lucide-react";
 import MovieCard, { type Movie } from "../components/movies/MovieCard";
 import SectionLabel from "../components/SectionLabel";
+import { useMovieStore } from "../stores/movie.store";
+import { type IMovie } from "../types/movie.type";
 
-// Extended interface matching the filter options
 export interface FilterableMovie extends Movie {
   language?: string;
   formats: string[];
 }
 
-// Sample Data
-const MOVIES: FilterableMovie[] = [
-  {
-    id: "1",
-    title: "Dune: Part Two",
-    poster:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800",
-    rating: "PG-13",
-    score: 8.6,
-    runtime: "2h 46m",
-    genres: ["Sci-Fi", "Adventure", "Action"],
-    language: "English",
-    formats: ["2D", "3D", "IMAX"],
-    comingSoon: false,
-  },
-  {
-    id: "2",
-    title: "Oppenheimer",
-    poster:
-      "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800",
-    rating: "R",
-    score: 8.9,
-    runtime: "3h 00m",
-    genres: ["Drama", "History"],
-    language: "English",
-    formats: ["2D", "IMAX"],
-    comingSoon: false,
-  },
-  {
-    id: "3",
-    title: "Interstellar 2",
-    poster:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800",
-    rating: "PG-13",
-    score: 0,
-    runtime: "2h 30m",
-    genres: ["Sci-Fi"],
-    language: "English",
-    formats: ["2D", "IMAX"],
-    comingSoon: true,
-    releaseLabel: "Releasing Dec 2026",
-  },
-];
+// Maps backend IMovie data to frontend FilterableMovie shape
+const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
+  const isUpcoming = movie.status === "UPCOMING";
+  const releaseDateObj = movie.releaseDate ? new Date(movie.releaseDate) : null;
+  const formattedDate = releaseDateObj
+    ? releaseDateObj.toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+
+  return {
+    id: String(movie._id || ""),
+    title: movie.title,
+    poster: movie.posterUrl,
+    rating: movie.contentRating,
+    score: movie.averageScore ?? 0,
+    runtime: `${movie.durationMinutes}m`,
+    genres: movie.genres || [],
+    language: movie.originalLanguage,
+    formats: ["2D"], // Default format array if omitted in database model
+    comingSoon: isUpcoming,
+    releaseLabel:
+      isUpcoming && formattedDate ? `Releasing ${formattedDate}` : undefined,
+  };
+};
 
 export default function MoviesPage() {
   const navigate = useNavigate();
+
+  // Zustand Movie Store
+  const { movies, isLoading, error, getAllMoviesAction } = useMovieStore();
 
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("All");
   const [lang, setLang] = useState("All");
   const [fmt, setFmt] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    getAllMoviesAction();
+  }, [getAllMoviesAction]);
 
   const allGenres = [
     "All",
@@ -75,8 +66,10 @@ export default function MoviesPage() {
     "Adventure",
     "Superhero",
   ];
-  const langs = ["All", "English", "Spanish", "Hindi", "French"];
+  const langs = ["All", "English", "Spanish", "Hindi", "French", "Japanese"];
   const fmts = ["All", "2D", "3D", "IMAX"];
+
+  const mappedMovies = movies.map(mapMovieToFilterable);
 
   const isFiltering =
     search !== "" || genre !== "All" || lang !== "All" || fmt !== "All";
@@ -89,8 +82,12 @@ export default function MoviesPage() {
     return matchSearch && matchGenre && matchLang && matchFmt;
   };
 
-  const nowShowing = MOVIES.filter((m) => !m.comingSoon && matchesFilters(m));
-  const comingSoon = MOVIES.filter((m) => m.comingSoon && matchesFilters(m));
+  const nowShowing = mappedMovies.filter(
+    (m) => !m.comingSoon && matchesFilters(m),
+  );
+  const comingSoon = mappedMovies.filter(
+    (m) => m.comingSoon && matchesFilters(m),
+  );
   const totalFiltered = nowShowing.length + comingSoon.length;
 
   const resetFilters = () => {
@@ -125,6 +122,7 @@ export default function MoviesPage() {
             />
             {search && (
               <button
+                type="button"
                 onClick={() => setSearch("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
               >
@@ -135,6 +133,7 @@ export default function MoviesPage() {
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 border rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                 showFilters
@@ -147,6 +146,7 @@ export default function MoviesPage() {
 
             {isFiltering && (
               <button
+                type="button"
                 onClick={resetFilters}
                 className="text-xs text-slate-400 hover:text-red-500 underline px-2 transition-colors"
               >
@@ -176,6 +176,7 @@ export default function MoviesPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {options.map((o) => (
                     <button
+                      type="button"
                       key={o}
                       onClick={() => set(o)}
                       className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
@@ -194,7 +195,7 @@ export default function MoviesPage() {
         )}
 
         {/* Results Counter when filtering */}
-        {isFiltering && (
+        {isFiltering && !isLoading && (
           <p className="text-slate-500 text-xs sm:text-sm font-medium mb-4">
             Showing{" "}
             <span className="text-white font-bold">{totalFiltered}</span> result
@@ -203,74 +204,110 @@ export default function MoviesPage() {
         )}
       </div>
 
-      {/* Empty State */}
-      {isFiltering && totalFiltered === 0 && (
+      {/* Loading State */}
+      {isLoading && (
+        <div className="max-w-7xl mx-auto px-6 py-24 text-center">
+          <Loader2 className="w-10 h-10 animate-spin mx-auto text-red-600 mb-4" />
+          <p className="text-slate-400 text-sm font-medium">
+            Fetching movies from server...
+          </p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {!isLoading && error && (
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center py-24 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
-            <Film className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-60" />
-            <h3 className="font-display font-bold text-lg text-white mb-1 uppercase tracking-wide">
-              No movies found
-            </h3>
-            <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-              We couldn't find any titles matching your selected filters or
-              search terms.
-            </p>
+          <div className="text-center py-16 bg-red-950/20 border border-red-900/50 rounded-2xl">
+            <p className="text-red-400 font-semibold mb-4">{error}</p>
             <button
-              onClick={resetFilters}
-              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg border border-slate-700 transition-all"
+              type="button"
+              onClick={() => getAllMoviesAction()}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition-all"
             >
-              Reset Filters
+              Try Again
             </button>
           </div>
         </div>
       )}
 
-      {/* Now Showing Section */}
-      {nowShowing.length > 0 && (
-        <section className="max-w-7xl mx-auto px-6 mb-16">
-          <div className="flex items-end justify-between mb-6">
-            <div>
-              <SectionLabel>On Screen Now</SectionLabel>
-              <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white uppercase tracking-wide">
-                Now Showing
-              </h2>
-            </div>
-            <span className="text-slate-500 text-xs sm:text-sm font-medium">
-              {nowShowing.length} film{nowShowing.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-            {nowShowing.map((m) => (
-              <MovieCard key={m.id} movie={m} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Coming Soon Section */}
-      {comingSoon.length > 0 && (
-        <section className="bg-slate-900/40 border-y border-slate-800/80 py-16">
+      {/* Empty State (Filtered or No Movies Available) */}
+      {!isLoading &&
+        !error &&
+        (mappedMovies.length === 0 || (isFiltering && totalFiltered === 0)) && (
           <div className="max-w-7xl mx-auto px-6">
-            <div className="flex items-end justify-between mb-6">
-              <div>
-                <SectionLabel>Coming Soon</SectionLabel>
-                <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white uppercase tracking-wide">
-                  On the Horizon
-                </h2>
-              </div>
-              <span className="text-slate-500 text-xs sm:text-sm font-medium">
-                {comingSoon.length} film{comingSoon.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-              {comingSoon.map((m) => (
-                <MovieCard key={m.id} movie={m} />
-              ))}
+            <div className="text-center py-24 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
+              <Film className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-60" />
+              <h3 className="font-display font-bold text-lg text-white mb-1 uppercase tracking-wide">
+                No movies found
+              </h3>
+              <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
+                We couldn't find any titles matching your selected filters or
+                search terms.
+              </p>
+              {isFiltering && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg border border-slate-700 transition-all"
+                >
+                  Reset Filters
+                </button>
+              )}
             </div>
           </div>
-        </section>
+        )}
+
+      {/* Content Rendering */}
+      {!isLoading && !error && (
+        <>
+          {/* Now Showing Section */}
+          {nowShowing.length > 0 && (
+            <section className="max-w-7xl mx-auto px-6 mb-16">
+              <div className="flex items-end justify-between mb-6">
+                <div>
+                  <SectionLabel>On Screen Now</SectionLabel>
+                  <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white uppercase tracking-wide">
+                    Now Showing
+                  </h2>
+                </div>
+                <span className="text-slate-500 text-xs sm:text-sm font-medium">
+                  {nowShowing.length} film{nowShowing.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+                {nowShowing.map((m) => (
+                  <MovieCard key={m.id} movie={m} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Coming Soon Section */}
+          {comingSoon.length > 0 && (
+            <section className="bg-slate-900/40 border-y border-slate-800/80 py-16">
+              <div className="max-w-7xl mx-auto px-6">
+                <div className="flex items-end justify-between mb-6">
+                  <div>
+                    <SectionLabel>Coming Soon</SectionLabel>
+                    <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white uppercase tracking-wide">
+                      On the Horizon
+                    </h2>
+                  </div>
+                  <span className="text-slate-500 text-xs sm:text-sm font-medium">
+                    {comingSoon.length} film{comingSoon.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+                  {comingSoon.map((m) => (
+                    <MovieCard key={m.id} movie={m} />
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

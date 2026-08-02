@@ -4,6 +4,7 @@ import cors from "cors";
 import connectDb from "./db/connectDb";
 
 import userRoutes from "./routes/user.routes";
+import movieRoutes from "./routes/movie.routes";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use(
 app.use(express.json());
 
 app.use("/user", userRoutes);
+app.use("/movie", movieRoutes);
 
 const start = async () => {
   await connectDb();
