@@ -10,7 +10,6 @@ import {
 } from "../types/auth.type";
 import api from "../services/api";
 
-// Helper for extracting clean error messages from Axios responses
 const getErrorMessage = (err: unknown, fallback: string): string => {
   if (isAxiosError(err)) {
     return err.response?.data?.message || err.message || fallback;
@@ -20,6 +19,8 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
 
 interface RegisterResponse {
   message: string;
+  accessToken: string;
+  refreshToken: string;
   user: User;
 }
 
@@ -27,6 +28,11 @@ interface AuthResponse {
   message: string;
   accessToken: string;
   refreshToken: string;
+  user: User;
+}
+
+interface ProfileResponse {
+  message: string;
   user: User;
 }
 
@@ -43,10 +49,10 @@ interface UserState {
   isLoading: boolean;
   error: string | null;
 
-  // Sync Store Actions with Backend API Calls
   registerAction: (payload: RegisterPayload) => Promise<void>;
   loginAction: (payload: LoginPayload) => Promise<void>;
   logoutAction: () => Promise<void>;
+  getProfileAction: () => Promise<void>;
   updateProfileAction: (payload: UpdateProfilePayload) => Promise<void>;
   updatePasswordAction: (payload: UpdatePasswordPayload) => Promise<void>;
   clearError: () => void;
@@ -63,11 +69,10 @@ export const useUserStore = create<UserState>()(
       isLoading: false,
       error: null,
 
+      // Registers a new user account without auto-login
       registerAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
-          // POST /user/register -> expects name, email, password, phone
-          // Only triggers registration without persisting tokens or auto-logging in
           await api.post<RegisterResponse>("/user/register", payload);
         } catch (err: unknown) {
           const message = getErrorMessage(err, "Registration failed");
@@ -78,13 +83,17 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      // Authenticates user and stores non-sensitive user details and tokens
       loginAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
-          // POST /user/login -> expects email, password
           const { data } = await api.post<AuthResponse>("/user/login", payload);
           set({
-            user: data.user,
+            user: {
+              name: data.user.name,
+              email: data.user.email,
+              phone: data.user.phone,
+            },
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
             isAuthenticated: true,
@@ -98,10 +107,10 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      // Revokes session on backend and clears auth state
       logoutAction: async () => {
         set({ isLoading: true });
         try {
-          // DELETE /user/logout
           await api.delete("/user/logout");
         } catch (err: unknown) {
           console.error("Logout error on server:", err);
@@ -117,16 +126,41 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      // Fetches user profile data using current access token
+      getProfileAction: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await api.get<ProfileResponse>("/user/profile");
+          set({
+            user: {
+              name: data.user.name,
+              email: data.user.email,
+              phone: data.user.phone,
+            },
+          });
+        } catch (err: unknown) {
+          const message = getErrorMessage(err, "Failed to fetch profile");
+          set({ error: message });
+          throw err;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      // Updates user profile details and syncs local state
       updateProfileAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
-          // PATCH /user/updateProfile -> expects name, phone (optional)
           const { data } = await api.patch<UpdateProfileResponse>(
             "/user/updateProfile",
             payload,
           );
           set((state) => ({
-            user: state.user ? { ...state.user, ...data.user } : data.user,
+            user: {
+              name: data.user.name ?? state.user?.name,
+              email: data.user.email ?? state.user?.email,
+              phone: data.user.phone ?? state.user?.phone,
+            },
           }));
         } catch (err: unknown) {
           const message = getErrorMessage(err, "Profile update failed");
@@ -137,10 +171,10 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      // Updates user account password
       updatePasswordAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
-          // PATCH /user/updatePassword -> expects currentPassword, newPassword
           await api.patch("/user/updatePassword", payload);
         } catch (err: unknown) {
           const message = getErrorMessage(err, "Password update failed");
@@ -151,9 +185,10 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      // Resets store error message
       clearError: () => set({ error: null }),
 
-      // Internal manual cleanup helper
+      // Performs local auth state cleanup without backend call
       logout: () =>
         set({
           user: null,
@@ -167,7 +202,13 @@ export const useUserStore = create<UserState>()(
       name: "cinematrix-user-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        user: state.user,
+        user: state.user
+          ? {
+              name: state.user.name,
+              email: state.user.email,
+              phone: state.user.phone,
+            }
+          : null,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,

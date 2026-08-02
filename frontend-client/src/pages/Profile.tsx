@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Mail,
   Phone,
-  MapPin,
   Lock,
   Eye,
   EyeOff,
@@ -12,10 +11,11 @@ import {
   QrCode,
   Edit3,
   X,
+  Loader2,
 } from "lucide-react";
 import SectionLabel from "../components/SectionLabel";
+import { useUserStore } from "../stores/user.store";
 
-// Types
 export interface Booking {
   id: string;
   movieTitle: string;
@@ -28,15 +28,6 @@ export interface Booking {
   total: number;
 }
 
-export interface UserProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  city: string;
-}
-
-// Sample Data
 const BOOKINGS: Booking[] = [
   {
     id: "CM-89201",
@@ -65,45 +56,73 @@ const BOOKINGS: Booking[] = [
 ];
 
 export default function ProfilePage() {
+  const {
+    user,
+    isLoading,
+    error,
+    getProfileAction,
+    updateProfileAction,
+    updatePasswordAction,
+    clearError,
+  } = useUserStore();
+
   const [tab, setTab] = useState<"info" | "security" | "bookings">("bookings");
 
-  // Profile Information State
-  const [userInfo, setUserInfo] = useState<UserProfile>({
-    firstName: "Alex",
-    lastName: "Chen",
-    email: "alex.chen@example.com",
-    phone: "+1 (555) 012-3456",
-    city: "New York",
-  });
-
-  // Modal Visibility States
   const [isEditInfoOpen, setIsEditInfoOpen] = useState(false);
   const [isEditPassOpen, setIsEditPassOpen] = useState(false);
 
-  // Form Temp States
-  const [tempInfo, setTempInfo] = useState<UserProfile>(userInfo);
-  const [passData, setPassData] = useState({ current: "", new: "" });
+  const [tempInfo, setTempInfo] = useState({ name: "", phone: "" });
+  const [passData, setPassData] = useState({
+    currentPassword: "",
+    newPassword: "",
+  });
 
-  // Password Visibility States
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
 
-  const handleSaveInfo = (e: React.FormEvent) => {
-    e.preventDefault();
-    setUserInfo(tempInfo);
-    setIsEditInfoOpen(false);
+  useEffect(() => {
+    getProfileAction();
+  }, [getProfileAction]);
+
+  const handleOpenEditInfo = () => {
+    clearError();
+    setTempInfo({
+      name: user?.name || "",
+      phone: user?.phone || "",
+    });
+    setIsEditInfoOpen(true);
   };
 
-  const handleSavePassword = (e: React.FormEvent) => {
+  const handleOpenEditPass = () => {
+    clearError();
+    setPassData({ currentPassword: "", newPassword: "" });
+    setIsEditPassOpen(true);
+  };
+
+  const handleSaveInfo = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPassData({ current: "", new: "" });
-    setIsEditPassOpen(false);
+    try {
+      await updateProfileAction(tempInfo);
+      setIsEditInfoOpen(false);
+    } catch {
+      // Error state handled inside Zustand store
+    }
+  };
+
+  const handleSavePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updatePasswordAction(passData);
+      setPassData({ currentPassword: "", newPassword: "" });
+      setIsEditPassOpen(false);
+    } catch {
+      // Error state handled inside Zustand store
+    }
   };
 
   return (
     <div className="bg-slate-950 min-h-screen text-white pt-24 pb-20 selection:bg-red-600 selection:text-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        {/* Page Section Heading */}
         <div className="mb-6">
           <SectionLabel>Account Overview</SectionLabel>
           <h1 className="font-display font-black text-3xl sm:text-5xl text-white uppercase tracking-wide">
@@ -115,22 +134,20 @@ export default function ProfilePage() {
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-xl">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center shrink-0 border border-red-500/30 shadow-lg shadow-red-600/20">
             <span className="font-display font-black text-2xl text-white uppercase tracking-wider">
-              {userInfo.firstName[0]}
-              {userInfo.lastName[0]}
+              {user?.name ? user.name[0] : "U"}
             </span>
           </div>
 
           <div className="flex-1">
             <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-wide">
-              {userInfo.firstName} {userInfo.lastName}
+              {user?.name || "Loading..."}
             </h2>
-            <p className="text-slate-400 text-sm mt-0.5">{userInfo.email}</p>
+            <p className="text-slate-400 text-sm mt-0.5">
+              {user?.email || "—"}
+            </p>
             <div className="flex flex-wrap gap-2.5 mt-3">
               <span className="text-xs bg-red-950/40 border border-red-600/40 text-red-500 px-3 py-1 rounded-full font-bold">
                 Premium Member
-              </span>
-              <span className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1 rounded-full">
-                {userInfo.city}
               </span>
             </div>
           </div>
@@ -174,7 +191,7 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {/* Personal Info Tab (Read-Only View) */}
+        {/* Personal Info Tab */}
         {tab === "info" && (
           <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 max-w-2xl shadow-xl">
             <div className="flex items-center justify-between mb-6">
@@ -182,10 +199,7 @@ export default function ProfilePage() {
                 Personal Information
               </h3>
               <button
-                onClick={() => {
-                  setTempInfo(userInfo);
-                  setIsEditInfoOpen(true);
-                }}
+                onClick={handleOpenEditInfo}
                 className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-700 transition-all"
               >
                 <Edit3 className="w-3.5 h-3.5 text-red-500" /> Edit Profile
@@ -193,21 +207,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/60 p-5 rounded-xl border border-slate-800/80">
-              <div>
+              <div className="col-span-1 md:col-span-2">
                 <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                  First Name
+                  Full Name
                 </p>
                 <p className="text-slate-200 text-sm font-semibold">
-                  {userInfo.firstName}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                  Last Name
-                </p>
-                <p className="text-slate-200 text-sm font-semibold">
-                  {userInfo.lastName}
+                  {user?.name || "—"}
                 </p>
               </div>
 
@@ -216,7 +221,7 @@ export default function ProfilePage() {
                   Email Address
                 </p>
                 <p className="text-slate-200 text-sm font-semibold">
-                  {userInfo.email}
+                  {user?.email || "—"}
                 </p>
               </div>
 
@@ -225,23 +230,14 @@ export default function ProfilePage() {
                   Phone Number
                 </p>
                 <p className="text-slate-200 text-sm font-semibold">
-                  {userInfo.phone}
-                </p>
-              </div>
-
-              <div className="col-span-1 md:col-span-2">
-                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                  City / Location
-                </p>
-                <p className="text-slate-200 text-sm font-semibold">
-                  {userInfo.city}
+                  {user?.phone || "—"}
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Security Tab (Read-Only View) */}
+        {/* Security Tab */}
         {tab === "security" && (
           <div className="max-w-2xl">
             <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl">
@@ -255,7 +251,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsEditPassOpen(true)}
+                  onClick={handleOpenEditPass}
                   className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-700 transition-all shrink-0"
                 >
                   <Lock className="w-3.5 h-3.5 text-red-500" /> Change Password
@@ -272,7 +268,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <span className="text-[11px] text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded">
-                  Updated 3 months ago
+                  Active
                 </span>
               </div>
             </div>
@@ -288,14 +284,12 @@ export default function ProfilePage() {
                 className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl"
               >
                 <div className="p-5 sm:p-6 flex flex-col lg:flex-row gap-6">
-                  {/* Poster */}
                   <img
                     src={booking.poster}
                     alt={booking.movieTitle}
                     className="w-24 h-36 object-cover rounded-xl bg-slate-950 border border-slate-800 shrink-0 mx-auto sm:mx-0"
                   />
 
-                  {/* Booking Metadata */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
                       <h3 className="font-display font-bold text-white text-xl sm:text-2xl uppercase tracking-wide">
@@ -361,7 +355,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* E-Ticket / QR Block */}
                   <div className="flex flex-col items-center justify-center gap-2.5 p-4 bg-slate-950/80 rounded-xl border border-slate-800 shrink-0 lg:w-44">
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                       E-Ticket
@@ -406,56 +399,24 @@ export default function ProfilePage() {
               Update Personal Info
             </h3>
 
-            <form onSubmit={handleSaveInfo} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
-                    First Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type="text"
-                      value={tempInfo.firstName}
-                      onChange={(e) =>
-                        setTempInfo({ ...tempInfo, firstName: e.target.value })
-                      }
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
-                    Last Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                      type="text"
-                      value={tempInfo.lastName}
-                      onChange={(e) =>
-                        setTempInfo({ ...tempInfo, lastName: e.target.value })
-                      }
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
-                      required
-                    />
-                  </div>
-                </div>
+            {error && (
+              <div className="mb-4 p-3 bg-red-950/50 border border-red-600/50 rounded-lg text-red-400 text-xs font-semibold">
+                {error}
               </div>
+            )}
 
+            <form onSubmit={handleSaveInfo} className="space-y-4">
               <div>
                 <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
-                  Email Address
+                  Full Name
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
-                    type="email"
-                    value={tempInfo.email}
+                    type="text"
+                    value={tempInfo.name}
                     onChange={(e) =>
-                      setTempInfo({ ...tempInfo, email: e.target.value })
+                      setTempInfo({ ...tempInfo, name: e.target.value })
                     }
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
                     required
@@ -481,36 +442,23 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
-                  City
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type="text"
-                    value={tempInfo.city}
-                    onChange={(e) =>
-                      setTempInfo({ ...tempInfo, city: e.target.value })
-                    }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
-                    required
-                  />
-                </div>
-              </div>
-
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsEditInfoOpen(false)}
                   className="px-4 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all shadow-md shadow-red-600/20"
+                  disabled={isLoading}
+                  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all shadow-md shadow-red-600/20 flex items-center gap-2 disabled:opacity-50"
                 >
+                  {isLoading && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   Save Changes
                 </button>
               </div>
@@ -534,6 +482,12 @@ export default function ProfilePage() {
               Change Password
             </h3>
 
+            {error && (
+              <div className="mb-4 p-3 bg-red-950/50 border border-red-600/50 rounded-lg text-red-400 text-xs font-semibold">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSavePassword} className="space-y-4">
               <div>
                 <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
@@ -543,9 +497,12 @@ export default function ProfilePage() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type={showOldPass ? "text" : "password"}
-                    value={passData.current}
+                    value={passData.currentPassword}
                     onChange={(e) =>
-                      setPassData({ ...passData, current: e.target.value })
+                      setPassData({
+                        ...passData,
+                        currentPassword: e.target.value,
+                      })
                     }
                     placeholder="••••••••"
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-10 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
@@ -573,9 +530,9 @@ export default function ProfilePage() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type={showNewPass ? "text" : "password"}
-                    value={passData.new}
+                    value={passData.newPassword}
                     onChange={(e) =>
-                      setPassData({ ...passData, new: e.target.value })
+                      setPassData({ ...passData, newPassword: e.target.value })
                     }
                     placeholder="••••••••"
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-10 py-2.5 text-white text-sm focus:outline-none focus:border-red-600/60"
@@ -600,13 +557,18 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => setIsEditPassOpen(false)}
                   className="px-4 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all shadow-md shadow-red-600/20"
+                  disabled={isLoading}
+                  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all shadow-md shadow-red-600/20 flex items-center gap-2 disabled:opacity-50"
                 >
+                  {isLoading && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   Update Password
                 </button>
               </div>
