@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  getProfileController,
   loginUserController,
   logoutUserController,
   registerUserController,
@@ -20,5 +21,7 @@ router.patch(
   verifyAccessToken,
   updateUserPasswordController,
 );
+
+router.get("/profile", verifyAccessToken, getProfileController);
 
 export default router;
