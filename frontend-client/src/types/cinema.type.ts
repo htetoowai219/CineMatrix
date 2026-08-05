@@ -1,5 +1,3 @@
-import { Types } from "mongoose";
-
 export interface ICinemaLocation {
   type: "Point";
   coordinates: [number, number]; // [longitude, latitude]
@@ -21,10 +19,10 @@ export interface ICinemaSocials {
 }
 
 export interface ICinema {
-  _id?: Types.ObjectId | string;
+  _id?: string;
   name: string;
   description?: string;
-  ownerId: Types.ObjectId | string;
+  ownerId: string;
   address: ICinemaAddress;
   location?: ICinemaLocation;
   phone: string;
