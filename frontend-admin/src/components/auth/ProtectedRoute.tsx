@@ -1,12 +1,27 @@
+import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
 import { useUserStore } from "../../stores/user.store";
+import { decodeJwtPayload } from "../../utils/jwt";
+
+const hasExpired = (token: string | null): boolean => {
+  if (!token) return false;
+  const payload = decodeJwtPayload<{ exp?: number }>(token);
+  return !payload?.exp || payload.exp * 1000 <= Date.now();
+};
 
 // Restricts routes to authenticated super admins.
 // The backend independently enforces the admin role on every write request.
 const ProtectedRoute = () => {
-  const { isAuthenticated, role } = useUserStore();
+  const { isAuthenticated, role, accessToken, logout } = useUserStore();
+  const expired = isAuthenticated && hasExpired(accessToken);
 
-  if (!isAuthenticated || role !== "admin") {
+  useEffect(() => {
+    if (expired) {
+      logout();
+    }
+  }, [expired, logout]);
+
+  if (!isAuthenticated || expired || role !== "admin") {
     return <Navigate to="/login" replace />;
   }
 

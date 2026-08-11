@@ -13,6 +13,7 @@ const userSchema = new Schema<Omit<IUser, "_id">>(
     },
     phone: { type: String, required: true, trim: true },
     password: { type: String, required: true },
+    profileImageUrl: { type: String, trim: true },
     role: {
       type: String,
       enum: ["customer", "cinema_owner", "admin"],

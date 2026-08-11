@@ -17,6 +17,21 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
   return err instanceof Error ? err.message : fallback;
 };
 
+// Converts a payload to multipart FormData when it contains an image file,
+// so the backend multer middleware can receive the raw image.
+const toFormData = (payload: Record<string, unknown>): FormData => {
+  const fd = new FormData();
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (value instanceof File) {
+      fd.append(key, value);
+      return;
+    }
+    fd.append(key, String(value));
+  });
+  return fd;
+};
+
 interface RegisterResponse {
   message: string;
   accessToken: string;
@@ -73,7 +88,11 @@ export const useUserStore = create<UserState>()(
       registerAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
-          await api.post<RegisterResponse>("/user/register", payload);
+          const hasProfileImage = payload.profileImage instanceof File;
+          const body = hasProfileImage
+            ? toFormData({ ...payload })
+            : payload;
+          await api.post<RegisterResponse>("/user/register", body);
         } catch (err: unknown) {
           const message = getErrorMessage(err, "Registration failed");
           set({ error: message });
@@ -93,6 +112,7 @@ export const useUserStore = create<UserState>()(
               name: data.user.name,
               email: data.user.email,
               phone: data.user.phone,
+              profileImageUrl: data.user.profileImageUrl,
             },
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
@@ -136,6 +156,7 @@ export const useUserStore = create<UserState>()(
               name: data.user.name,
               email: data.user.email,
               phone: data.user.phone,
+              profileImageUrl: data.user.profileImageUrl,
             },
           });
         } catch (err: unknown) {
@@ -151,15 +172,21 @@ export const useUserStore = create<UserState>()(
       updateProfileAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
+          const hasProfileImage = payload.profileImage instanceof File;
+          const body = hasProfileImage
+            ? toFormData({ ...payload })
+            : payload;
           const { data } = await api.patch<UpdateProfileResponse>(
             "/user/updateProfile",
-            payload,
+            body,
           );
           set((state) => ({
             user: {
               name: data.user.name ?? state.user?.name,
               email: data.user.email ?? state.user?.email,
               phone: data.user.phone ?? state.user?.phone,
+              profileImageUrl:
+                data.user.profileImageUrl ?? state.user?.profileImageUrl,
             },
           }));
         } catch (err: unknown) {
@@ -207,6 +234,7 @@ export const useUserStore = create<UserState>()(
               name: state.user.name,
               email: state.user.email,
               phone: state.user.phone,
+              profileImageUrl: state.user.profileImageUrl,
             }
           : null,
         accessToken: state.accessToken,

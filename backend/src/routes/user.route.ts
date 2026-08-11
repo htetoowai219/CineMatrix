@@ -9,13 +9,28 @@ import {
   updateUserProfileController,
 } from "../controllers/userAuth.controller";
 import { verifyAccessToken } from "../middlewares/auth.middleware";
+import {
+  uploadSingleImage,
+  handleMulterError,
+} from "../middlewares/upload.middleware";
 
 const router = express.Router();
 
-router.post("/register", registerUserController);
+router.post(
+  "/register",
+  uploadSingleImage("profileImage"),
+  handleMulterError,
+  registerUserController,
+);
 router.post("/login", loginUserController);
 router.delete("/logout", verifyAccessToken, logoutUserController);
-router.patch("/updateProfile", verifyAccessToken, updateUserProfileController);
+router.patch(
+  "/updateProfile",
+  verifyAccessToken,
+  uploadSingleImage("profileImage"),
+  handleMulterError,
+  updateUserProfileController,
+);
 router.patch(
   "/updatePassword",
   verifyAccessToken,

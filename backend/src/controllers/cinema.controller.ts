@@ -1,5 +1,57 @@
 import { Request, Response } from "express";
 import { Cinema } from "../models/cinema.model";
+import {
+  ICinemaAddress,
+  ICinemaLocation,
+} from "../types/cinema.type";
+import { uploadImageToCloudinary } from "../utils/cloudinary.util";
+
+const CINEMA_IMAGES_FOLDER = "cinematrix/cinemas/images";
+const CINEMA_GALLERY_FOLDER = "cinematrix/cinemas/gallery";
+
+type CinemaUploadFiles = {
+  images?: Express.Multer.File[];
+  gallery?: Express.Multer.File[];
+};
+
+// Normalizes array-typed fields sent either as a JSON array or as a
+// comma-separated string (when submitted via multipart FormData).
+const toArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+// Parses nested objects (address/location) sent as JSON strings by the client
+// when it submits multipart FormData.
+const parseObject = <T>(value: unknown): T | undefined => {
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return undefined;
+    }
+  }
+  return value as T;
+};
+
+// Uploads an array of image buffers and returns their Cloudinary URLs.
+const uploadImages = async (
+  files: Express.Multer.File[],
+  folder: string,
+): Promise<string[]> => {
+  const urls: string[] = [];
+  for (const file of files) {
+    const { secure_url } = await uploadImageToCloudinary(file, folder);
+    urls.push(secure_url);
+  }
+  return urls;
+};
 
 // Fetches all cinemas from the database with optional filter query parameters.
 export const getAllCinemasController = async (req: Request, res: Response) => {
@@ -57,19 +109,31 @@ export const createCinemaController = async (req: Request, res: Response) => {
         .json({ message: "Access denied. Admin role required." });
     }
 
+    const files = req.files as CinemaUploadFiles | undefined;
+
     const {
       name,
       description,
       ownerId,
-      address,
-      location,
       phone,
       email,
-      amenities,
-      images,
       totalScreens,
       isActive,
     } = req.body;
+
+    const address = parseObject<ICinemaAddress>(req.body.address);
+    const location = parseObject<ICinemaLocation>(req.body.location);
+
+    // Uploaded files take precedence over URL fields.
+    let images = toArray(req.body.images);
+    let gallery = toArray(req.body.gallery);
+
+    if (files?.images?.length) {
+      images = await uploadImages(files.images, CINEMA_IMAGES_FOLDER);
+    }
+    if (files?.gallery?.length) {
+      gallery = await uploadImages(files.gallery, CINEMA_GALLERY_FOLDER);
+    }
 
     if (
       !name ||
@@ -94,8 +158,9 @@ export const createCinemaController = async (req: Request, res: Response) => {
       location,
       phone,
       email,
-      amenities,
+      amenities: toArray(req.body.amenities),
       images,
+      gallery,
       totalScreens,
       isActive,
     });
@@ -124,7 +189,36 @@ export const updateCinemaController = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const updateData = req.body;
+    const files = req.files as CinemaUploadFiles | undefined;
+    const updateData: Record<string, unknown> = { ...req.body };
+
+    delete updateData.images;
+    delete updateData.gallery;
+
+    if (files?.images?.length) {
+      updateData.images = await uploadImages(files.images, CINEMA_IMAGES_FOLDER);
+    } else if (req.body.images !== undefined) {
+      updateData.images = toArray(req.body.images);
+    }
+
+    if (files?.gallery?.length) {
+      updateData.gallery = await uploadImages(
+        files.gallery,
+        CINEMA_GALLERY_FOLDER,
+      );
+    } else if (req.body.gallery !== undefined) {
+      updateData.gallery = toArray(req.body.gallery);
+    }
+
+    if (updateData.amenities !== undefined) {
+      updateData.amenities = toArray(updateData.amenities);
+    }
+    if (updateData.address !== undefined) {
+      updateData.address = parseObject(updateData.address);
+    }
+    if (updateData.location !== undefined) {
+      updateData.location = parseObject(updateData.location);
+    }
 
     if (!id) {
       return res.status(400).json({ message: "Cinema ID is required." });

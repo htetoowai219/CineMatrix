@@ -2,6 +2,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  profileImageUrl?: string;
 }
 
 export interface AuthResponse {
@@ -16,6 +17,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   phone: string;
+  profileImage?: File;
 }
 
 export interface LoginPayload {
@@ -26,6 +28,7 @@ export interface LoginPayload {
 export interface UpdateProfilePayload {
   name?: string;
   phone?: string;
+  profileImage?: File;
 }
 
 export interface UpdatePasswordPayload {

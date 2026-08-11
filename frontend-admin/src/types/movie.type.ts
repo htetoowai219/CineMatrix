@@ -35,14 +35,16 @@ export interface CreateMoviePayload {
   originalLanguage: string;
   contentRating: string;
   averageScore?: number;
-  posterUrl: string;
-  backdropUrl: string;
+  // Image files take precedence over URL fields when provided.
+  posterUrl?: string;
+  backdropUrl?: string;
+  posterImage?: File;
+  backdropImage?: File;
   trailerUrl?: string;
   director: string;
   castMembers?: string[];
   genres?: string[];
   status?: MovieStatus;
-  createdByCinemaId?: string;
 }
 
 export type UpdateMoviePayload = Partial<CreateMoviePayload>;
