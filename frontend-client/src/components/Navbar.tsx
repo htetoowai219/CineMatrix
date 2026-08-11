@@ -112,10 +112,18 @@ const Navbar = () => {
               {/* Profile Icon Button */}
               <Link
                 to="/profile"
-                className="p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 transition-colors backdrop-blur-sm"
+                className="p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 transition-colors backdrop-blur-sm"
                 title="Profile"
               >
-                <User className="w-4 h-4 text-slate-200" />
+                {user?.profileImageUrl ? (
+                  <img
+                    src={user.profileImageUrl}
+                    alt={user.name}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4 text-slate-200" />
+                )}
               </Link>
 
               {/* Sign Out Button (Right of Profile) */}

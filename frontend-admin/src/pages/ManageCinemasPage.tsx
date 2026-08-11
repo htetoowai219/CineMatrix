@@ -12,6 +12,7 @@ import Modal from "../components/ui/Modal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Field, TextInput, TextArea } from "../components/ui/form";
+import ImageUpload from "../components/ui/ImageUpload";
 import { useCinemaStore } from "../stores/cinema.store";
 import {
   type ICinema,
@@ -33,6 +34,9 @@ interface CinemaFormState {
   openingHours: string;
   amenities: string;
   images: string;
+  gallery: string;
+  imageFiles: File[];
+  galleryFiles: File[];
   latitude: string;
   longitude: string;
   isActive: boolean;
@@ -53,6 +57,9 @@ const emptyForm: CinemaFormState = {
   openingHours: "10:00 AM - 11:30 PM",
   amenities: "",
   images: "",
+  gallery: "",
+  imageFiles: [],
+  galleryFiles: [],
   latitude: "",
   longitude: "",
   isActive: true,
@@ -86,7 +93,10 @@ const buildPayload = (form: CinemaFormState): CreateCinemaPayload => {
     totalScreens: Number(form.totalScreens),
     openingHours: form.openingHours.trim() || undefined,
     amenities: splitList(form.amenities),
-    images: splitList(form.images),
+    images: form.imageFiles.length ? undefined : splitList(form.images),
+    imageFiles: form.imageFiles,
+    gallery: form.galleryFiles.length ? undefined : splitList(form.gallery),
+    galleryFiles: form.galleryFiles,
     isActive: form.isActive,
     location:
       hasCoords && Number.isFinite(latitude) && Number.isFinite(longitude)
@@ -110,6 +120,9 @@ const toForm = (cinema: ICinema): CinemaFormState => ({
   openingHours: cinema.openingHours ?? "",
   amenities: (cinema.amenities ?? []).join(", "),
   images: (cinema.images ?? []).join(", "),
+  gallery: (cinema.gallery ?? []).join(", "),
+  imageFiles: [],
+  galleryFiles: [],
   latitude: cinema.location?.coordinates?.[1] != null ? String(cinema.location.coordinates[1]) : "",
   longitude: cinema.location?.coordinates?.[0] != null ? String(cinema.location.coordinates[0]) : "",
   isActive: cinema.isActive ?? true,
@@ -545,14 +558,33 @@ export default function ManageCinemasPage() {
                 />
               </Field>
 
-              <Field label="Images" hint="Comma-separated image URLs.">
-                <TextInput
-                  type="text"
-                  value={form.images}
-                  onChange={(e) => update({ images: e.target.value })}
-                  placeholder="https://.../photo.jpg"
+              <div className="sm:col-span-2">
+                <ImageUpload
+                  label="Hero / Banner Images"
+                  multiple
+                  hint="Primary cinema photos. Files are uploaded to Cloudinary and their URLs are stored."
+                  currentSrc={
+                    editingCinema ? form.images.split(", ")[0] : undefined
+                  }
+                  files={form.imageFiles}
+                  onChange={(files) => update({ imageFiles: files })}
+                  disabled={isSubmitting}
+                  previewClassName="w-28 h-16"
                 />
-              </Field>
+              </div>
+
+              <div className="sm:col-span-2">
+                <ImageUpload
+                  label="Gallery Photos"
+                  multiple
+                  hint="Additional interior / exterior photos. Files are uploaded to Cloudinary and their URLs are stored."
+                  currentSrc={undefined}
+                  files={form.galleryFiles}
+                  onChange={(files) => update({ galleryFiles: files })}
+                  disabled={isSubmitting}
+                  previewClassName="w-28 h-16"
+                />
+              </div>
 
               <Field label="Latitude" hint="Optional geo coordinates.">
                 <TextInput

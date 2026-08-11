@@ -10,6 +10,7 @@ import {
   type MovieMutationResponse,
 } from "../types/movie.type";
 import api from "../services/api";
+import { toFormData } from "../utils/formData";
 
 const getErrorMessage = (err: unknown, fallback: string): string => {
   if (isAxiosError(err)) {
@@ -17,6 +18,19 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
   }
   return err instanceof Error ? err.message : fallback;
 };
+
+// Movie mutations carry image files; when present the payload must be sent as
+// multipart FormData so multer can receive the raw images.
+const hasImageFiles = (
+  payload: CreateMoviePayload | UpdateMoviePayload,
+): boolean => !!(payload.posterImage || payload.backdropImage);
+
+const toRequestBody = (
+  payload: CreateMoviePayload | UpdateMoviePayload,
+): CreateMoviePayload | UpdateMoviePayload | FormData =>
+  hasImageFiles(payload)
+    ? toFormData(payload as unknown as Record<string, unknown>)
+    : payload;
 
 const STATUSES: MovieStatus[] = [
   "UPCOMING",
@@ -86,7 +100,10 @@ export const useMovieStore = create<MovieState>()((set) => ({
   createMovieAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
-      const { data } = await api.post<MovieMutationResponse>("/movie", payload);
+      const { data } = await api.post<MovieMutationResponse>(
+        "/movie",
+        toRequestBody(payload),
+      );
       set((state) => ({ movies: [data.movie, ...state.movies], count: state.count + 1 }));
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to create movie");
@@ -103,7 +120,7 @@ export const useMovieStore = create<MovieState>()((set) => ({
     try {
       const { data } = await api.patch<MovieMutationResponse>(
         `/movie/${id}`,
-        payload,
+        toRequestBody(payload),
       );
       set((state) => ({
         movies: state.movies.map((m) => (m._id === id ? data.movie : m)),

@@ -14,6 +14,8 @@ import {
   Book,
   Loader2,
   AlertCircle,
+  Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 import SectionLabel from "../components/SectionLabel";
 import { useUserStore } from "../stores/user.store";
@@ -31,6 +33,15 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
+
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setProfileImage(file ?? null);
+    if (profilePreview) URL.revokeObjectURL(profilePreview);
+    setProfilePreview(file ? URL.createObjectURL(file) : null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +53,7 @@ export default function RegisterPage() {
         email,
         password,
         phone,
+        profileImage: profileImage ?? undefined,
       });
       // Clear errors and redirect user to login page instead of profile page
       clearError();
@@ -252,6 +264,39 @@ export default function RegisterPage() {
                   required
                 />
               </div>
+            </div>
+
+            {/* Profile Picture Field */}
+            <div>
+              <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                Profile Picture (optional)
+              </label>
+              <label className="flex items-center gap-3 bg-slate-900 border border-dashed border-slate-700 hover:border-red-600/50 rounded-lg px-3 py-2 cursor-pointer transition-all disabled:opacity-50">
+                {profilePreview ? (
+                  <img
+                    src={profilePreview}
+                    alt="Profile preview"
+                    className="w-9 h-9 rounded-full object-cover bg-slate-950 border border-slate-700"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-slate-950 border border-slate-700 flex items-center justify-center">
+                    <Camera className="w-4 h-4 text-slate-500" />
+                  </div>
+                )}
+                <span className="flex-1 text-xs text-slate-400 font-medium">
+                  {profileImage
+                    ? profileImage.name
+                    : "Choose a profile photo"}
+                </span>
+                <ImageIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isLoading}
+                  onChange={handleProfileImageChange}
+                />
+              </label>
             </div>
 
             {/* Password Field */}

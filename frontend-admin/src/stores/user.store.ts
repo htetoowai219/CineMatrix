@@ -5,10 +5,13 @@ import {
   type User,
   type UserRole,
   type LoginPayload,
+  type UpdateProfilePayload,
+  type UpdatePasswordPayload,
   type JwtPayload,
 } from "../types/auth.type";
 import api from "../services/api";
 import { decodeJwtPayload } from "../utils/jwt";
+import { toFormData } from "../utils/formData";
 
 const ADMIN_ROLE: UserRole = "admin";
 const ADMIN_GATE_ERROR =
@@ -39,12 +42,16 @@ interface UserState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  isBootstrapped: boolean;
   isLoading: boolean;
   error: string | null;
 
   loginAction: (payload: LoginPayload) => Promise<void>;
   logoutAction: () => Promise<void>;
   getProfileAction: () => Promise<void>;
+  bootstrapAction: () => Promise<void>;
+  updateProfileAction: (payload: UpdateProfilePayload) => Promise<void>;
+  updatePasswordAction: (payload: UpdatePasswordPayload) => Promise<void>;
   clearError: () => void;
   logout: () => void;
 }
@@ -57,6 +64,7 @@ export const useUserStore = create<UserState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      isBootstrapped: false,
       isLoading: false,
       error: null,
 
@@ -94,6 +102,7 @@ export const useUserStore = create<UserState>()(
               name: data.user.name,
               email: data.user.email,
               phone: data.user.phone,
+              profileImageUrl: data.user.profileImageUrl,
             },
             role,
             accessToken: data.accessToken,
@@ -136,6 +145,33 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      // Validates any persisted session against the backend before the app
+      // renders. Prevents stale/expired tokens from flashing protected pages.
+      bootstrapAction: async () => {
+        const { accessToken } = get();
+
+        if (!accessToken) {
+          set({ isBootstrapped: true });
+          return;
+        }
+
+        try {
+          const { data } = await api.get<ProfileResponse>("/user/profile");
+          set({
+            user: {
+              name: data.user.name,
+              email: data.user.email,
+              phone: data.user.phone,
+              profileImageUrl: data.user.profileImageUrl,
+            },
+            isBootstrapped: true,
+          });
+        } catch {
+          get().logout();
+          set({ isBootstrapped: true });
+        }
+      },
+
       // Fetches the signed-in admin's profile details.
       getProfileAction: async () => {
         set({ isLoading: true, error: null });
@@ -146,10 +182,55 @@ export const useUserStore = create<UserState>()(
               name: data.user.name,
               email: data.user.email,
               phone: data.user.phone,
+              profileImageUrl: data.user.profileImageUrl,
             },
           });
         } catch (err: unknown) {
           const message = getErrorMessage(err, "Failed to fetch profile");
+          set({ error: message });
+          throw err;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      // Updates the signed-in admin's profile details and syncs local state.
+      updateProfileAction: async (payload) => {
+        set({ isLoading: true, error: null });
+        try {
+          const hasProfileImage = payload.profileImage instanceof File;
+          const body = hasProfileImage
+            ? toFormData({ ...payload })
+            : payload;
+          const { data } = await api.patch<{ message: string; user: User }>(
+            "/user/updateProfile",
+            body,
+          );
+          set((state) => ({
+            user: {
+              name: data.user.name ?? state.user?.name ?? "",
+              email: data.user.email ?? state.user?.email ?? "",
+              phone: data.user.phone ?? state.user?.phone ?? "",
+              profileImageUrl:
+                data.user.profileImageUrl ?? state.user?.profileImageUrl,
+            },
+          }));
+        } catch (err: unknown) {
+          const message = getErrorMessage(err, "Profile update failed");
+          set({ error: message });
+          throw err;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      // Updates the signed-in admin's account password.
+      updatePasswordAction: async (payload) => {
+        set({ isLoading: true, error: null });
+        try {
+          await api.patch("/user/updatePassword", payload);
+        } catch (err: unknown) {
+          const message = getErrorMessage(err, "Password update failed");
           set({ error: message });
           throw err;
         } finally {
@@ -180,6 +261,7 @@ export const useUserStore = create<UserState>()(
               name: state.user.name,
               email: state.user.email,
               phone: state.user.phone,
+              profileImageUrl: state.user.profileImageUrl,
             }
           : null,
         role: state.role,

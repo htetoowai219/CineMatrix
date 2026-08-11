@@ -6,6 +6,9 @@ import {
   generateRefreshToken,
   verifyPassword,
 } from "../utils/userAuth.util";
+import { uploadImageToCloudinary } from "../utils/cloudinary.util";
+
+const PROFILE_IMAGE_FOLDER = "cinematrix/profiles";
 
 // Handles new user registration and returns authentication tokens along with basic user details.
 export const registerUserController = async (req: Request, res: Response) => {
@@ -33,6 +36,15 @@ export const registerUserController = async (req: Request, res: Response) => {
       role: "customer",
     });
 
+    // Optional profile picture uploaded to Cloudinary.
+    if (req.file) {
+      const { secure_url } = await uploadImageToCloudinary(
+        req.file,
+        PROFILE_IMAGE_FOLDER,
+      );
+      newUser.profileImageUrl = secure_url;
+    }
+
     const accessToken = generateAccessToken(
       newUser._id.toString(),
       newUser.role,
@@ -50,6 +62,7 @@ export const registerUserController = async (req: Request, res: Response) => {
         name: newUser.name,
         email: newUser.email,
         phone: newUser.phone,
+        profileImageUrl: newUser.profileImageUrl,
       },
     });
   } catch (error) {
@@ -95,6 +108,7 @@ export const loginUserController = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        profileImageUrl: user.profileImageUrl,
       },
     });
   } catch (error) {
@@ -138,9 +152,22 @@ export const updateUserProfileController = async (
       return res.status(400).json({ message: "User ID is required." });
     }
 
-    const updateData: { name?: string; phone?: string } = {};
+    const updateData: {
+      name?: string;
+      phone?: string;
+      profileImageUrl?: string;
+    } = {};
     if (name) updateData.name = name;
     if (phone) updateData.phone = phone;
+
+    // Optional new profile picture uploaded to Cloudinary.
+    if (req.file) {
+      const { secure_url } = await uploadImageToCloudinary(
+        req.file,
+        PROFILE_IMAGE_FOLDER,
+      );
+      updateData.profileImageUrl = secure_url;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return res
@@ -152,7 +179,7 @@ export const updateUserProfileController = async (
       userId,
       { $set: updateData },
       { new: true, runValidators: true },
-    ).select("name email phone -_id");
+    ).select("name email phone profileImageUrl -_id");
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found." });
@@ -229,7 +256,9 @@ export const getProfileController = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Unauthorized Access." });
     }
 
-    const user = await User.findById(userId).select("name email phone -_id");
+    const user = await User.findById(userId).select(
+      "name email phone profileImageUrl -_id",
+    );
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -241,6 +270,7 @@ export const getProfileController = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        profileImageUrl: user.profileImageUrl,
       },
     });
   } catch (error) {

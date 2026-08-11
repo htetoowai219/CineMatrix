@@ -9,6 +9,7 @@ import {
   type CinemaMutationResponse,
 } from "../types/cinema.type";
 import api from "../services/api";
+import { toFormData } from "../utils/formData";
 
 const getErrorMessage = (err: unknown, fallback: string): string => {
   if (isAxiosError(err)) {
@@ -16,6 +17,19 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
   }
   return err instanceof Error ? err.message : fallback;
 };
+
+// Cinema mutations carry image files; when present the payload must be sent as
+// multipart FormData so multer can receive the raw images.
+const hasImageFiles = (
+  payload: CreateCinemaPayload | UpdateCinemaPayload,
+): boolean => !!(payload.imageFiles?.length || payload.galleryFiles?.length);
+
+const toRequestBody = (
+  payload: CreateCinemaPayload | UpdateCinemaPayload,
+): CreateCinemaPayload | UpdateCinemaPayload | FormData =>
+  hasImageFiles(payload)
+    ? toFormData(payload as unknown as Record<string, unknown>)
+    : payload;
 
 interface CinemaState {
   cinemas: ICinema[];
@@ -85,7 +99,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     try {
       const { data } = await api.post<CinemaMutationResponse>(
         "/cinema",
-        payload,
+        toRequestBody(payload),
       );
       set((state) => ({
         cinemas: [data.cinema, ...state.cinemas],
@@ -106,7 +120,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     try {
       const { data } = await api.patch<CinemaMutationResponse>(
         `/cinema/${id}`,
-        payload,
+        toRequestBody(payload),
       );
       set((state) => ({
         cinemas: state.cinemas.map((c) => (c._id === id ? data.cinema : c)),

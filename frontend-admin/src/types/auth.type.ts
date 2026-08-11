@@ -4,6 +4,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  profileImageUrl?: string;
 }
 
 export interface AuthResponse {
@@ -16,6 +17,17 @@ export interface AuthResponse {
 export interface LoginPayload {
   email: string;
   password: string;
+}
+
+export interface UpdateProfilePayload {
+  name?: string;
+  phone?: string;
+  profileImage?: File;
+}
+
+export interface UpdatePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface JwtPayload {

@@ -6,6 +6,7 @@ import {
   Building2,
   LogOut,
   ShieldCheck,
+  UserCircle2,
 } from "lucide-react";
 import { useUserStore } from "../../stores/user.store";
 
@@ -49,7 +50,7 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 transition-transform duration-300 lg:translate-x-0 lg:h-full ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -86,29 +87,46 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
 
         {/* User card + logout */}
         <div className="p-3 border-t border-slate-800">
-          <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center shrink-0">
-              <span className="font-display font-black text-white text-sm uppercase">
-                {user?.name ? user.name[0] : "A"}
-              </span>
+          <button
+            type="button"
+            onClick={() => {
+              navigate("/profile");
+              onClose();
+            }}
+            className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/80 transition-all text-left w-full group"
+            title="View profile"
+          >
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center shrink-0 overflow-hidden">
+              {user?.profileImageUrl ? (
+                <img
+                  src={user.profileImageUrl}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="font-display font-black text-white text-sm uppercase">
+                  {user?.name ? user.name[0] : "A"}
+                </span>
+              )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white truncate">
+              <p className="text-sm font-semibold text-white truncate group-hover:text-red-400 transition-colors">
                 {user?.name || "Admin"}
               </p>
               <p className="text-[11px] text-slate-500 truncate">
                 {user?.email || "super admin"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              title="Sign out"
-              className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-950/30 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+            <UserCircle2 className="w-4 h-4 text-slate-600 shrink-0 group-hover:text-red-500 transition-colors" />
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-2 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-red-500 hover:bg-red-950/30 transition-colors border border-slate-800/80"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
         </div>
       </aside>
     </>

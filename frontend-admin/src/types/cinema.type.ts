@@ -58,8 +58,11 @@ export interface CreateCinemaPayload {
   phone: string;
   email: string;
   amenities?: string[];
+  // Uploaded files take precedence over the URL arrays below.
   images?: string[];
+  imageFiles?: File[];
   gallery?: string[];
+  galleryFiles?: File[];
   totalScreens: number;
   openingHours?: string;
   isActive?: boolean;

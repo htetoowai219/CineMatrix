@@ -9,6 +9,7 @@ export interface IUser {
   password: string;
   role: UserRole;
   phone: string;
+  profileImageUrl?: string;
   refreshToken?: string;
   createdAt?: Date;
   updatedAt?: Date;

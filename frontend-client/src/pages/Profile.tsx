@@ -12,6 +12,7 @@ import {
   Edit3,
   X,
   Loader2,
+  Camera,
 } from "lucide-react";
 import SectionLabel from "../components/SectionLabel";
 import { useUserStore } from "../stores/user.store";
@@ -120,6 +121,16 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      await updateProfileAction({ profileImage: file });
+    } catch {
+      // Error state handled inside Zustand store
+    }
+  };
+
   return (
     <div className="bg-slate-950 min-h-screen text-white pt-24 pb-20 selection:bg-red-600 selection:text-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -132,10 +143,33 @@ export default function ProfilePage() {
 
         {/* Profile Header Card */}
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-xl">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center shrink-0 border border-red-500/30 shadow-lg shadow-red-600/20">
-            <span className="font-display font-black text-2xl text-white uppercase tracking-wider">
-              {user?.name ? user.name[0] : "U"}
-            </span>
+          <div className="relative w-20 h-20 shrink-0">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center border border-red-500/30 shadow-lg shadow-red-600/20 overflow-hidden">
+              {user?.profileImageUrl ? (
+                <img
+                  src={user.profileImageUrl}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="font-display font-black text-2xl text-white uppercase tracking-wider">
+                  {user?.name ? user.name[0] : "U"}
+                </span>
+              )}
+            </div>
+            <label
+              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:border-slate-600 flex items-center justify-center cursor-pointer transition-colors shadow-md"
+              title="Change profile picture"
+            >
+              <Camera className="w-3.5 h-3.5 text-slate-200" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={isLoading}
+                onChange={handleAvatarChange}
+              />
+            </label>
           </div>
 
           <div className="flex-1">

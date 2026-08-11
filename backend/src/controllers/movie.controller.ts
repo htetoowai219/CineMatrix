@@ -1,5 +1,27 @@
 import { Request, Response } from "express";
 import { Movie } from "../models/movie.model";
+import { uploadImageToCloudinary } from "../utils/cloudinary.util";
+
+const POSTER_FOLDER = "cinematrix/movies/posters";
+const BACKDROP_FOLDER = "cinematrix/movies/backdrops";
+
+type MovieUploadFiles = {
+  posterImage?: Express.Multer.File[];
+  backdropImage?: Express.Multer.File[];
+};
+
+// Normalizes array-typed fields sent either as a JSON array or as a
+// comma-separated string (when submitted via multipart FormData).
+const toArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
 
 // Fetches all movies from the database with optional filter query parameters.
 export const getAllMoviesController = async (req: Request, res: Response) => {
@@ -57,6 +79,8 @@ export const createMovieController = async (req: Request, res: Response) => {
         .json({ message: "Access denied. Admin role required." });
     }
 
+    const files = req.files as MovieUploadFiles | undefined;
+
     const {
       title,
       tagline,
@@ -66,15 +90,32 @@ export const createMovieController = async (req: Request, res: Response) => {
       originalLanguage,
       contentRating,
       averageScore,
-      posterUrl,
-      backdropUrl,
       trailerUrl,
       director,
-      castMembers,
-      genres,
       status,
       createdByCinemaId,
     } = req.body;
+
+    // Image files take precedence over URL fields; the URL is stored once the
+    // file has been pushed to Cloudinary.
+    let posterUrl = req.body.posterUrl;
+    let backdropUrl = req.body.backdropUrl;
+
+    if (files?.posterImage?.[0]) {
+      const { secure_url } = await uploadImageToCloudinary(
+        files.posterImage[0],
+        POSTER_FOLDER,
+      );
+      posterUrl = secure_url;
+    }
+
+    if (files?.backdropImage?.[0]) {
+      const { secure_url } = await uploadImageToCloudinary(
+        files.backdropImage[0],
+        BACKDROP_FOLDER,
+      );
+      backdropUrl = secure_url;
+    }
 
     if (
       !title ||
@@ -83,12 +124,16 @@ export const createMovieController = async (req: Request, res: Response) => {
       !releaseDate ||
       !originalLanguage ||
       !contentRating ||
-      !posterUrl ||
-      !backdropUrl ||
       !director
     ) {
       return res.status(400).json({
         message: "Missing required movie fields.",
+      });
+    }
+
+    if (!posterUrl || !backdropUrl) {
+      return res.status(400).json({
+        message: "Poster and backdrop images are required.",
       });
     }
 
@@ -105,8 +150,8 @@ export const createMovieController = async (req: Request, res: Response) => {
       backdropUrl,
       trailerUrl,
       director,
-      castMembers,
-      genres,
+      castMembers: toArray(req.body.castMembers),
+      genres: toArray(req.body.genres),
       status,
       createdByCinemaId,
     });
@@ -135,7 +180,34 @@ export const updateMovieController = async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const updateData = req.body;
+    const files = req.files as MovieUploadFiles | undefined;
+    const updateData: Record<string, unknown> = { ...req.body };
+
+    delete updateData.posterImage;
+    delete updateData.backdropImage;
+
+    if (files?.posterImage?.[0]) {
+      const { secure_url } = await uploadImageToCloudinary(
+        files.posterImage[0],
+        POSTER_FOLDER,
+      );
+      updateData.posterUrl = secure_url;
+    }
+
+    if (files?.backdropImage?.[0]) {
+      const { secure_url } = await uploadImageToCloudinary(
+        files.backdropImage[0],
+        BACKDROP_FOLDER,
+      );
+      updateData.backdropUrl = secure_url;
+    }
+
+    if (updateData.castMembers !== undefined) {
+      updateData.castMembers = toArray(updateData.castMembers);
+    }
+    if (updateData.genres !== undefined) {
+      updateData.genres = toArray(updateData.genres);
+    }
 
     if (!id) {
       return res.status(400).json({ message: "Movie ID is required." });

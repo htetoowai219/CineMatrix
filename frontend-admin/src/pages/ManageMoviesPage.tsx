@@ -13,6 +13,7 @@ import Modal from "../components/ui/Modal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusBadge from "../components/ui/StatusBadge";
 import { Field, TextInput, TextArea, Select } from "../components/ui/form";
+import ImageUpload from "../components/ui/ImageUpload";
 import { useMovieStore, STATUSES } from "../stores/movie.store";
 import {
   type IMovie,
@@ -31,12 +32,13 @@ interface MovieFormState {
   averageScore: string;
   posterUrl: string;
   backdropUrl: string;
+  posterImage: File[];
+  backdropImage: File[];
   trailerUrl: string;
   director: string;
   castMembers: string;
   genres: string;
   status: MovieStatus;
-  createdByCinemaId: string;
 }
 
 const emptyForm: MovieFormState = {
@@ -50,12 +52,13 @@ const emptyForm: MovieFormState = {
   averageScore: "",
   posterUrl: "",
   backdropUrl: "",
+  posterImage: [],
+  backdropImage: [],
   trailerUrl: "",
   director: "",
   castMembers: "",
   genres: "",
   status: "UPCOMING",
-  createdByCinemaId: "",
 };
 
 const toDateInput = (value: Date | string | undefined): string => {
@@ -70,24 +73,30 @@ const splitList = (value: string): string[] =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-const buildPayload = (form: MovieFormState): CreateMoviePayload => ({
-  title: form.title.trim(),
-  tagline: form.tagline.trim() || undefined,
-  synopsis: form.synopsis.trim(),
-  durationMinutes: Number(form.durationMinutes),
-  releaseDate: form.releaseDate,
-  originalLanguage: form.originalLanguage.trim(),
-  contentRating: form.contentRating.trim(),
-  averageScore: form.averageScore ? Number(form.averageScore) : undefined,
-  posterUrl: form.posterUrl.trim(),
-  backdropUrl: form.backdropUrl.trim(),
-  trailerUrl: form.trailerUrl.trim() || undefined,
-  director: form.director.trim(),
-  castMembers: splitList(form.castMembers),
-  genres: splitList(form.genres),
-  status: form.status,
-  createdByCinemaId: form.createdByCinemaId.trim() || undefined,
-});
+const buildPayload = (form: MovieFormState): CreateMoviePayload => {
+  const hasPosterFile = form.posterImage.length > 0;
+  const hasBackdropFile = form.backdropImage.length > 0;
+
+  return {
+    title: form.title.trim(),
+    tagline: form.tagline.trim() || undefined,
+    synopsis: form.synopsis.trim(),
+    durationMinutes: Number(form.durationMinutes),
+    releaseDate: form.releaseDate,
+    originalLanguage: form.originalLanguage.trim(),
+    contentRating: form.contentRating.trim(),
+    averageScore: form.averageScore ? Number(form.averageScore) : undefined,
+    posterUrl: hasPosterFile ? undefined : form.posterUrl.trim(),
+    backdropUrl: hasBackdropFile ? undefined : form.backdropUrl.trim(),
+    posterImage: hasPosterFile ? form.posterImage[0] : undefined,
+    backdropImage: hasBackdropFile ? form.backdropImage[0] : undefined,
+    trailerUrl: form.trailerUrl.trim() || undefined,
+    director: form.director.trim(),
+    castMembers: splitList(form.castMembers),
+    genres: splitList(form.genres),
+    status: form.status,
+  };
+};
 
 const toForm = (movie: IMovie): MovieFormState => ({
   title: movie.title,
@@ -100,12 +109,13 @@ const toForm = (movie: IMovie): MovieFormState => ({
   averageScore: movie.averageScore != null ? String(movie.averageScore) : "",
   posterUrl: movie.posterUrl ?? "",
   backdropUrl: movie.backdropUrl ?? "",
+  posterImage: [],
+  backdropImage: [],
   trailerUrl: movie.trailerUrl ?? "",
   director: movie.director ?? "",
   castMembers: (movie.castMembers ?? []).join(", "),
   genres: (movie.genres ?? []).join(", "),
   status: movie.status ?? "UPCOMING",
-  createdByCinemaId: movie.createdByCinemaId ?? "",
 });
 
 export default function ManageMoviesPage() {
@@ -190,6 +200,11 @@ export default function ManageMoviesPage() {
 
   const update = (patch: Partial<MovieFormState>) =>
     setForm((prev) => ({ ...prev, ...patch }));
+
+  // Creating a movie requires both poster and backdrop images.
+  const canSubmit =
+    !!editingMovie ||
+    (form.posterImage.length > 0 && form.backdropImage.length > 0);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -543,27 +558,28 @@ export default function ManageMoviesPage() {
               </Field>
 
               <div className="sm:col-span-2">
-                <Field label="Poster URL" required hint="Portrait movie poster image URL.">
-                  <TextInput
-                    type="url"
-                    value={form.posterUrl}
-                    onChange={(e) => update({ posterUrl: e.target.value })}
-                    placeholder="https://.../poster.jpg"
-                    required
-                  />
-                </Field>
+                <ImageUpload
+                  label="Poster Image"
+                  required={!editingMovie}
+                  hint="Portrait movie poster. The file is uploaded to Cloudinary and its URL is stored."
+                  currentSrc={editingMovie ? form.posterUrl : undefined}
+                  files={form.posterImage}
+                  onChange={(files) => update({ posterImage: files })}
+                  disabled={isSubmitting}
+                />
               </div>
 
               <div className="sm:col-span-2">
-                <Field label="Backdrop URL" required hint="Wide banner / hero image URL.">
-                  <TextInput
-                    type="url"
-                    value={form.backdropUrl}
-                    onChange={(e) => update({ backdropUrl: e.target.value })}
-                    placeholder="https://.../backdrop.jpg"
-                    required
-                  />
-                </Field>
+                <ImageUpload
+                  label="Backdrop Image"
+                  required={!editingMovie}
+                  hint="Wide banner / hero image. The file is uploaded to Cloudinary and its URL is stored."
+                  currentSrc={editingMovie ? form.backdropUrl : undefined}
+                  files={form.backdropImage}
+                  onChange={(files) => update({ backdropImage: files })}
+                  disabled={isSubmitting}
+                  previewClassName="w-28 h-16"
+                />
               </div>
 
               <Field label="Trailer URL">
@@ -572,18 +588,6 @@ export default function ManageMoviesPage() {
                   value={form.trailerUrl}
                   onChange={(e) => update({ trailerUrl: e.target.value })}
                   placeholder="https://youtube.com/..."
-                />
-              </Field>
-
-              <Field
-                label="Created By Cinema ID"
-                hint="Optional — leave empty for the global catalog."
-              >
-                <TextInput
-                  type="text"
-                  value={form.createdByCinemaId}
-                  onChange={(e) => update({ createdByCinemaId: e.target.value })}
-                  placeholder="Cinema ObjectId"
                 />
               </Field>
             </div>
@@ -602,7 +606,7 @@ export default function ManageMoviesPage() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !canSubmit}
                 className="bg-red-600 hover:bg-red-700 active:scale-95 disabled:opacity-50 disabled:hover:bg-red-600 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all shadow-md shadow-red-600/20 flex items-center gap-2"
               >
                 {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

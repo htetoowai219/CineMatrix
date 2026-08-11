@@ -22,7 +22,7 @@ owners manage rooms, schedule screenings, and manually verify payment receipts.
 | Auth          | JWT (access + refresh), Role-Based Access Control (RBAC)     |
 | Client Web    | React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, Axios  |
 | Admin Web     | React 19, TypeScript, Vite (scaffolded — dashboard TBD)      |
-| Media storage | Cloudinary (planned — cinema photos & payment screenshots)   |
+| Media storage | Cloudinary (all image assets) + Multer (in-memory file uploads) |
 | Infra         | Docker Compose (MongoDB, backend, both frontends)            |
 
 ---
@@ -35,11 +35,11 @@ cinema-platform/
 │   └── src/
 │       ├── controllers/ # Route handlers (auth, movie, cinema)
 │       ├── db/          # MongoDB connection
-│       ├── middlewares/ # JWT access-token verification
+│       ├── middlewares/ # JWT access-token verification, multer image uploads
 │       ├── models/      # Mongoose models (User, Movie, Cinema)
 │       ├── routes/      # Express routers
 │       ├── types/       # TS interfaces & shared types
-│       └── utils/       # Password hashing & token generation
+│       └── utils/       # Password hashing, token generation, Cloudinary uploads
 ├── frontend-client/     # Public moviegoer web app
 │   └── src/
 │       ├── components/  # Layout, movie cards, auth guards
@@ -66,6 +66,7 @@ cinema-platform/
 
 ### User (`backend/src/models/user.model.ts`)
 - `name`, `email` (unique), `phone`, `password` (bcrypt-hashed)
+- `profileImageUrl` (Cloudinary URL, optional)
 - `role`: `customer` | `cinema_owner` | `admin` (default `customer`)
 - `refreshToken` stored for session invalidation
 
@@ -96,6 +97,13 @@ All endpoints under the following prefixes (`backend/src/index.ts`):
 
 - Auth middleware (`auth.middleware.ts`) parses `Authorization: Bearer <token>` and attaches `req.user = { id, role }`.
 - RBAC is enforced **inline** inside controllers (e.g., `req.user?.role !== "admin"` → 403).
+- **Image uploads:** mutation endpoints accept `multipart/form-data` and read image files via the
+  `uploadImages` multer middleware (in-memory). Uploaded files are pushed to Cloudinary and the
+  returned URL(s) are stored on the document. Recognized file fields:
+  - User: `profileImage`
+  - Movie: `posterImage`, `backdropImage`
+  - Cinema: `images` (single), `gallery` (single; multi-file pending)
+  - Both file-based and plain-JSON (URL-only) payloads are supported and validated by Joi.
 
 ---
 
@@ -157,6 +165,7 @@ ACCESS_TOKEN_SECRET=...
 ACCESS_TOKEN_EXP=1d
 REFRESH_TOKEN_SECRET=...
 REFRESH_TOKEN_EXP=7d
+CLOUDINARY_URL=cloudinary://<key>:<secret>@<cloud_name>   # used by utils/cloudinary.ts
 ```
 
 Client frontend uses `VITE_API_URL` (base URL for Axios).
@@ -186,6 +195,15 @@ Docker: `docker compose up --build`
 - [x] Cinema API integration in frontend pages
 - [x] Super-admin frontend: login, dashboard, movie & cinema CRUD (sidebar UI)
 - [x] Dev seed script for demo admin + cinema owner (`npm run seed:admin`)
+- [x] Cloudinary + Multer image uploads across all mutation endpoints (profile, movie, cinema);
+      file-based and URL-based payloads both supported; non-image files rejected (400)
+- [x] Admin auth bootstrap: session validated against backend (`GET /user/profile`) before any route
+      renders (loader gate), so stale/expired tokens can never flash the dashboard; `ProtectedRoute`
+      also checks JWT `exp` and always redirects unauthenticated users to `/login`
+- [x] Admin profile page (`/profile`): editable personal info, password change, and avatar upload;
+      the sidebar profile card is clickable and navigates to it (like the client frontend)
+- [x] Movie create/edit form: removed the "Created By Cinema ID" field (relation only needed for
+      listing which cinemas show a movie, not for creation)
 - [x] Docker Compose: fixed `VITE_API_URL` → port 8000; full stack tested end-to-end (auth gate, movie/cinema CRUD, 401/403 enforcement)
 
 ### 🔜 In Progress / Upcoming
@@ -222,6 +240,10 @@ Docker: `docker compose up --build`
   users. Use the ID printed by `npm run seed:admin`.
 - `cinema_owner` has no dedicated dashboard or backend permissions yet (backend only grants
   create/update/delete to `admin`).
+- Admin movie/cinema forms no longer accept poster/backdrop/gallery/image **URL** inputs (URLs are
+  backend-only / Cloudinary-returned); the frontends must be updated to file pickers + previews.
+- Cinema `images` and `gallery` file fields currently accept a single file each; multi-file support
+  is planned (schema already supports arrays).
 
 ---
 
