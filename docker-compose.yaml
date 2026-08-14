@@ -35,6 +35,7 @@ services:
       - ACCESS_TOKEN_EXP=1d
       - REFRESH_TOKEN_SECRET=E34Iygiq78rKFMTYhCpaHmxoG0UlU6fX
       - REFRESH_TOKEN_EXP=7d
+      - CLOUDINARY_URL=cloudinary://418981418793822:R5qV7vPuslG1CHv4pnQ4jNEwRwc@dxmpgnub2
     volumes:
       - ./backend:/app
       - /app/node_modules
