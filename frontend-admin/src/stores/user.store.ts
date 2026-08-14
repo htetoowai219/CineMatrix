@@ -13,9 +13,11 @@ import api from "../services/api";
 import { decodeJwtPayload } from "../utils/jwt";
 import { toFormData } from "../utils/formData";
 
-const ADMIN_ROLE: UserRole = "admin";
-const ADMIN_GATE_ERROR =
-  "Access denied. This account has no admin privileges.";
+const PARTNER_ROLES: UserRole[] = ["admin", "cinema_owner", "cinema_staff"];
+const PARTNER_GATE_ERROR =
+  "Access denied. This portal is for admins and cinema partners.";
+
+export { PARTNER_ROLES };
 
 const getErrorMessage = (err: unknown, fallback: string): string => {
   if (isAxiosError(err)) {
@@ -68,7 +70,8 @@ export const useUserStore = create<UserState>()(
       isLoading: false,
       error: null,
 
-      // Authenticates the user and gates the session to super admins only.
+      // Authenticates the user and gates the session to admins and
+      // cinema partners (owners + staff). Customer accounts are rejected.
       loginAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
@@ -77,8 +80,8 @@ export const useUserStore = create<UserState>()(
           const decoded = decodeJwtPayload<JwtPayload>(data.accessToken);
           const role = decoded?.role ?? null;
 
-          if (role !== ADMIN_ROLE) {
-            // Reject non-admin sessions and revoke the token server-side.
+          if (!role || !PARTNER_ROLES.includes(role)) {
+            // Reject non-partner sessions and revoke the token server-side.
             await api.delete("/user/logout", {
               headers: { Authorization: `Bearer ${data.accessToken}` },
             });
@@ -88,9 +91,9 @@ export const useUserStore = create<UserState>()(
               accessToken: null,
               refreshToken: null,
               isAuthenticated: false,
-              error: ADMIN_GATE_ERROR,
+              error: PARTNER_GATE_ERROR,
             });
-            const gateError = new Error(ADMIN_GATE_ERROR) as Error & {
+            const gateError = new Error(PARTNER_GATE_ERROR) as Error & {
               __adminGate?: boolean;
             };
             gateError.__adminGate = true;
@@ -111,7 +114,7 @@ export const useUserStore = create<UserState>()(
           });
         } catch (err: unknown) {
           if ((err as { __adminGate?: boolean })?.__adminGate) {
-            set({ error: ADMIN_GATE_ERROR });
+            set({ error: PARTNER_GATE_ERROR });
             throw err;
           }
           const message = getErrorMessage(err, "Login failed");

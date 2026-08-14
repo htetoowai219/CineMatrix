@@ -2,9 +2,18 @@ import { useState } from "react";
 import { Outlet } from "react-router";
 import { Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
+import { useUserStore } from "../../stores/user.store";
+
+const ROLE_LABELS: Record<string, { title: string; subtitle: string }> = {
+  admin: { title: "Super Admin", subtitle: "Cinema & content management" },
+  cinema_owner: { title: "Cinema Owner", subtitle: "Your cinema partner portal" },
+  cinema_staff: { title: "Cinema Staff", subtitle: "Cinema operations dashboard" },
+};
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { role } = useUserStore();
+  const labels = ROLE_LABELS[role ?? "admin"] ?? ROLE_LABELS.admin;
 
   return (
     <div className="h-dvh bg-slate-950 text-white flex overflow-hidden selection:bg-red-600 selection:text-white">
@@ -23,8 +32,8 @@ const AdminLayout = () => {
             <Menu className="w-5 h-5" />
           </button>
           <div>
-            <p className="text-sm font-semibold text-white">Super Admin</p>
-            <p className="text-[11px] text-slate-500">Cinema & content management</p>
+            <p className="text-sm font-semibold text-white">{labels.title}</p>
+            <p className="text-[11px] text-slate-500">{labels.subtitle}</p>
           </div>
         </header>
 

@@ -16,8 +16,12 @@ const userSchema = new Schema<Omit<IUser, "_id">>(
     profileImageUrl: { type: String, trim: true },
     role: {
       type: String,
-      enum: ["customer", "cinema_owner", "admin"],
+      enum: ["customer", "cinema_owner", "cinema_staff", "admin"],
       default: "customer",
+    },
+    managedByOwnerId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
     refreshToken: { type: String },
   },

@@ -4,8 +4,9 @@ import { User } from "../models/user.model";
 import { hashPassword } from "../utils/userAuth.util";
 
 // Dev-only seed script.
-// Creates a demo super admin and a demo cinema owner (whose _id is used when
-// assigning a cinema's ownerId). Safe to re-run: existing users are left intact.
+// Creates a demo super admin, a demo cinema owner (whose _id is used when
+// assigning a cinema's ownerId), and a demo customer (used to test the public
+// client booking flow). Safe to re-run: existing users are left intact.
 //
 // Usage: npm run seed:admin
 
@@ -15,6 +16,8 @@ const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || "admin@cinematrix.com";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "Admin@1234";
 const OWNER_EMAIL = process.env.SEED_OWNER_EMAIL || "owner@cinematrix.com";
 const OWNER_PASSWORD = process.env.SEED_OWNER_PASSWORD || "Owner@1234";
+const CUSTOMER_EMAIL = process.env.SEED_CUSTOMER_EMAIL || "customer@cinematrix.com";
+const CUSTOMER_PASSWORD = process.env.SEED_CUSTOMER_PASSWORD || "Customer@1234";
 
 const seed = async () => {
   const MONGO_URI = process.env.MONGO_URI;
@@ -64,6 +67,23 @@ const seed = async () => {
   console.log("");
   console.log("Use this owner _id as the cinema 'Owner ID' when creating cinemas:");
   console.log(owner._id.toString());
+
+  let customer = await User.findOne({ email: CUSTOMER_EMAIL });
+  if (!customer) {
+    customer = new User({
+      name: "Demo Customer",
+      email: CUSTOMER_EMAIL,
+      phone: "+1 (555) 000-0003",
+      password: await hashPassword(CUSTOMER_PASSWORD),
+      role: "customer",
+    });
+    await customer.save();
+    console.log(`Created customer: ${CUSTOMER_EMAIL} / ${CUSTOMER_PASSWORD}`);
+  } else {
+    customer.password = await hashPassword(CUSTOMER_PASSWORD);
+    await customer.save();
+    console.log(`Synced customer credentials: ${CUSTOMER_EMAIL} / ${CUSTOMER_PASSWORD}`);
+  }
 
   await mongoose.disconnect();
   console.log("Seed complete.");

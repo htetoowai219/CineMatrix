@@ -66,7 +66,7 @@ export default function LoginPage() {
             <div className="flex items-center gap-2 mb-3">
               <span className="w-6 h-0.5 bg-red-500" />
               <span className="text-red-500 text-xs font-bold uppercase tracking-widest">
-                Admin Portal
+                Admin & Partner Portal
               </span>
             </div>
             <h1 className="font-display font-black text-4xl xl:text-5xl text-white uppercase leading-tight tracking-tight">
@@ -108,7 +108,7 @@ export default function LoginPage() {
               Sign In
             </h2>
             <p className="text-slate-400 text-xs mt-1.5">
-              Enter your super admin credentials to continue.
+              Enter your admin, owner, or staff credentials to continue.
             </p>
           </div>
 

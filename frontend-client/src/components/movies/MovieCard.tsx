@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router";
-import { Play, Star, Clock, Ticket, Bell } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Play, Clock, Ticket, Bell } from "lucide-react";
 
 // Flexible Interface matching your movie data model
 export interface Movie {
@@ -7,7 +7,6 @@ export interface Movie {
   title: string;
   poster: string;
   rating: string; // e.g., "PG-13"
-  score: number; // e.g., 8.5
   genres: string[];
   runtime: string; // e.g., "2h 15m"
   comingSoon?: boolean;
@@ -56,15 +55,8 @@ const MovieCard = ({ movie }: MovieCardProps) => {
           {movie.rating}
         </div>
 
-        {/* Score or Release Label */}
-        {!movie.comingSoon ? (
-          <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 bg-slate-950/80 backdrop-blur-sm px-1.5 py-0.5 rounded border border-slate-700/50">
-            <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-400 fill-yellow-400" />
-            <span className="text-white text-[11px] sm:text-xs font-bold">
-              {movie.score}
-            </span>
-          </div>
-        ) : (
+        {/* Coming Soon Label */}
+        {movie.comingSoon && (
           <div className="absolute bottom-2 left-2 right-2 sm:bottom-2.5 sm:left-2.5 sm:right-2.5">
             <div className="bg-red-600/90 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-1.5 py-1 rounded text-center uppercase tracking-wider truncate">
               {movie.releaseLabel || "Coming Soon"}

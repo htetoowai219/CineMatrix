@@ -33,6 +33,7 @@ const toRequestBody = (
 
 interface CinemaState {
   cinemas: ICinema[];
+  myCinemas: ICinema[];
   selectedCinema: ICinema | null;
   count: number;
   isLoading: boolean;
@@ -40,6 +41,7 @@ interface CinemaState {
   error: string | null;
 
   getAllCinemasAction: (params?: FetchCinemasParams) => Promise<void>;
+  getMyCinemasAction: () => Promise<void>;
   getCinemaByIdAction: (id: string) => Promise<void>;
   createCinemaAction: (payload: CreateCinemaPayload) => Promise<void>;
   updateCinemaAction: (
@@ -47,12 +49,15 @@ interface CinemaState {
     payload: UpdateCinemaPayload,
   ) => Promise<void>;
   deleteCinemaAction: (id: string) => Promise<void>;
+  approveCinemaAction: (id: string) => Promise<void>;
+  rejectCinemaAction: (id: string) => Promise<void>;
   clearSelectedCinema: () => void;
   clearError: () => void;
 }
 
 export const useCinemaStore = create<CinemaState>()((set) => ({
   cinemas: [],
+  myCinemas: [],
   selectedCinema: null,
   count: 0,
   isLoading: false,
@@ -69,6 +74,21 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
       set({ cinemas: data.cinemas, count: data.count });
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to fetch cinemas");
+      set({ error: message });
+      throw err;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Fetches the cinemas owned/managed by the signed-in partner.
+  getMyCinemasAction: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data } = await api.get<FetchCinemasResponse>("/cinema/my");
+      set({ myCinemas: data.cinemas, count: data.count });
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Failed to fetch your cinemas");
       set({ error: message });
       throw err;
     } finally {
@@ -103,6 +123,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
       );
       set((state) => ({
         cinemas: [data.cinema, ...state.cinemas],
+        myCinemas: [data.cinema, ...state.myCinemas],
         count: state.count + 1,
       }));
     } catch (err: unknown) {
@@ -124,6 +145,9 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
       );
       set((state) => ({
         cinemas: state.cinemas.map((c) => (c._id === id ? data.cinema : c)),
+        myCinemas: state.myCinemas.map((c) => (c._id === id ? data.cinema : c)),
+        selectedCinema:
+          state.selectedCinema?._id === id ? data.cinema : state.selectedCinema,
       }));
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to update cinema");
@@ -141,10 +165,55 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
       await api.delete<{ message: string }>(`/cinema/${id}`);
       set((state) => ({
         cinemas: state.cinemas.filter((c) => c._id !== id),
+        myCinemas: state.myCinemas.filter((c) => c._id !== id),
         count: Math.max(0, state.count - 1),
       }));
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to delete cinema");
+      set({ error: message });
+      throw err;
+    } finally {
+      set({ isSubmitting: false });
+    }
+  },
+
+  // Approves a pending cinema (admin-only on the backend).
+  approveCinemaAction: async (id: string) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const { data } = await api.patch<CinemaMutationResponse>(
+        `/cinema/${id}/approve`,
+      );
+      set((state) => ({
+        cinemas: state.cinemas.map((c) => (c._id === id ? data.cinema : c)),
+        myCinemas: state.myCinemas.map((c) => (c._id === id ? data.cinema : c)),
+        selectedCinema:
+          state.selectedCinema?._id === id ? data.cinema : state.selectedCinema,
+      }));
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Failed to approve cinema");
+      set({ error: message });
+      throw err;
+    } finally {
+      set({ isSubmitting: false });
+    }
+  },
+
+  // Rejects a pending cinema (admin-only on the backend).
+  rejectCinemaAction: async (id: string) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const { data } = await api.patch<CinemaMutationResponse>(
+        `/cinema/${id}/reject`,
+      );
+      set((state) => ({
+        cinemas: state.cinemas.map((c) => (c._id === id ? data.cinema : c)),
+        myCinemas: state.myCinemas.map((c) => (c._id === id ? data.cinema : c)),
+        selectedCinema:
+          state.selectedCinema?._id === id ? data.cinema : state.selectedCinema,
+      }));
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Failed to reject cinema");
       set({ error: message });
       throw err;
     } finally {

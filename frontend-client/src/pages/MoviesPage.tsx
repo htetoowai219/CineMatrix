@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect } from "react";
 import { Search, Filter, Film, X, Loader2 } from "lucide-react";
 import MovieCard, { type Movie } from "../components/movies/MovieCard";
 import SectionLabel from "../components/SectionLabel";
@@ -27,7 +26,6 @@ const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
     title: movie.title,
     poster: movie.posterUrl,
     rating: movie.contentRating,
-    score: movie.averageScore ?? 0,
     runtime: `${movie.durationMinutes}m`,
     genres: movie.genres || [],
     language: movie.originalLanguage,
@@ -39,8 +37,6 @@ const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
 };
 
 export default function MoviesPage() {
-  const navigate = useNavigate();
-
   // Zustand Movie Store
   const { movies, isLoading, error, getAllMoviesAction } = useMovieStore();
 

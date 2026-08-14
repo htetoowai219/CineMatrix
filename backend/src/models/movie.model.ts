@@ -10,7 +10,6 @@ const movieSchema = new Schema<Omit<IMovie, "_id">>(
     releaseDate: { type: Date, required: true },
     originalLanguage: { type: String, required: true, trim: true },
     contentRating: { type: String, required: true, trim: true },
-    averageScore: { type: Number, default: 0.0, min: 0, max: 10 },
     posterUrl: { type: String, required: true, trim: true },
     backdropUrl: { type: String, required: true, trim: true },
     trailerUrl: { type: String, trim: true },

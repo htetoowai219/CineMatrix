@@ -48,6 +48,7 @@ export const registerUserController = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(
       newUser._id.toString(),
       newUser.role,
+      newUser.managedByOwnerId?.toString(),
     );
     const refreshToken = generateRefreshToken(newUser._id.toString());
 
@@ -94,7 +95,11 @@ export const loginUserController = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid Credentials." });
     }
 
-    const accessToken = generateAccessToken(user._id.toString(), user.role);
+    const accessToken = generateAccessToken(
+      user._id.toString(),
+      user.role,
+      user.managedByOwnerId?.toString(),
+    );
     const refreshToken = generateRefreshToken(user._id.toString());
 
     user.refreshToken = refreshToken;

@@ -9,8 +9,8 @@ const hasExpired = (token: string | null): boolean => {
   return !payload?.exp || payload.exp * 1000 <= Date.now();
 };
 
-// Restricts routes to authenticated super admins.
-// The backend independently enforces the admin role on every write request.
+// Restricts routes to authenticated admins and cinema partners.
+// The backend independently enforces roles on every write request.
 const ProtectedRoute = () => {
   const { isAuthenticated, role, accessToken, logout } = useUserStore();
   const expired = isAuthenticated && hasExpired(accessToken);
@@ -21,7 +21,7 @@ const ProtectedRoute = () => {
     }
   }, [expired, logout]);
 
-  if (!isAuthenticated || expired || role !== "admin") {
+  if (!isAuthenticated || expired || !role || role === "customer") {
     return <Navigate to="/login" replace />;
   }
 

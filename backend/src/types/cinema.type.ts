@@ -1,8 +1,10 @@
 import { Types } from "mongoose";
 
+export type CinemaStatus = "pending" | "active" | "rejected";
+
 export interface ICinemaLocation {
-  type: "Point";
-  coordinates: [number, number]; // [longitude, latitude]
+  lat: number;
+  lng: number;
 }
 
 export interface ICinemaAddress {
@@ -10,7 +12,6 @@ export interface ICinemaAddress {
   city: string;
   state?: string;
   country: string;
-  zipCode?: string;
 }
 
 export interface ICinemaSocials {
@@ -18,6 +19,27 @@ export interface ICinemaSocials {
   facebook?: string;
   instagram?: string;
   twitter?: string;
+}
+
+// Cell types in a room's seat grid.
+// - seat   : single seat (1 ticket)
+// - double : loveseat (2 tickets, priced at 2x the row's single price)
+// - walkway: aisle / walking path (not bookable)
+// - stairs : staircase (not bookable)
+// - empty  : unused cell (not bookable)
+export type SeatCellType = "seat" | "double" | "walkway" | "stairs" | "empty";
+
+export interface ICinemaRoom {
+  name: string;
+  rows: number;
+  cols: number;
+  grid: SeatCellType[][];
+}
+
+export interface ICinemaAnnouncement {
+  title?: string;
+  body?: string;
+  imageUrl?: string;
 }
 
 export interface ICinema {
@@ -29,25 +51,19 @@ export interface ICinema {
   location?: ICinemaLocation;
   phone: string;
   email: string;
-  rating?: number;
-  reviewsCount?: number;
-  amenities?: string[];
   images?: string[]; // Hero & banner images
   gallery?: string[]; // Additional interior / exterior gallery photos
-  totalScreens: number;
-  openingHours?: string; // e.g., "10:00 AM - 12:00 AM"
+  rooms: ICinemaRoom[];
+  announcements?: ICinemaAnnouncement[]; // Image slider shown on the cinema page
   socials?: ICinemaSocials;
-  isActive: boolean;
+  allowPayInPerson: boolean; // Whether customers may choose to pay at the cinema
+  status: CinemaStatus; // pending -> active after admin approval
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
 
 export interface FetchCinemasParams {
   city?: string;
-  amenity?: string;
-  lat?: number;
-  lng?: number;
-  maxDistanceKm?: number;
 }
 
 export interface FetchCinemasResponse {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import {
   Film,
   Mail,
@@ -18,6 +18,7 @@ import { useUserStore } from "../stores/user.store";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Zustand Store Hooks
   const { loginAction, isLoading, error, clearError } = useUserStore();
@@ -32,7 +33,9 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await loginAction({ email, password });
-      navigate("/profile");
+      const from =
+        (location.state as { from?: string } | null)?.from || "/profile";
+      navigate(from);
     } catch {
       // Error is caught and stored in Zustand store state
     }

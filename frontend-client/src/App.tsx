@@ -8,6 +8,8 @@ import CinemaDetailPage from "./pages/CinemaDetailPage";
 import ProfilePage from "./pages/Profile";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import BookingPage from "./pages/BookingPage";
+import ScreeningsPage from "./pages/ScreeningsPage";
 
 const App = () => {
   return (
@@ -18,6 +20,8 @@ const App = () => {
         <Route path="/movies/:id" element={<MovieDetailPage />} />
         <Route path="/cinemas" element={<CinemasPage />} />
         <Route path="/cinemas/:id" element={<CinemaDetailPage />} />
+        <Route path="/screenings" element={<ScreeningsPage />} />
+        <Route path="/book/:screeningId" element={<BookingPage />} />
 
         <Route path="/profile" element={<ProfilePage />} />
       </Route>

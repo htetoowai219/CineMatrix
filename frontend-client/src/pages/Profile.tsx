@@ -1,60 +1,65 @@
 import React, { useState, useEffect } from "react";
 import {
   User,
-  Mail,
   Phone,
   Lock,
   Eye,
   EyeOff,
-  Download,
-  Share2,
-  QrCode,
   Edit3,
   X,
   Loader2,
   Camera,
+  Ticket,
 } from "lucide-react";
 import SectionLabel from "../components/SectionLabel";
 import { useUserStore } from "../stores/user.store";
+import { useBookingStore } from "../stores/booking.store";
+import { type IBooking, type BookingStatus } from "../types/booking.type";
 
-export interface Booking {
-  id: string;
-  movieTitle: string;
-  poster: string;
-  cinema: string;
-  date: string;
-  time: string;
-  format: string;
-  seats: string[];
-  total: number;
-}
+const STATUS_STYLES: Record<BookingStatus, { label: string; className: string }> = {
+  pending: {
+    label: "Pending",
+    className: "bg-amber-950/40 border border-amber-600/40 text-amber-400",
+  },
+  confirmed: {
+    label: "Confirmed",
+    className: "bg-emerald-950/40 border border-emerald-600/40 text-emerald-400",
+  },
+  rejected: {
+    label: "Rejected",
+    className: "bg-red-950/40 border border-red-600/40 text-red-400",
+  },
+  cancelled: {
+    label: "Cancelled",
+    className: "bg-slate-800/60 border border-slate-700 text-slate-400",
+  },
+};
 
-const BOOKINGS: Booking[] = [
-  {
-    id: "CM-89201",
-    movieTitle: "Dune: Part Two",
-    poster:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800",
-    cinema: "CineMatrix Downtown",
-    date: "Aug 12, 2026",
-    time: "7:45 PM",
-    format: "IMAX 3D",
-    seats: ["H12", "H13"],
-    total: 37,
-  },
-  {
-    id: "CM-77104",
-    movieTitle: "Oppenheimer",
-    poster:
-      "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800",
-    cinema: "CineMatrix Westside IMAX",
-    date: "Jul 28, 2026",
-    time: "4:30 PM",
-    format: "Dolby Atmos",
-    seats: ["F8"],
-    total: 16,
-  },
-];
+// Flattens a backend booking (with populated screeningId) into display fields.
+const flattenBooking = (booking: IBooking) => {
+  const screening =
+    booking.screeningId && typeof booking.screeningId === "object"
+      ? booking.screeningId
+      : null;
+  const movie =
+    screening && typeof screening.movieId === "object" ? screening.movieId : null;
+  const cinema =
+    screening && typeof screening.cinemaId === "object" ? screening.cinemaId : null;
+  const startTime = screening ? new Date(screening.startTime) : null;
+
+  return {
+    id: booking._id,
+    movieTitle: movie?.title ?? "Screening",
+    poster: movie?.posterUrl ?? "",
+    cinema: cinema?.name ?? "",
+    date: startTime ? startTime.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—",
+    time: startTime ? startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "—",
+    room: screening?.roomName ?? "",
+    seats: booking.seats.map((s) => s.label),
+    total: booking.totalPrice,
+    status: booking.status,
+  };
+};
 
 export default function ProfilePage() {
   const {
@@ -66,6 +71,15 @@ export default function ProfilePage() {
     updatePasswordAction,
     clearError,
   } = useUserStore();
+
+  const {
+    myBookings,
+    isLoading: isBookingsLoading,
+    isBooking,
+    error: bookingsError,
+    getMyBookingsAction,
+    cancelBookingAction,
+  } = useBookingStore();
 
   const [tab, setTab] = useState<"info" | "security" | "bookings">("bookings");
 
@@ -84,6 +98,12 @@ export default function ProfilePage() {
   useEffect(() => {
     getProfileAction();
   }, [getProfileAction]);
+
+  useEffect(() => {
+    if (tab === "bookings") {
+      getMyBookingsAction();
+    }
+  }, [tab, getMyBookingsAction]);
 
   const handleOpenEditInfo = () => {
     clearError();
@@ -188,7 +208,7 @@ export default function ProfilePage() {
 
           <div className="flex gap-6 sm:gap-8 text-center border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-8 w-full md:w-auto justify-around md:justify-start">
             {[
-              ["3", "Bookings"],
+              [String(myBookings.length), "Bookings"],
               ["2", "Watchlist"],
               ["14", "Reviews"],
             ].map(([n, l]) => (
@@ -312,108 +332,129 @@ export default function ProfilePage() {
         {/* Bookings Tab */}
         {tab === "bookings" && (
           <div className="flex flex-col gap-6">
-            {BOOKINGS.map((booking) => (
-              <div
-                key={booking.id}
-                className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl"
-              >
-                <div className="p-5 sm:p-6 flex flex-col lg:flex-row gap-6">
-                  <img
-                    src={booking.poster}
-                    alt={booking.movieTitle}
-                    className="w-24 h-36 object-cover rounded-xl bg-slate-950 border border-slate-800 shrink-0 mx-auto sm:mx-0"
-                  />
+            {(bookingsError || error) && (
+              <div className="p-3 bg-red-950/50 border border-red-600/50 rounded-lg text-red-400 text-xs font-semibold">
+                {bookingsError || error}
+              </div>
+            )}
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
-                      <h3 className="font-display font-bold text-white text-xl sm:text-2xl uppercase tracking-wide">
-                        {booking.movieTitle}
-                      </h3>
-                      <span className="text-xs bg-emerald-950/40 border border-emerald-600/40 text-emerald-400 px-3 py-1 rounded-full font-bold shrink-0">
-                        Confirmed
-                      </span>
-                    </div>
+            {isBookingsLoading ? (
+              <div className="flex items-center justify-center py-20 text-slate-500">
+                <Loader2 className="w-6 h-6 animate-spin text-red-600 mr-3" />
+                <span className="text-sm">Loading your bookings...</span>
+              </div>
+            ) : myBookings.length === 0 ? (
+              <div className="text-center py-20 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
+                <Ticket className="w-10 h-10 mx-auto mb-3 text-slate-600 opacity-60" />
+                <p className="text-slate-400 text-sm">
+                  No bookings yet. Browse movies and book your first screening.
+                </p>
+              </div>
+            ) : (
+              myBookings.map((raw) => {
+                const booking = flattenBooking(raw);
+                const statusStyle = STATUS_STYLES[booking.status];
+                return (
+                  <div
+                    key={booking.id}
+                    className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl"
+                  >
+                    <div className="p-5 sm:p-6 flex flex-col lg:flex-row gap-6">
+                      {booking.poster && (
+                        <img
+                          src={booking.poster}
+                          alt={booking.movieTitle}
+                          className="w-24 h-36 object-cover rounded-xl bg-slate-950 border border-slate-800 shrink-0 mx-auto sm:mx-0"
+                        />
+                      )}
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 bg-slate-950/50 p-3.5 rounded-xl border border-slate-800/80">
-                      {[
-                        { label: "Cinema", value: booking.cinema },
-                        { label: "Date", value: booking.date },
-                        { label: "Time", value: booking.time },
-                        { label: "Format", value: booking.format },
-                      ].map(({ label, value }) => (
-                        <div key={label}>
-                          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-0.5">
-                            {label}
-                          </p>
-                          <p className="text-slate-200 text-xs sm:text-sm font-semibold truncate">
-                            {value}
-                          </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+                          <h3 className="font-display font-bold text-white text-xl sm:text-2xl uppercase tracking-wide">
+                            {booking.movieTitle}
+                          </h3>
+                          <span
+                            className={`text-xs px-3 py-1 rounded-full font-bold shrink-0 ${statusStyle.className}`}
+                          >
+                            {statusStyle.label}
+                          </span>
                         </div>
-                      ))}
-                    </div>
 
-                    <div className="flex items-center gap-6 flex-wrap">
-                      <div>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                          Seats
-                        </p>
-                        <div className="flex gap-1.5">
-                          {booking.seats.map((s) => (
-                            <span
-                              key={s}
-                              className="text-xs font-bold text-red-500 bg-red-950/30 border border-red-600/40 px-2.5 py-0.5 rounded"
-                            >
-                              {s}
-                            </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 bg-slate-950/50 p-3.5 rounded-xl border border-slate-800/80">
+                          {[
+                            { label: "Cinema", value: booking.cinema || "—" },
+                            { label: "Date", value: booking.date },
+                            { label: "Time", value: booking.time },
+                            { label: "Room", value: booking.room || "—" },
+                          ].map(({ label, value }) => (
+                            <div key={label}>
+                              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-0.5">
+                                {label}
+                              </p>
+                              <p className="text-slate-200 text-xs sm:text-sm font-semibold truncate">
+                                {value}
+                              </p>
+                            </div>
                           ))}
                         </div>
-                      </div>
 
-                      <div>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                          Total Paid
-                        </p>
-                        <p className="text-white font-bold text-sm sm:text-base">
-                          ${booking.total}.00
-                        </p>
-                      </div>
+                        <div className="flex items-center gap-6 flex-wrap">
+                          <div>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                              Seats
+                            </p>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {booking.seats.map((s) => (
+                                <span
+                                  key={s}
+                                  className="text-xs font-bold text-red-500 bg-red-950/30 border border-red-600/40 px-2.5 py-0.5 rounded"
+                                >
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
 
-                      <div>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
-                          Booking Ref
-                        </p>
-                        <p className="text-slate-300 text-xs sm:text-sm font-mono font-semibold">
-                          {booking.id}
-                        </p>
+                          <div>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                              Total
+                            </p>
+                            <p className="text-white font-bold text-sm sm:text-base">
+                              ${booking.total}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                              Booking Ref
+                            </p>
+                            <p className="text-slate-300 text-xs sm:text-sm font-mono font-semibold">
+                              {booking.id}
+                            </p>
+                          </div>
+                        </div>
+
+                        {booking.status === "pending" && (
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              type="button"
+                              disabled={isBooking}
+                              onClick={() => cancelBookingAction(booking.id)}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 bg-red-950/30 hover:bg-red-950/50 border border-red-600/40 px-3.5 py-2 rounded-lg transition-all disabled:opacity-50"
+                            >
+                              {isBooking && (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              )}
+                              Cancel Booking
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex flex-col items-center justify-center gap-2.5 p-4 bg-slate-950/80 rounded-xl border border-slate-800 shrink-0 lg:w-44">
-                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                      E-Ticket
-                    </p>
-
-                    <div className="w-20 h-20 bg-white p-2 rounded-lg flex items-center justify-center">
-                      <QrCode className="w-full h-full text-slate-950" />
-                    </div>
-
-                    <p className="text-slate-400 text-[10px] font-mono text-center font-bold">
-                      {booking.id}
-                    </p>
-
-                    <div className="flex gap-2 w-full pt-1">
-                      <button className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 py-1.5 rounded-lg transition-all active:scale-95">
-                        <Download className="w-3 h-3" /> PDF
-                      </button>
-                      <button className="flex-1 flex items-center justify-center gap-1 text-[11px] text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 py-1.5 rounded-lg transition-all active:scale-95">
-                        <Share2 className="w-3 h-3" /> Share
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
         )}
       </div>

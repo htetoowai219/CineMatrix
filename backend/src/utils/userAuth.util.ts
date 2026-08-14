@@ -17,12 +17,16 @@ export const verifyPassword = async (
 };
 
 // Generate Access Token
-export const generateAccessToken = (userId: string, role: UserRole): string => {
+export const generateAccessToken = (
+  userId: string,
+  role: UserRole,
+  managedByOwnerId?: string,
+): string => {
   const secret = process.env.ACCESS_TOKEN_SECRET;
   const expiresIn = (process.env.ACCESS_TOKEN_EXP ||
     "1d") as SignOptions["expiresIn"];
 
-  return jwt.sign({ userId, role }, secret!, { expiresIn });
+  return jwt.sign({ userId, role, managedByOwnerId }, secret!, { expiresIn });
 };
 
 // Generate Refresh Token

@@ -8,6 +8,11 @@ import {
   Trash2,
   AlertCircle,
   Clapperboard,
+  Film,
+  Star,
+  Download,
+  Check,
+  X,
 } from "lucide-react";
 import Modal from "../components/ui/Modal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -19,6 +24,7 @@ import {
   type IMovie,
   type MovieStatus,
   type CreateMoviePayload,
+  type TmdbMoviePreview,
 } from "../types/movie.type";
 
 interface MovieFormState {
@@ -29,7 +35,6 @@ interface MovieFormState {
   releaseDate: string;
   originalLanguage: string;
   contentRating: string;
-  averageScore: string;
   posterUrl: string;
   backdropUrl: string;
   posterImage: File[];
@@ -49,7 +54,6 @@ const emptyForm: MovieFormState = {
   releaseDate: "",
   originalLanguage: "",
   contentRating: "",
-  averageScore: "",
   posterUrl: "",
   backdropUrl: "",
   posterImage: [],
@@ -85,7 +89,6 @@ const buildPayload = (form: MovieFormState): CreateMoviePayload => {
     releaseDate: form.releaseDate,
     originalLanguage: form.originalLanguage.trim(),
     contentRating: form.contentRating.trim(),
-    averageScore: form.averageScore ? Number(form.averageScore) : undefined,
     posterUrl: hasPosterFile ? undefined : form.posterUrl.trim(),
     backdropUrl: hasBackdropFile ? undefined : form.backdropUrl.trim(),
     posterImage: hasPosterFile ? form.posterImage[0] : undefined,
@@ -106,7 +109,6 @@ const toForm = (movie: IMovie): MovieFormState => ({
   releaseDate: toDateInput(movie.releaseDate),
   originalLanguage: movie.originalLanguage ?? "",
   contentRating: movie.contentRating ?? "",
-  averageScore: movie.averageScore != null ? String(movie.averageScore) : "",
   posterUrl: movie.posterUrl ?? "",
   backdropUrl: movie.backdropUrl ?? "",
   posterImage: [],
@@ -129,6 +131,8 @@ export default function ManageMoviesPage() {
     createMovieAction,
     updateMovieAction,
     deleteMovieAction,
+    tmdbSearchAction,
+    tmdbImportAction,
     clearError,
   } = useMovieStore();
 
@@ -140,6 +144,18 @@ export default function ManageMoviesPage() {
   const [form, setForm] = useState<MovieFormState>(emptyForm);
 
   const [deleteTarget, setDeleteTarget] = useState<IMovie | null>(null);
+
+  // TMDB import modal state
+  const [tmdbOpen, setTmdbOpen] = useState(false);
+  const [tmdbQuery, setTmdbQuery] = useState("");
+  const [tmdbYear, setTmdbYear] = useState("");
+  const [tmdbResults, setTmdbResults] = useState<TmdbMoviePreview[]>([]);
+  const [tmdbSearching, setTmdbSearching] = useState(false);
+  const [tmdbImportingId, setTmdbImportingId] = useState<number | null>(null);
+  const [tmdbMessage, setTmdbMessage] = useState<{
+    kind: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     getAllMoviesAction();
@@ -198,6 +214,56 @@ export default function ManageMoviesPage() {
     }
   };
 
+  const openTmdb = () => {
+    clearError();
+    setTmdbMessage(null);
+    setTmdbResults([]);
+    setTmdbQuery("");
+    setTmdbYear("");
+    setTmdbOpen(true);
+  };
+
+  const handleTmdbSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = tmdbQuery.trim();
+    if (!query) return;
+    setTmdbMessage(null);
+    setTmdbSearching(true);
+    try {
+      const results = await tmdbSearchAction(
+        query,
+        tmdbYear.trim() ? Number(tmdbYear.trim()) : undefined,
+      );
+      setTmdbResults(results);
+      if (results.length === 0) {
+        setTmdbMessage({ kind: "error", text: "No matches found on TMDB." });
+      }
+    } catch {
+      // Error is stored in the Zustand store state
+    } finally {
+      setTmdbSearching(false);
+    }
+  };
+
+  const handleTmdbImport = async (preview: TmdbMoviePreview) => {
+    setTmdbMessage(null);
+    setTmdbImportingId(preview.tmdbId);
+    try {
+      const movie = await tmdbImportAction(preview.tmdbId);
+      setTmdbMessage({
+        kind: "success",
+        text: `"${movie.title}" imported and set to UPCOMING.`,
+      });
+    } catch {
+      setTmdbMessage({
+        kind: "error",
+        text: `Could not import "${preview.title}". It may already exist in the catalog.`,
+      });
+    } finally {
+      setTmdbImportingId(null);
+    }
+  };
+
   const update = (patch: Partial<MovieFormState>) =>
     setForm((prev) => ({ ...prev, ...patch }));
 
@@ -221,13 +287,22 @@ export default function ManageMoviesPage() {
             {count} movie{count !== 1 ? "s" : ""} in the global catalog.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-red-600/25 shrink-0"
-        >
-          <Plus className="w-4 h-4" /> Add Movie
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openTmdb}
+            className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all shadow-md border border-slate-700 shrink-0"
+          >
+            <Download className="w-4 h-4" /> Import from TMDB
+          </button>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-red-600/25 shrink-0"
+          >
+            <Plus className="w-4 h-4" /> Add Movie
+          </button>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -324,7 +399,6 @@ export default function ManageMoviesPage() {
                   <th className="px-5 py-3.5">Status</th>
                   <th className="px-5 py-3.5 hidden lg:table-cell">Runtime</th>
                   <th className="px-5 py-3.5 hidden lg:table-cell">Release</th>
-                  <th className="px-5 py-3.5 hidden sm:table-cell">Rating</th>
                   <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -372,9 +446,6 @@ export default function ManageMoviesPage() {
                     </td>
                     <td className="px-5 py-3.5 hidden lg:table-cell text-slate-300">
                       {format(new Date(movie.releaseDate), "MMM d, yyyy")}
-                    </td>
-                    <td className="px-5 py-3.5 hidden sm:table-cell text-slate-300">
-                      {movie.averageScore != null ? movie.averageScore.toFixed(1) : "—"}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
@@ -514,18 +585,6 @@ export default function ManageMoviesPage() {
                 />
               </Field>
 
-              <Field label="Average Score (0–10)">
-                <TextInput
-                  type="number"
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  value={form.averageScore}
-                  onChange={(e) => update({ averageScore: e.target.value })}
-                  placeholder="8.8"
-                />
-              </Field>
-
               <Field label="Status">
                 <Select
                   value={form.status}
@@ -614,6 +673,145 @@ export default function ManageMoviesPage() {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* TMDB Import Modal */}
+      {tmdbOpen && (
+        <Modal
+          title="Import from TMDB"
+          subtitle="Search The Movie Database and pull a title with its metadata, trailer, and artwork."
+          onClose={() => {
+            if (!isSubmitting) setTmdbOpen(false);
+          }}
+          maxWidth="max-w-3xl"
+        >
+          <form onSubmit={handleTmdbSearch} className="mb-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  type="text"
+                  value={tmdbQuery}
+                  onChange={(e) => setTmdbQuery(e.target.value)}
+                  placeholder="Search TMDB (e.g. Dune, Oppenheimer...)"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
+                  required
+                />
+              </div>
+              <div className="w-full sm:w-28">
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={tmdbYear}
+                  onChange={(e) => setTmdbYear(e.target.value)}
+                  placeholder="Year"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={tmdbSearching || isSubmitting}
+                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 disabled:opacity-50 disabled:hover:bg-red-600 text-white font-semibold text-xs px-5 py-2.5 rounded-lg transition-all"
+              >
+                {tmdbSearching ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Search className="w-3.5 h-3.5" />
+                )}
+                Search
+              </button>
+            </div>
+          </form>
+
+          {(error || tmdbMessage) && (
+            <div
+              className={`mb-4 p-3 rounded-lg text-xs font-semibold flex items-start justify-between gap-2 ${
+                tmdbMessage?.kind === "success"
+                  ? "bg-emerald-950/50 border border-emerald-600/50 text-emerald-400"
+                  : "bg-red-950/50 border border-red-600/50 text-red-400"
+              }`}
+            >
+              <span>{tmdbMessage?.text || error}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  clearError();
+                  setTmdbMessage(null);
+                }}
+                className="shrink-0 text-current opacity-70 hover:opacity-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {tmdbResults.length === 0 && !tmdbSearching ? (
+            <div className="text-center py-14 bg-slate-950/40 border border-slate-800/50 rounded-xl">
+              <Film className="w-10 h-10 mx-auto mb-3 text-slate-600 opacity-60" />
+              <p className="text-slate-400 text-sm">
+                Search TMDB to discover titles to import into the catalog.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
+              {tmdbResults.map((result) => (
+                <div
+                  key={result.tmdbId}
+                  className="flex gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3 hover:border-slate-700 transition-colors"
+                >
+                  <img
+                    src={
+                      result.posterUrl ||
+                      "https://via.placeholder.com/100x150?text=No+Poster"
+                    }
+                    alt={result.title}
+                    className="w-14 h-20 object-cover rounded-md bg-slate-800 border border-slate-800 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-white text-sm truncate">
+                      {result.title}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {result.releaseDate ? result.releaseDate.slice(0, 4) : "—"}{" "}
+                      · {result.language.toUpperCase()}
+                    </p>
+                    <div className="flex items-center gap-1 text-xs text-amber-400 mt-0.5">
+                      <Star className="w-3 h-3 fill-amber-400" />
+                      {result.rating.toFixed(1)}
+                    </div>
+                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1">
+                      {result.overview || "No synopsis available."}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {result.genres.slice(0, 3).map((g) => (
+                        <span
+                          key={g}
+                          className="text-[10px] text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded-full border border-slate-700/70"
+                        >
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleTmdbImport(result)}
+                    title={`Import ${result.title}`}
+                    className="self-center shrink-0 p-2 rounded-lg bg-red-600/20 hover:bg-red-600 hover:text-white text-red-500 border border-red-600/40 transition-all disabled:opacity-50"
+                  >
+                    {tmdbImportingId === result.tmdbId ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </Modal>
       )}
 

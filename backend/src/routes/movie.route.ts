@@ -5,6 +5,8 @@ import {
   createMovieController,
   updateMovieController,
   deleteMovieController,
+  tmdbSearchController,
+  tmdbImportController,
 } from "../controllers/movie.controller";
 import { verifyAccessToken } from "../middlewares/auth.middleware";
 import {
@@ -16,6 +18,11 @@ const router = Router();
 
 // Public routes for browsing movies
 router.get("/", getAllMoviesController);
+
+// Admin: TMDB import tooling (must precede the /:id route below)
+router.get("/tmdb/search", verifyAccessToken, tmdbSearchController);
+router.post("/tmdb/import", verifyAccessToken, tmdbImportController);
+
 router.get("/:id", getMovieByIdController);
 
 // Protected routes for managing movies (accepts optional poster/backdrop files)

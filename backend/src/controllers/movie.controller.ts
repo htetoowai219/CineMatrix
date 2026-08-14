@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { Movie } from "../models/movie.model";
 import { uploadImageToCloudinary } from "../utils/cloudinary.util";
+import {
+  isTmdbConfigured,
+  searchTmdbMovies,
+  getTmdbMovie,
+} from "../utils/tmdb.util";
 
 const POSTER_FOLDER = "cinematrix/movies/posters";
 const BACKDROP_FOLDER = "cinematrix/movies/backdrops";
@@ -89,7 +94,6 @@ export const createMovieController = async (req: Request, res: Response) => {
       releaseDate,
       originalLanguage,
       contentRating,
-      averageScore,
       trailerUrl,
       director,
       status,
@@ -145,7 +149,6 @@ export const createMovieController = async (req: Request, res: Response) => {
       releaseDate,
       originalLanguage,
       contentRating,
-      averageScore,
       posterUrl,
       backdropUrl,
       trailerUrl,
@@ -170,6 +173,99 @@ export const createMovieController = async (req: Request, res: Response) => {
   }
 };
 
+// Admin: searches TMDB for movies to import.
+export const tmdbSearchController = async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Admin role required." });
+    }
+    if (!isTmdbConfigured()) {
+      return res.status(503).json({
+        message: "TMDB integration is not configured (TMDB_API_KEY missing).",
+      });
+    }
+
+    const query = String(req.query.q || "").trim();
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required." });
+    }
+
+    const year = req.query.year ? Number(req.query.year) : undefined;
+    const results = await searchTmdbMovies(query, year);
+
+    return res.status(200).json({
+      message: "TMDB search results.",
+      count: results.length,
+      results,
+    });
+  } catch (error) {
+    console.error("TMDB search error:", error);
+    const message =
+      error instanceof Error ? error.message : "TMDB search failed.";
+    return res.status(502).json({ message });
+  }
+};
+
+// Admin: imports a movie (with metadata + trailer) from TMDB into the database.
+export const tmdbImportController = async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Admin role required." });
+    }
+    if (!isTmdbConfigured()) {
+      return res.status(503).json({
+        message: "TMDB integration is not configured (TMDB_API_KEY missing).",
+      });
+    }
+
+    const tmdbId = Number(req.body.tmdbId);
+    if (!Number.isInteger(tmdbId)) {
+      return res.status(400).json({ message: "A valid tmdbId is required." });
+    }
+
+    const data = await getTmdbMovie(tmdbId);
+
+    const existing = await Movie.findOne({ title: data.title });
+    if (existing) {
+      return res.status(409).json({
+        message: `"${data.title}" already exists in the database.`,
+      });
+    }
+
+    const movie = new Movie({
+      title: data.title,
+      tagline: data.tagline,
+      synopsis: data.synopsis,
+      durationMinutes: data.durationMinutes,
+      releaseDate: new Date(data.releaseDate),
+      originalLanguage: data.originalLanguage,
+      contentRating: data.contentRating,
+      posterUrl: data.posterUrl,
+      backdropUrl: data.backdropUrl,
+      trailerUrl: data.trailerUrl,
+      director: data.director,
+      castMembers: data.castMembers,
+      genres: data.genres,
+      status: "UPCOMING",
+    });
+    await movie.save();
+
+    return res.status(201).json({
+      message: `"${movie.title}" imported from TMDB.`,
+      movie,
+    });
+  } catch (error) {
+    console.error("TMDB import error:", error);
+    const message =
+      error instanceof Error ? error.message : "TMDB import failed.";
+    return res.status(502).json({ message });
+  }
+};
+
 // Updates an existing movie's details by ID.
 export const updateMovieController = async (req: Request, res: Response) => {
   try {
@@ -185,6 +281,7 @@ export const updateMovieController = async (req: Request, res: Response) => {
 
     delete updateData.posterImage;
     delete updateData.backdropImage;
+    delete updateData.averageScore;
 
     if (files?.posterImage?.[0]) {
       const { secure_url } = await uploadImageToCloudinary(

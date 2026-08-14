@@ -7,7 +7,6 @@ import {
   Sparkles,
   CalendarClock,
   ChevronRight,
-  Star,
 } from "lucide-react";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useMovieStore } from "../stores/movie.store";
@@ -24,7 +23,7 @@ export default function DashboardPage() {
 
   const nowShowing = movies.filter((m) => m.status === "NOW_SHOWING").length;
   const upcoming = movies.filter((m) => m.status === "UPCOMING").length;
-  const activeCinemas = cinemas.filter((c) => c.isActive).length;
+  const activeCinemas = cinemas.filter((c) => c.status === "active").length;
   const isLoading = moviesLoading || cinemasLoading;
 
   const stats = [
@@ -138,10 +137,6 @@ export default function DashboardPage() {
                           {movie.durationMinutes}m · {movie.contentRating}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-slate-400 shrink-0">
-                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                        {movie.averageScore ?? 0}
-                      </div>
                       {movie.status && <StatusBadge label={movie.status} />}
                     </li>
                   ))}
@@ -185,10 +180,10 @@ export default function DashboardPage() {
                         </p>
                         <p className="text-xs text-slate-500 truncate">
                           {cinema.address.city}, {cinema.address.country} ·{" "}
-                          {cinema.totalScreens} screens
+                          {cinema.rooms?.length ?? 0} rooms
                         </p>
                       </div>
-                      <StatusBadge label={cinema.isActive ? "active" : "inactive"} />
+                      <StatusBadge label={cinema.status} />
                     </li>
                   ))}
                 </ul>

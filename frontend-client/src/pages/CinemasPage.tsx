@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   Search,
   MapPin,
-  Star,
   ChevronRight,
   Film,
   X,
@@ -20,44 +19,27 @@ export default function CinemasPage() {
     useCinemaStore();
 
   const [search, setSearch] = useState("");
-  const [selectedAmenity, setSelectedAmenity] = useState("All");
-
-  const amenities = [
-    "All",
-    "IMAX",
-    "3D",
-    "Dolby Atmos",
-    "4DX",
-    "VIP Lounge",
-    "Parking",
-  ];
 
   // Fetch cinemas on mount
   useEffect(() => {
     getAllCinemasAction();
   }, [getAllCinemasAction]);
 
-  // Client-side search and filtering based on response from the backend
+  // Client-side search based on response from the backend
   const filtered = cinemas.filter((cinema) => {
     const fullAddress = `${cinema.address?.street || ""} ${cinema.address?.city || ""} ${cinema.address?.state || ""}`;
-    const matchSearch =
+    return (
       cinema.name.toLowerCase().includes(search.toLowerCase()) ||
       cinema.address?.city.toLowerCase().includes(search.toLowerCase()) ||
-      fullAddress.toLowerCase().includes(search.toLowerCase());
-
-    const matchAmenity =
-      selectedAmenity === "All" ||
-      (cinema.amenities && cinema.amenities.includes(selectedAmenity));
-
-    return matchSearch && matchAmenity;
+      fullAddress.toLowerCase().includes(search.toLowerCase())
+    );
   });
 
   const resetFilters = () => {
     setSearch("");
-    setSelectedAmenity("All");
   };
 
-  const hasActiveFilters = search !== "" || selectedAmenity !== "All";
+  const hasActiveFilters = search !== "";
 
   return (
     <div className="bg-slate-950 min-h-screen text-white pt-24 pb-20 selection:bg-red-600 selection:text-white">
@@ -92,20 +74,6 @@ export default function CinemasPage() {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
-            {amenities.map((a) => (
-              <button
-                key={a}
-                onClick={() => setSelectedAmenity(a)}
-                className={`text-xs px-3.5 py-2 rounded-full border transition-all whitespace-nowrap shrink-0 ${
-                  selectedAmenity === a
-                    ? "bg-red-600 border-red-600 text-white font-bold shadow-md shadow-red-600/20"
-                    : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700 hover:text-white"
-                }`}
-              >
-                {a}
-              </button>
-            ))}
-
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
@@ -156,8 +124,7 @@ export default function CinemasPage() {
                   No cinemas found
                 </h3>
                 <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-                  We couldn't find any locations matching your selected amenity
-                  or search terms.
+                  We couldn't find any locations matching your search terms.
                 </p>
                 <button
                   onClick={resetFilters}
@@ -191,16 +158,10 @@ export default function CinemasPage() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-90" />
 
-                        {/* Rating Badge */}
-                        <div className="absolute top-3 right-3 flex items-center gap-1 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-md text-white text-xs font-bold border border-slate-800">
-                          <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                          <span>4.8</span>
-                        </div>
-
-                        {/* Screen Count Badge */}
+                        {/* Room Count Badge */}
                         <div className="absolute bottom-3 left-3">
                           <span className="text-white text-xs font-bold bg-red-600 px-2.5 py-1 rounded-md shadow-md">
-                            {cinema.totalScreens} Screens
+                            {cinema.rooms?.length ?? 0} Rooms
                           </span>
                         </div>
                       </div>
@@ -218,20 +179,6 @@ export default function CinemasPage() {
                               {formattedAddress}
                             </span>
                           </div>
-
-                          {/* Amenities Badges */}
-                          {cinema.amenities && cinema.amenities.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mb-6">
-                              {cinema.amenities.map((a) => (
-                                <span
-                                  key={a}
-                                  className="text-[11px] text-slate-300 bg-slate-800/90 border border-slate-700/60 px-2.5 py-0.5 rounded-md"
-                                >
-                                  {a}
-                                </span>
-                              ))}
-                            </div>
-                          )}
                         </div>
 
                         {/* Card Footer */}

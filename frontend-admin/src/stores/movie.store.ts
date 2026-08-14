@@ -8,6 +8,8 @@ import {
   type FetchMoviesParams,
   type FetchMoviesResponse,
   type MovieMutationResponse,
+  type TmdbMoviePreview,
+  type TmdbSearchResponse,
 } from "../types/movie.type";
 import api from "../services/api";
 import { toFormData } from "../utils/formData";
@@ -52,6 +54,8 @@ interface MovieState {
   createMovieAction: (payload: CreateMoviePayload) => Promise<void>;
   updateMovieAction: (id: string, payload: UpdateMoviePayload) => Promise<void>;
   deleteMovieAction: (id: string) => Promise<void>;
+  tmdbSearchAction: (query: string, year?: number) => Promise<TmdbMoviePreview[]>;
+  tmdbImportAction: (tmdbId: number) => Promise<IMovie>;
   clearSelectedMovie: () => void;
   clearError: () => void;
 }
@@ -145,6 +149,44 @@ export const useMovieStore = create<MovieState>()((set) => ({
       }));
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to delete movie");
+      set({ error: message });
+      throw err;
+    } finally {
+      set({ isSubmitting: false });
+    }
+  },
+
+  // Admin: searches TMDB for movies to import (metadata + trailer).
+  tmdbSearchAction: async (query, year) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const { data } = await api.get<TmdbSearchResponse>("/movie/tmdb/search", {
+        params: { q: query, ...(year ? { year } : {}) },
+      });
+      return data.results;
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "TMDB search failed");
+      set({ error: message });
+      throw err;
+    } finally {
+      set({ isSubmitting: false });
+    }
+  },
+
+  // Admin: imports a movie (with trailer, credits, and images) from TMDB.
+  tmdbImportAction: async (tmdbId) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const { data } = await api.post<MovieMutationResponse>("/movie/tmdb/import", {
+        tmdbId,
+      });
+      set((state) => ({
+        movies: [data.movie, ...state.movies],
+        count: state.count + 1,
+      }));
+      return data.movie;
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "TMDB import failed");
       set({ error: message });
       throw err;
     } finally {
