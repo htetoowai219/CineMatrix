@@ -166,6 +166,10 @@ ACCESS_TOKEN_EXP=1d
 REFRESH_TOKEN_SECRET=...
 REFRESH_TOKEN_EXP=7d
 CLOUDINARY_URL=cloudinary://<key>:<secret>@<cloud_name>   # used by utils/cloudinary.ts
+REDIS_URL=redis://localhost:6379      # Phase 3 seat locking (defaults to redis://redis:6379)
+PENDING_BOOKING_TTL_MINUTES=30        # how long a pending booking survives before the TTL job frees its seats
+TMDB_API_KEY=...                      # The Movie Database API key (TMDB endpoints 503 without it)
+SMTP_HOST=...                         # email notifications (booking confirmed/rejected); SMTP_PORT / SMTP_USER / SMTP_PASS / EMAIL_FROM
 ```
 
 Client frontend uses `VITE_API_URL` (base URL for Axios).
@@ -205,19 +209,30 @@ Docker: `docker compose up --build`
 - [x] Movie create/edit form: removed the "Created By Cinema ID" field (relation only needed for
       listing which cinemas show a movie, not for creation)
 - [x] Docker Compose: fixed `VITE_API_URL` → port 8000; full stack tested end-to-end (auth gate, movie/cinema CRUD, 401/403 enforcement)
+- [x] **Phase 3 — Seat locking:** Redis-based temporary seat locks (10-minute countdown) with atomic
+      `acquire`/`release`/`extend`/`reconcile` Lua scripts; locked seats are excluded from any booking
+      attempt, locks auto-release on expiry, and conflict errors are scoped by screening
+- [x] **Phase 3 — Bookings:** create (auto-cancels past bookings + confirms the paid lock), reject,
+      cancel, TTL-expire (10s polling job re-freeing seats of abandoned pending bookings),
+      payment-receipt upload (Cloudinary), and a public booking lookup endpoint (`GET /bookings/public/:code`)
+- [x] **Phase 3 — Client booking flow:** `/book/:screeningId` seat grid (rows/cols + unavailable seats),
+      live countdown timer with lock auto-extend, booking code + receipt upload, and a
+      "My Bookings" view tracking pending/confirmed/rejected status
+- [x] **Phase 3 — TMDB:** search (`GET /tmdb/search`) and import (`POST /tmdb/import`) endpoints plus an
+      admin "Import from TMDB" modal (poster/backdrop/trailer/genres/overview); importing sets the movie
+      to `UPCOMING` and re-uses a normalized poster, so existing seeded art isn't clobbered
+- [x] **Phase 3 — Email:** SMTP notifications on booking confirm/reject (skipped with a log warning when
+      SMTP is unconfigured)
 
 ### 🔜 In Progress / Upcoming
-- [ ] Owner-side admin capabilities (rooms/seat layouts, screenings, booking approvals)
-- [ ] Screenings / showtimes model & scheduling
-- [ ] Seat layout (rooms, rows/cols, disabled seats) model & seat grid UI
-- [ ] Booking flow + payment receipt upload (Cloudinary) + owner verification
-- [ ] Booking status tracker (pending / confirmed / rejected)
+- [ ] Multi-file upload support for cinema `images` / `gallery` (schema already supports arrays)
+- [ ] Owner-scoped cinema permissions (backend currently grants create/update/delete to `admin` only)
 
 ### 🗺️ Roadmap (from README)
-- [ ] Redis-based temporary seat locking (10-minute payment timeout)
-- [ ] Mongo TTL index for expired pending bookings
-- [ ] TMDB integration for auto-fetching movie metadata & trailers
-- [ ] Email notifications on booking confirm/reject
+- [x] Redis-based temporary seat locking (10-minute payment timeout)
+- [x] Mongo TTL index for expired pending bookings
+- [x] TMDB integration for auto-fetching movie metadata & trailers
+- [x] Email notifications on booking confirm/reject
 
 ---
 

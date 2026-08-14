@@ -1,4 +1,4 @@
-export type UserRole = "customer" | "cinema_owner" | "admin";
+export type UserRole = "customer" | "cinema_owner" | "cinema_staff" | "admin";
 
 export interface User {
   name: string;

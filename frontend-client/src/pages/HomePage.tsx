@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import {
-  Star,
   Clock,
   Ticket,
   Play,
@@ -13,19 +12,27 @@ import {
 import MovieCard from "../components/movies/MovieCard";
 import SectionLabel from "../components/SectionLabel";
 import { useMovieStore } from "../stores/movie.store";
+import { useCinemaStore } from "../stores/cinema.store";
 import { type IMovie } from "../types/movie.type";
+import { type ICinema } from "../types/cinema.type";
 
-// Mock Data Interfaces
-export interface Cinema {
-  id: string;
-  name: string;
-  image: string;
-  address: string;
-  rating: number;
-  distance: string;
-  screens: number;
-  amenities: string[];
-}
+// Fallback artwork for cinemas without uploaded images.
+const FALLBACK_CINEMA_IMAGE =
+  "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800";
+
+const mapCinemaToCard = (cinema: ICinema) => {
+  const city = [cinema.address.city, cinema.address.country]
+    .filter(Boolean)
+    .join(", ");
+  return {
+    id: String(cinema._id || ""),
+    name: cinema.name,
+    image: cinema.images?.[0] || FALLBACK_CINEMA_IMAGE,
+    address: [cinema.address.street, city].filter(Boolean).join(", "),
+    screens: cinema.rooms?.length ?? 0,
+    city,
+  };
+};
 
 interface FeaturedMovie {
   id: string;
@@ -34,44 +41,18 @@ interface FeaturedMovie {
   poster: string;
   backdrop: string;
   rating: string;
-  score: number;
   runtime: string;
   genres: string[];
   formats: string[];
   comingSoon: boolean;
 }
 
-const CINEMAS: Cinema[] = [
-  {
-    id: "c1",
-    name: "CineMatrix Downtown",
-    image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800",
-    address: "777 Grand Ave, New York, NY",
-    rating: 4.8,
-    distance: "1.2 mi",
-    screens: 12,
-    amenities: ["IMAX", "Dolby Atmos", "Recline Seats", "VIP Lounge"],
-  },
-  {
-    id: "c2",
-    name: "CineMatrix Westside IMAX",
-    image: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800",
-    address: "404 Ocean Blvd, Santa Monica, CA",
-    rating: 4.6,
-    distance: "3.5 mi",
-    screens: 8,
-    amenities: ["IMAX 3D", "4DX", "Dine-In"],
-  },
-];
-
-// Helper to transform store/backend IMovie to Home MovieCard component shape
 const mapMovieToCardFormat = (m: IMovie) => {
   return {
     id: String(m._id || ""),
     title: m.title,
     poster: m.posterUrl,
     rating: m.contentRating,
-    score: m.averageScore ?? 0,
     runtime: `${m.durationMinutes}m`,
     genres: m.genres || [],
     comingSoon: m.status === "UPCOMING",
@@ -91,7 +72,6 @@ const mapMovieToFeatured = (m: IMovie): FeaturedMovie => {
     poster: m.posterUrl,
     backdrop: m.backdropUrl,
     rating: m.contentRating,
-    score: m.averageScore ?? 0,
     runtime: `${m.durationMinutes}m`,
     genres: m.genres || [],
     formats: ["IMAX 3D", "Dolby Atmos"],
@@ -104,12 +84,31 @@ export default function HomePage() {
 
   // Zustand Movie Store
   const { movies, isLoading, error, getAllMoviesAction } = useMovieStore();
+  const {
+    cinemas,
+    isLoading: cinemasLoading,
+    error: cinemasError,
+    getAllCinemasAction,
+  } = useCinemaStore();
 
   const [activeGenre, setActiveGenre] = useState("All");
+  const [cityQuery, setCityQuery] = useState("");
+  const [submittedCity, setSubmittedCity] = useState("");
 
   useEffect(() => {
     getAllMoviesAction();
   }, [getAllMoviesAction]);
+
+  const handleCinemaSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittedCity(cityQuery.trim());
+  };
+
+  useEffect(() => {
+    getAllCinemasAction(submittedCity ? { city: submittedCity } : undefined);
+  }, [submittedCity, getAllCinemasAction]);
+
+  const cinemaCards = cinemas.map(mapCinemaToCard);
 
   const genres = [
     "All",
@@ -201,13 +200,6 @@ export default function HomePage() {
 
               {/* Meta badges */}
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-5">
-                <div className="flex items-center gap-1.5 bg-slate-900/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-slate-800">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span className="text-white font-bold text-sm sm:text-base">
-                    {featured.score}
-                  </span>
-                  <span className="text-slate-500 text-xs">/10</span>
-                </div>
                 <span className="bg-slate-800/80 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-700">
                   {featured.rating}
                 </span>
@@ -364,79 +356,83 @@ export default function HomePage() {
         </div>
 
         {/* Location Search Bar */}
-        <div className="flex gap-3 mb-10 max-w-md">
+        <form onSubmit={handleCinemaSearch} className="flex gap-3 mb-10 max-w-md">
           <div className="relative flex-1">
             <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               type="text"
+              value={cityQuery}
+              onChange={(e) => setCityQuery(e.target.value)}
               placeholder="Search by city or area..."
               className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-600/60 transition-all"
             />
           </div>
           <button
-            type="button"
+            type="submit"
             className="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors shadow-md shadow-red-600/20 active:scale-95"
           >
             Search
           </button>
-        </div>
+        </form>
+
+        {cinemasError && (
+          <p className="mb-6 text-sm text-red-500">{cinemasError}</p>
+        )}
 
         {/* Cinema Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {CINEMAS.map((cinema) => (
-            <div
-              key={cinema.id}
-              onClick={() => navigate(`/cinemas/${cinema.id}`)}
-              className="group bg-slate-900/90 rounded-xl overflow-hidden border border-slate-800/80 hover:border-slate-700 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/60"
-            >
-              <div className="h-44 overflow-hidden relative bg-slate-800">
-                <img
-                  src={cinema.image}
-                  alt={cinema.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-85"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded border border-slate-700/50 text-white text-xs font-bold">
-                  <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                  <span>{cinema.rating}</span>
+        {cinemasLoading ? (
+          <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
+            <Loader2 className="w-5 h-5 animate-spin text-red-600" />
+            Loading cinemas...
+          </div>
+        ) : cinemaCards.length === 0 ? (
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-10 text-center">
+            <Film className="w-10 h-10 mx-auto mb-3 text-slate-600 opacity-60" />
+            <p className="text-slate-300 text-sm font-semibold mb-1">
+              No cinemas found
+            </p>
+            <p className="text-slate-500 text-xs">
+              {submittedCity
+                ? `No active cinemas match "${submittedCity}".`
+                : "There are no active cinemas to show right now."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {cinemaCards.map((cinema) => (
+              <div
+                key={cinema.id}
+                onClick={() => navigate(`/cinemas/${cinema.id}`)}
+                className="group bg-slate-900/90 rounded-xl overflow-hidden border border-slate-800/80 hover:border-slate-700 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/60"
+              >
+                <div className="h-44 overflow-hidden relative bg-slate-800">
+                  <img
+                    src={cinema.image}
+                    alt={cinema.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-85"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                </div>
+
+                <div className="p-5">
+                  <h3 className="font-bold text-white text-lg uppercase tracking-wide mb-1">
+                    {cinema.name}
+                  </h3>
+                  <div className="flex items-start gap-1.5 text-slate-400 text-xs mb-4">
+                    <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-500" />
+                    <span className="leading-relaxed">{cinema.address}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-red-500">{cinema.city}</span>
+                    <span className="text-slate-500">
+                      {cinema.screens} screen{cinema.screens !== 1 ? "s" : ""}
+                    </span>
+                  </div>
                 </div>
               </div>
-
-              <div className="p-5">
-                <h3 className="font-bold text-white text-lg uppercase tracking-wide mb-1">
-                  {cinema.name}
-                </h3>
-                <div className="flex items-start gap-1.5 text-slate-400 text-xs mb-4">
-                  <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-500" />
-                  <span className="leading-relaxed">{cinema.address}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-red-500">{cinema.distance} away</span>
-                  <span className="text-slate-500">
-                    {cinema.screens} screens
-                  </span>
-                </div>
-
-                {/* Amenities Badges */}
-                <div className="flex flex-wrap gap-1.5 mt-4 pt-3.5 border-t border-slate-800/80">
-                  {cinema.amenities.slice(0, 3).map((a) => (
-                    <span
-                      key={a}
-                      className="text-[11px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-full border border-slate-700/50"
-                    >
-                      {a}
-                    </span>
-                  ))}
-                  {cinema.amenities.length > 3 && (
-                    <span className="text-[11px] text-slate-500">
-                      +{cinema.amenities.length - 3}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

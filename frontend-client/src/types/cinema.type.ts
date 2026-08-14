@@ -1,6 +1,8 @@
+export type CinemaStatus = "pending" | "active" | "rejected";
+
 export interface ICinemaLocation {
-  type: "Point";
-  coordinates: [number, number]; // [longitude, latitude]
+  lat: number;
+  lng: number;
 }
 
 export interface ICinemaAddress {
@@ -8,7 +10,6 @@ export interface ICinemaAddress {
   city: string;
   state?: string;
   country: string;
-  zipCode?: string;
 }
 
 export interface ICinemaSocials {
@@ -16,6 +17,21 @@ export interface ICinemaSocials {
   facebook?: string;
   instagram?: string;
   twitter?: string;
+}
+
+export type SeatCellType = "seat" | "double" | "walkway" | "stairs" | "empty";
+
+export interface ICinemaRoom {
+  name: string;
+  rows: number;
+  cols: number;
+  grid: SeatCellType[][];
+}
+
+export interface ICinemaAnnouncement {
+  title?: string;
+  body?: string;
+  imageUrl?: string;
 }
 
 export interface ICinema {
@@ -27,25 +43,19 @@ export interface ICinema {
   location?: ICinemaLocation;
   phone: string;
   email: string;
-  rating?: number;
-  reviewsCount?: number;
-  amenities?: string[];
   images?: string[]; // Hero & banner images
   gallery?: string[]; // Additional interior / exterior gallery photos
-  totalScreens: number;
-  openingHours?: string; // e.g., "10:00 AM - 12:00 AM"
+  rooms: ICinemaRoom[];
+  announcements?: ICinemaAnnouncement[];
   socials?: ICinemaSocials;
-  isActive: boolean;
+  allowPayInPerson: boolean;
+  status: CinemaStatus;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
 
 export interface FetchCinemasParams {
   city?: string;
-  amenity?: string;
-  lat?: number;
-  lng?: number;
-  maxDistanceKm?: number;
 }
 
 export interface FetchCinemasResponse {

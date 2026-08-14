@@ -2,11 +2,18 @@ import { Router } from "express";
 import {
   getAllCinemasController,
   getCinemaByIdController,
+  getMyCinemasController,
   createCinemaController,
   updateCinemaController,
+  approveCinemaController,
+  rejectCinemaController,
   deleteCinemaController,
 } from "../controllers/cinema.controller";
-import { verifyAccessToken } from "../middlewares/auth.middleware";
+import {
+  verifyAccessToken,
+  verifyOptionalAccessToken,
+  requireRole,
+} from "../middlewares/auth.middleware";
 import {
   uploadCinemaImages,
   handleMulterError,
@@ -14,25 +21,57 @@ import {
 
 const router = Router();
 
-// Public routes for browsing cinemas
+// Public routes for browsing active cinemas
 router.get("/", getAllCinemasController);
-router.get("/:id", getCinemaByIdController);
 
-// Protected routes for managing cinemas (accepts optional images/gallery files)
+// Owner/staff routes: cinemas they own or manage
+router.get("/my", verifyAccessToken, requireRole("admin", "cinema_owner", "cinema_staff"), getMyCinemasController);
+
+// Single-cinema route: active cinemas are public; non-active cinemas are
+// visible only to the owning owner, their staff, or an admin (optional auth
+// lets an anonymous browser still read active cinemas).
+router.get("/:id", verifyOptionalAccessToken, getCinemaByIdController);
+
+// Owner-only: submit a new cinema for approval
 router.post(
   "/",
   verifyAccessToken,
+  requireRole("cinema_owner"),
   uploadCinemaImages,
   handleMulterError,
   createCinemaController,
 );
+
+// Owner/staff: edit cinema details
 router.patch(
   "/:id",
   verifyAccessToken,
+  requireRole("cinema_owner", "cinema_staff"),
   uploadCinemaImages,
   handleMulterError,
   updateCinemaController,
 );
-router.delete("/:id", verifyAccessToken, deleteCinemaController);
+
+// Admin-only: review pending cinemas
+router.patch(
+  "/:id/approve",
+  verifyAccessToken,
+  requireRole("admin"),
+  approveCinemaController,
+);
+router.patch(
+  "/:id/reject",
+  verifyAccessToken,
+  requireRole("admin"),
+  rejectCinemaController,
+);
+
+// Admin or owning owner: delete a cinema
+router.delete(
+  "/:id",
+  verifyAccessToken,
+  requireRole("admin", "cinema_owner"),
+  deleteCinemaController,
+);
 
 export default router;

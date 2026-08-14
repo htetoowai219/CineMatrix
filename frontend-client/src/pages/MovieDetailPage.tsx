@@ -1,29 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate, Link } from "react-router";
 import {
   Play,
-  Star,
   Clock,
   Calendar,
   Ticket,
-  Heart,
-  Share2,
   ArrowLeft,
   Loader2,
   Film,
+  Building2,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 import SectionLabel from "../components/SectionLabel";
 import { useMovieStore } from "../stores/movie.store";
+import { useScreeningStore } from "../stores/screening.store";
+import { type IScreening } from "../types/booking.type";
 import { type IMovie } from "../types/movie.type";
-
-export interface Showtime {
-  id: string | number;
-  time: string;
-  format: string;
-  hall: string;
-  price: number;
-}
 
 export interface DetailedMovie {
   id: string;
@@ -32,7 +24,6 @@ export interface DetailedMovie {
   poster: string;
   backdrop: string;
   rating: string;
-  score: number;
   runtime: string;
   releaseDate: string;
   synopsis: string;
@@ -46,34 +37,7 @@ export interface DetailedMovie {
 export interface Cinema {
   id: string;
   name: string;
-  distance: string;
 }
-
-const CINEMAS: Cinema[] = [
-  { id: "c1", name: "CineMatrix Downtown", distance: "1.2 mi" },
-  { id: "c2", name: "CineMatrix Westside IMAX", distance: "3.5 mi" },
-  { id: "c3", name: "CineMatrix Grand Plaza 4K", distance: "5.1 mi" },
-  { id: "c4", name: "CineMatrix Northside ScreenX", distance: "7.8 mi" },
-];
-
-const SHOWTIMES: Showtime[] = [
-  { id: 101, time: "1:15 PM", format: "IMAX 3D", hall: "Hall 1", price: 18.5 },
-  {
-    id: 102,
-    time: "4:30 PM",
-    format: "Dolby Atmos",
-    hall: "Hall 4",
-    price: 16.0,
-  },
-  { id: 103, time: "7:45 PM", format: "IMAX 3D", hall: "Hall 1", price: 18.5 },
-  {
-    id: 104,
-    time: "10:15 PM",
-    format: "Standard 2D",
-    hall: "Hall 2",
-    price: 13.5,
-  },
-];
 
 // Maps backend IMovie data to frontend DetailedMovie shape
 const mapMovieToDetailed = (movie: IMovie): DetailedMovie => {
@@ -94,7 +58,6 @@ const mapMovieToDetailed = (movie: IMovie): DetailedMovie => {
     poster: movie.posterUrl,
     backdrop: movie.backdropUrl,
     rating: movie.contentRating,
-    score: movie.averageScore ?? 0,
     runtime: `${movie.durationMinutes}m`,
     releaseDate: formattedDate,
     synopsis: movie.synopsis,
@@ -119,24 +82,76 @@ export default function MovieDetailPage() {
     clearSelectedMovie,
   } = useMovieStore();
 
-  const [selectedDate, setSelectedDate] = useState(0);
-  const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(
-    null,
-  );
-  const [selectedCinema, setSelectedCinema] = useState<Cinema>(CINEMAS[0]);
-  const [liked, setLiked] = useState(false);
+  const {
+    screenings,
+    isLoading: isScreeningsLoading,
+    getPublicScreeningsAction,
+  } = useScreeningStore();
+
+  const [selectedDay, setSelectedDay] = useState("");
 
   useEffect(() => {
     if (id) {
       getMovieByIdAction(id);
+      getPublicScreeningsAction({ movieId: id, limit: 50 });
     }
 
     return () => {
       clearSelectedMovie();
     };
-  }, [id, getMovieByIdAction, clearSelectedMovie]);
+  }, [id, getMovieByIdAction, getPublicScreeningsAction, clearSelectedMovie]);
 
-  const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
+  // All future screenings of this movie, grouped by calendar day so every
+  // available screening is shown regardless of how far ahead it is.
+  const screeningsByDay = useMemo(() => {
+    const map = new Map<string, IScreening[]>();
+    for (const s of screenings) {
+      const day = format(new Date(s.startTime), "yyyy-MM-dd");
+      const list = map.get(day) ?? [];
+      list.push(s);
+      map.set(day, list);
+    }
+    return map;
+  }, [screenings]);
+
+  const days = useMemo(
+    () => Array.from(screeningsByDay.keys()).sort(),
+    [screeningsByDay],
+  );
+
+  const visibleDays = selectedDay ? [selectedDay] : days;
+
+  // Groups a day's screenings by cinema, sorted by start time.
+  const groupsForDay = (day: string) => {
+    const list = screeningsByDay.get(day) ?? [];
+    const map = new Map<string, { cinema: Cinema; screenings: IScreening[] }>();
+    for (const screening of list) {
+      const cinema =
+        typeof screening.cinemaId === "object" && screening.cinemaId
+          ? { id: String(screening.cinemaId._id), name: screening.cinemaId.name }
+          : { id: String(screening.cinemaId), name: "Cinema" };
+      const group = map.get(cinema.id) ?? {
+        cinema,
+        screenings: [] as IScreening[],
+      };
+      group.screenings.push(screening);
+      map.set(cinema.id, group);
+    }
+    for (const group of map.values()) {
+      group.screenings.sort(
+        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      );
+    }
+    return Array.from(map.values());
+  };
+
+  const dayLabel = (day: string) => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
+    if (day === today) return "Today";
+    if (day === tomorrow) return "Tomorrow";
+    return format(new Date(`${day}T00:00:00`), "EEE");
+  };
 
   if (isLoading) {
     return (
@@ -176,10 +191,9 @@ export default function MovieDetailPage() {
   const movie = mapMovieToDetailed(selectedMovie);
 
   const handleBookTickets = (showtimeId?: string | number) => {
-    const stId = showtimeId ?? selectedShowtime?.id ?? SHOWTIMES[0].id;
-    navigate(
-      `/screenings?movieId=${movie.id}&showtimeId=${stId}&cinemaId=${selectedCinema.id}`,
-    );
+    const stId = showtimeId ?? screenings[0]?._id;
+    if (!stId) return;
+    navigate(`/book/${stId}`);
   };
 
   return (
@@ -254,14 +268,6 @@ export default function MovieDetailPage() {
 
             {/* Meta Row */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-5 mb-5">
-              <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-md border border-slate-800">
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="text-white font-bold text-sm sm:text-lg">
-                  {movie.score}
-                </span>
-                <span className="text-slate-500 text-xs">/10</span>
-              </div>
-
               <span className="bg-slate-800 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-700">
                 {movie.rating}
               </span>
@@ -322,25 +328,6 @@ export default function MovieDetailPage() {
                   <Ticket className="w-4 h-4" /> Book Tickets
                 </button>
               )}
-
-              <button
-                type="button"
-                onClick={() => setLiked(!liked)}
-                className={`w-11 h-11 rounded-lg border flex items-center justify-center transition-all active:scale-95 ${
-                  liked
-                    ? "border-red-600/80 bg-red-950/30 text-red-500"
-                    : "border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white hover:border-slate-700"
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${liked ? "fill-current" : ""}`} />
-              </button>
-
-              <button
-                type="button"
-                className="w-11 h-11 rounded-lg border border-slate-800 bg-slate-900/80 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-700 transition-all active:scale-95"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>
@@ -348,119 +335,148 @@ export default function MovieDetailPage() {
         {/* Showtimes & Booking Section */}
         {!movie.comingSoon && (
           <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-slate-800/80">
-            <div className="flex items-end justify-between mb-6">
+            <div className="flex items-end justify-between gap-4 mb-6">
               <div>
                 <SectionLabel>Select Your Show</SectionLabel>
                 <h2 className="font-display font-extrabold text-2xl sm:text-4xl text-white uppercase tracking-wide">
                   Showtimes
                 </h2>
               </div>
-              <span className="text-[11px] text-slate-500 font-medium sm:hidden pb-1">
-                Swipe left/right &rarr;
+              <span className="text-[11px] text-slate-500 font-medium sm:hidden pb-1 whitespace-nowrap">
+                Swipe &rarr;
               </span>
+              <Link
+                to="/screenings"
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 border border-red-600/40 bg-red-950/20 hover:bg-red-950/40 px-3.5 py-2 rounded-lg transition-all shrink-0"
+              >
+                View all screenings
+              </Link>
             </div>
 
-            {/* Date Picker Area with Fade Gradients */}
-            <div className="relative mb-6 -mx-4 sm:mx-0">
-              {/* Fade Overlays */}
-              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
+            {/* Day Filter Chips with Fade Gradients */}
+            {!isScreeningsLoading && days.length > 0 && (
+              <div className="relative mb-6 -mx-4 sm:mx-0">
+                {/* Fade Overlays */}
+                <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
 
-              {/* Scroll Container */}
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none px-4 sm:px-0">
-                {dates.map((d, i) => (
+                {/* Scroll Container */}
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none px-4 sm:px-0">
                   <button
                     type="button"
-                    key={i}
-                    onClick={() => setSelectedDate(i)}
+                    onClick={() => setSelectedDay("")}
                     className={`shrink-0 min-w-[85px] sm:min-w-[100px] px-3.5 py-2.5 rounded-xl border text-sm transition-all text-center ${
-                      selectedDate === i
+                      selectedDay === ""
                         ? "bg-red-600 border-red-600 text-white font-bold shadow-md shadow-red-600/20"
                         : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700 hover:text-white"
                     }`}
                   >
-                    <div className="font-bold text-xs sm:text-sm">
-                      {i === 0
-                        ? "Today"
-                        : i === 1
-                          ? "Tomorrow"
-                          : format(d, "EEE")}
-                    </div>
+                    <div className="font-bold text-xs sm:text-sm">All Days</div>
                     <div className="text-[10px] sm:text-[11px] opacity-80 mt-0.5">
-                      {format(d, "MMM d")}
+                      {days.length} day{days.length > 1 ? "s" : ""}
                     </div>
                   </button>
-                ))}
+                  {days.map((day) => (
+                    <button
+                      type="button"
+                      key={day}
+                      onClick={() =>
+                        setSelectedDay(selectedDay === day ? "" : day)
+                      }
+                      className={`shrink-0 min-w-[85px] sm:min-w-[100px] px-3.5 py-2.5 rounded-xl border text-sm transition-all text-center ${
+                        selectedDay === day
+                          ? "bg-red-600 border-red-600 text-white font-bold shadow-md shadow-red-600/20"
+                          : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700 hover:text-white"
+                      }`}
+                    >
+                      <div className="font-bold text-xs sm:text-sm">
+                        {dayLabel(day)}
+                      </div>
+                      <div className="text-[10px] sm:text-[11px] opacity-80 mt-0.5">
+                        {format(new Date(`${day}T00:00:00`), "MMM d")}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Cinema Selection Area with Fade Gradients */}
-            <div className="relative mb-6 -mx-4 sm:mx-0">
-              {/* Fade Overlays */}
-              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
-
-              {/* Scroll Container */}
-              <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none px-4 sm:px-0">
-                {CINEMAS.map((c) => (
-                  <button
-                    type="button"
-                    key={c.id}
-                    onClick={() => setSelectedCinema(c)}
-                    className={`shrink-0 px-4 py-2 rounded-lg border text-xs sm:text-sm transition-all whitespace-nowrap ${
-                      selectedCinema.id === c.id
-                        ? "border-red-600/60 bg-red-950/30 text-white font-semibold"
-                        : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-white"
-                    }`}
-                  >
-                    <span>{c.name}</span>
-                    <span className="text-slate-500 ml-2 font-mono text-xs">
-                      {c.distance}
-                    </span>
-                  </button>
-                ))}
+            {/* Screening List Grouped by Day, Then Cinema */}
+            {isScreeningsLoading ? (
+              <div className="flex items-center justify-center py-16 text-slate-500">
+                <Loader2 className="w-6 h-6 animate-spin text-red-600 mr-3" />
+                <span className="text-sm">Loading screenings...</span>
               </div>
-            </div>
+            ) : screenings.length === 0 ? (
+              <div className="text-center py-16 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
+                <Film className="w-10 h-10 mx-auto mb-3 text-slate-600 opacity-60" />
+                <p className="text-slate-400 text-sm">
+                  No screenings scheduled for this movie yet. Check back soon.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-10">
+                {visibleDays.map((day) => {
+                  const groups = groupsForDay(day);
+                  if (groups.length === 0) return null;
+                  return (
+                    <section key={day}>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Calendar className="w-4 h-4 text-slate-500" />
+                        <h3 className="font-display font-bold text-lg sm:text-xl text-white uppercase tracking-wide">
+                          {dayLabel(day)}
+                        </h3>
+                        <span className="text-xs sm:text-sm text-slate-500">
+                          {format(new Date(`${day}T00:00:00`), "EEEE, MMMM d")}
+                        </span>
+                      </div>
 
-            {/* Responsive Showtime Options Grid */}
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {SHOWTIMES.map((st) => (
-                <button
-                  type="button"
-                  key={st.id}
-                  onClick={() => {
-                    setSelectedShowtime(st);
-                    handleBookTickets(st.id);
-                  }}
-                  className={`border rounded-xl p-3.5 sm:p-4 text-left transition-all hover:-translate-y-0.5 active:scale-95 ${
-                    selectedShowtime?.id === st.id
-                      ? "border-red-600 bg-red-950/20 shadow-md shadow-red-600/10"
-                      : "border-slate-800/90 bg-slate-900/80 hover:border-slate-700"
-                  }`}
-                >
-                  <div
-                    className={`font-display font-bold text-base sm:text-lg ${
-                      selectedShowtime?.id === st.id
-                        ? "text-red-500"
-                        : "text-white"
-                    }`}
-                  >
-                    {st.time}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-xs text-slate-400">
-                    <span className="font-medium text-slate-300">
-                      {st.format}
-                    </span>
-                    <span className="w-1 h-1 rounded-full bg-slate-700" />
-                    <span>{st.hall}</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-700" />
-                    <span className="font-bold text-slate-200">
-                      ${st.price}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
+                      <div className="space-y-6">
+                        {groups.map((group) => (
+                          <div key={group.cinema.id}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <Building2 className="w-4 h-4 text-slate-500" />
+                              <h4 className="text-sm sm:text-base font-bold text-white">
+                                {group.cinema.name}
+                              </h4>
+                              <span className="text-[11px] text-slate-500">
+                                {group.screenings.length} screening
+                                {group.screenings.length > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                              {group.screenings.map((s) => (
+                                <button
+                                  type="button"
+                                  key={String(s._id)}
+                                  onClick={() => handleBookTickets(String(s._id))}
+                                  className="group border rounded-xl p-3.5 sm:p-4 text-left transition-all hover:-translate-y-0.5 active:scale-95 border-slate-800/90 bg-slate-900/80 hover:border-slate-700"
+                                >
+                                  <div className="font-display font-bold text-base sm:text-lg text-white group-hover:text-red-400 transition-colors">
+                                    {format(new Date(s.startTime), "h:mm a")}
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-xs text-slate-400">
+                                    <span className="font-medium text-slate-300">
+                                      Standard 2D
+                                    </span>
+                                    <span className="w-1 h-1 rounded-full bg-slate-700" />
+                                    <span>{s.roomName}</span>
+                                    <span className="w-1 h-1 rounded-full bg-slate-700" />
+                                    <span className="font-bold text-slate-200">
+                                      ${s.seats[0]?.price ?? 0}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

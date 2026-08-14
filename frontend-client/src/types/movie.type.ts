@@ -13,7 +13,6 @@ export interface IMovie {
   releaseDate: Date | string;
   originalLanguage: string;
   contentRating: string;
-  averageScore?: number;
   posterUrl: string;
   backdropUrl: string;
   trailerUrl?: string;

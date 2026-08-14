@@ -165,6 +165,19 @@ Access the applications in your browser:
 - **Frontend Admin:** [http://localhost:5174](http://localhost:5174)
 - **Backend API:** [http://localhost:8000](http://localhost:8000)
 
+### Demo Accounts
+
+Seed with `npm run seed:admin` (idempotent — safe to re-run) to get the
+following demo accounts:
+
+| Role             | Email                     | Password       | Use                                                       |
+| :--------------- | :------------------------ | :------------- | :-------------------------------------------------------- |
+| **`customer`**   | `customer@cinematrix.com` | `Customer@1234`| Book movie tickets in the public client (`/book/:id`)      |
+| **`cinema_owner`**| `owner@cinematrix.com`    | `Owner@1234`   | Manage rooms/screenings & approve bookings (dashboard)     |
+| **`admin`**      | `admin@cinematrix.com`    | `Admin@1234`   | Approve cinemas, manage the movie database (dashboard)     |
+
+Booking requires the `customer` role — admin/owner accounts cannot book seats.
+
 ---
 
 ### Useful Docker Commands
@@ -191,10 +204,16 @@ Access the applications in your browser:
 
 ## 🗺️ Roadmap & Key Improvements
 
-- [ ] Implement Redis-based temporary seat locking (10-minute payment timeout).
-- [ ] Add automated TTL (Time-To-Live) index for expired pending bookings in MongoDB.
-- [ ] Integrate TMDB (The Movie Database) API for auto-fetching movie metadata and trailers.
-- [ ] Add email notification triggers when a booking is confirmed/rejected.
+- [x] Implement Redis-based temporary seat locking (10-minute payment timeout).
+- [x] Add automated TTL (Time-To-Live) index for expired pending bookings in MongoDB.
+- [x] Integrate TMDB (The Movie Database) API for auto-fetching movie metadata and trailers.
+- [x] Add email notification triggers when a booking is confirmed/rejected.
+
+> **Phase 3 configuration** — set `REDIS_URL` (default `redis://redis:6379`),
+> `PENDING_BOOKING_TTL_MINUTES` (default `30`), `TMDB_API_KEY`, and
+> `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`EMAIL_FROM` in `backend/.env`.
+> Without `TMDB_API_KEY` the TMDB endpoints return 503; without `SMTP_HOST`
+> booking emails are skipped with a logged warning.
 
 ---
 

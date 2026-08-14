@@ -7,14 +7,35 @@ import {
   LogOut,
   ShieldCheck,
   UserCircle2,
+  Users,
+  CalendarClock,
+  Ticket,
+  UserCog,
 } from "lucide-react";
 import { useUserStore } from "../../stores/user.store";
 
-const NAV_ITEMS = [
+const ADMIN_NAV_ITEMS = [
   { label: "Dashboard", to: "/", icon: LayoutDashboard },
   { label: "Movies", to: "/movies", icon: Clapperboard },
   { label: "Cinemas", to: "/cinemas", icon: Building2 },
+  { label: "Owners", to: "/owners", icon: Users },
+  { label: "Bookings", to: "/bookings", icon: Ticket },
 ];
+
+const PARTNER_NAV_ITEMS = [
+  { label: "Dashboard", to: "/", icon: LayoutDashboard },
+  { label: "My Cinemas", to: "/my-cinemas", icon: Building2 },
+  { label: "Templates", to: "/templates", icon: Clapperboard },
+  { label: "Screenings", to: "/screenings", icon: CalendarClock },
+  { label: "Bookings", to: "/bookings", icon: Ticket },
+  { label: "Staff", to: "/staff", icon: UserCog },
+];
+
+const ROLE_BRAND: Record<string, { badge: string; userLabel: string }> = {
+  admin: { badge: "Admin Panel", userLabel: "super admin" },
+  cinema_owner: { badge: "Partner Portal", userLabel: "cinema owner" },
+  cinema_staff: { badge: "Partner Portal", userLabel: "cinema staff" },
+};
 
 interface SidebarProps {
   open: boolean;
@@ -23,7 +44,9 @@ interface SidebarProps {
 
 const Sidebar = ({ open, onClose }: SidebarProps) => {
   const navigate = useNavigate();
-  const { user, logoutAction } = useUserStore();
+  const { user, role, logoutAction } = useUserStore();
+  const navItems = role === "admin" ? ADMIN_NAV_ITEMS : PARTNER_NAV_ITEMS;
+  const brand = ROLE_BRAND[role ?? "admin"] ?? ROLE_BRAND.admin;
 
   const handleLogout = async () => {
     await logoutAction();
@@ -66,7 +89,7 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
               </p>
               <p className="flex items-center gap-1 text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">
                 <ShieldCheck className="w-3 h-3 text-red-500" />
-                Admin Panel
+                {brand.badge}
               </p>
             </div>
           </div>
@@ -77,7 +100,7 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
           <p className="px-3.5 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-600">
             Manage
           </p>
-          {NAV_ITEMS.map(({ label, to, icon: Icon }) => (
+          {navItems.map(({ label, to, icon: Icon }) => (
             <NavLink key={to} to={to} end={to === "/"} className={navClasses} onClick={onClose}>
               <Icon className="w-4.5 h-4.5" />
               {label}
@@ -114,7 +137,7 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
                 {user?.name || "Admin"}
               </p>
               <p className="text-[11px] text-slate-500 truncate">
-                {user?.email || "super admin"}
+                {user?.email || brand.userLabel}
               </p>
             </div>
             <UserCircle2 className="w-4 h-4 text-slate-600 shrink-0 group-hover:text-red-500 transition-colors" />

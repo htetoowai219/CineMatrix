@@ -1,6 +1,8 @@
+export type CinemaStatus = "pending" | "active" | "rejected";
+
 export interface ICinemaLocation {
-  type: "Point";
-  coordinates: [number, number]; // [longitude, latitude]
+  lat: number;
+  lng: number;
 }
 
 export interface ICinemaAddress {
@@ -8,7 +10,6 @@ export interface ICinemaAddress {
   city: string;
   state?: string;
   country: string;
-  zipCode?: string;
 }
 
 export interface ICinemaSocials {
@@ -16,6 +17,21 @@ export interface ICinemaSocials {
   facebook?: string;
   instagram?: string;
   twitter?: string;
+}
+
+export type SeatCellType = "seat" | "double" | "walkway" | "stairs" | "empty";
+
+export interface ICinemaRoom {
+  name: string;
+  rows: number;
+  cols: number;
+  grid: SeatCellType[][];
+}
+
+export interface ICinemaAnnouncement {
+  title?: string;
+  body?: string;
+  imageUrl?: string;
 }
 
 export interface ICinema {
@@ -27,15 +43,13 @@ export interface ICinema {
   location?: ICinemaLocation;
   phone: string;
   email: string;
-  rating?: number;
-  reviewsCount?: number;
-  amenities?: string[];
   images?: string[];
   gallery?: string[];
-  totalScreens: number;
-  openingHours?: string;
+  rooms: ICinemaRoom[];
+  announcements?: ICinemaAnnouncement[];
   socials?: ICinemaSocials;
-  isActive: boolean;
+  allowPayInPerson: boolean;
+  status: CinemaStatus;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
@@ -43,36 +57,33 @@ export interface ICinema {
 export interface CreateCinemaPayload {
   name: string;
   description?: string;
-  ownerId: string;
   address: {
     street: string;
     city: string;
     state?: string;
     country: string;
-    zipCode?: string;
   };
   location?: {
-    type: "Point";
-    coordinates: [number, number];
+    lat: number;
+    lng: number;
   };
   phone: string;
   email: string;
-  amenities?: string[];
   // Uploaded files take precedence over the URL arrays below.
   images?: string[];
   imageFiles?: File[];
   gallery?: string[];
   galleryFiles?: File[];
-  totalScreens: number;
-  openingHours?: string;
-  isActive?: boolean;
+  rooms: ICinemaRoom[];
+  announcements?: ICinemaAnnouncement[];
+  socials?: ICinemaSocials;
+  allowPayInPerson?: boolean;
 }
 
 export type UpdateCinemaPayload = Partial<CreateCinemaPayload>;
 
 export interface FetchCinemasParams {
   city?: string;
-  amenity?: string;
 }
 
 export interface FetchCinemasResponse {

@@ -15,7 +15,6 @@ export interface IMovie {
   releaseDate: Date;
   originalLanguage: string;
   contentRating: string;
-  averageScore?: number;
   posterUrl: string;
   backdropUrl: string;
   trailerUrl?: string;

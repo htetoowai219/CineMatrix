@@ -8,8 +8,14 @@ const StatusBadge = ({ label }: { label: string }) => {
     ARCHIVED: "text-slate-400 bg-slate-800/60 border-slate-700",
     PENDING_APPROVAL: "text-sky-400 bg-sky-950/40 border-sky-600/40",
     active: "text-emerald-400 bg-emerald-950/40 border-emerald-600/40",
+    pending: "text-amber-400 bg-amber-950/40 border-amber-600/40",
+    rejected: "text-rose-400 bg-rose-950/40 border-rose-600/40",
     inactive: "text-slate-400 bg-slate-800/60 border-slate-700",
     admin: "text-red-400 bg-red-950/40 border-red-600/40",
+    confirmed: "text-emerald-400 bg-emerald-950/40 border-emerald-600/40",
+    cancelled: "text-slate-400 bg-slate-800/60 border-slate-700",
+    cinema_owner: "text-violet-400 bg-violet-950/40 border-violet-600/40",
+    cinema_staff: "text-sky-400 bg-sky-950/40 border-sky-600/40",
   };
 
   const normalized = label.toLowerCase().replace(/\s+/g, "_");

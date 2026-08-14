@@ -8,7 +8,18 @@ import {
   updateUserPasswordController,
   updateUserProfileController,
 } from "../controllers/userAuth.controller";
-import { verifyAccessToken } from "../middlewares/auth.middleware";
+import {
+  createOwnerController,
+  getOwnersController,
+  deleteOwnerController,
+  createStaffController,
+  getStaffController,
+  deleteStaffController,
+} from "../controllers/userManagement.controller";
+import {
+  verifyAccessToken,
+  requireRole,
+} from "../middlewares/auth.middleware";
 import {
   uploadSingleImage,
   handleMulterError,
@@ -38,5 +49,25 @@ router.patch(
 );
 
 router.get("/profile", verifyAccessToken, getProfileController);
+
+// Admin-only: cinema owner management
+router.get("/owners", verifyAccessToken, requireRole("admin"), getOwnersController);
+router.post("/owners", verifyAccessToken, requireRole("admin"), createOwnerController);
+router.delete(
+  "/owners/:id",
+  verifyAccessToken,
+  requireRole("admin"),
+  deleteOwnerController,
+);
+
+// Owner-only: cinema staff management
+router.get("/staff", verifyAccessToken, requireRole("cinema_owner"), getStaffController);
+router.post("/staff", verifyAccessToken, requireRole("cinema_owner"), createStaffController);
+router.delete(
+  "/staff/:id",
+  verifyAccessToken,
+  requireRole("cinema_owner"),
+  deleteStaffController,
+);
 
 export default router;

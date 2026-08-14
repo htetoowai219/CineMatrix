@@ -15,6 +15,17 @@ services:
       - cinematrix_network
 
   # --------------------------------------------------
+  # 2. Redis (seat locks + booking timeouts)
+  # --------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: cinematrix_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - cinematrix_network
+
+  # --------------------------------------------------
   # 2. Express Backend
   # --------------------------------------------------
   backend:
@@ -36,11 +47,13 @@ services:
       - REFRESH_TOKEN_SECRET=E34Iygiq78rKFMTYhCpaHmxoG0UlU6fX
       - REFRESH_TOKEN_EXP=7d
       - CLOUDINARY_URL=cloudinary://418981418793822:R5qV7vPuslG1CHv4pnQ4jNEwRwc@dxmpgnub2
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./backend:/app
       - /app/node_modules
     depends_on:
       - mongodb
+      - redis
     networks:
       - cinematrix_network
 

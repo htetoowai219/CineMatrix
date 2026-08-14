@@ -13,7 +13,6 @@ export interface IMovie {
   releaseDate: Date | string;
   originalLanguage: string;
   contentRating: string;
-  averageScore?: number;
   posterUrl: string;
   backdropUrl: string;
   trailerUrl?: string;
@@ -34,7 +33,6 @@ export interface CreateMoviePayload {
   releaseDate: string;
   originalLanguage: string;
   contentRating: string;
-  averageScore?: number;
   // Image files take precedence over URL fields when provided.
   posterUrl?: string;
   backdropUrl?: string;
@@ -67,4 +65,22 @@ export interface MovieMutationResponse {
 
 export interface MessageResponse {
   message: string;
+}
+
+export interface TmdbMoviePreview {
+  tmdbId: number;
+  title: string;
+  releaseDate: string | null;
+  overview: string;
+  language: string;
+  rating: number;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  genres: string[];
+}
+
+export interface TmdbSearchResponse {
+  message: string;
+  count: number;
+  results: TmdbMoviePreview[];
 }

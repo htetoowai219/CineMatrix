@@ -1,70 +1,24 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
-  Star,
   MapPin,
   Ticket,
   ArrowLeft,
-  Zap,
-  Volume2,
-  Bookmark,
-  Car,
-  Coffee,
   Film,
-  Wifi,
-  Check,
-  Clock,
   Globe,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { useCinemaStore } from "../stores/cinema.store";
+import { useScreeningStore } from "../stores/screening.store";
+import type { IScreening } from "../types/booking.type";
 
-export interface Showtime {
-  id: string | number;
-  time: string;
-  format: string;
-}
+const getMovie = (s: IScreening) =>
+  typeof s.movieId === "object" && s.movieId ? s.movieId : null;
 
-export interface Movie {
-  id: string;
-  title: string;
-  poster: string;
-  rating: string;
-  runtime: string;
-  language: string;
-  comingSoon?: boolean;
-}
-
-const MOVIES: Movie[] = [
-  {
-    id: "1",
-    title: "Dune: Part Two",
-    poster:
-      "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800",
-    rating: "PG-13",
-    runtime: "2h 46m",
-    language: "English",
-    comingSoon: false,
-  },
-  {
-    id: "2",
-    title: "Oppenheimer",
-    poster:
-      "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800",
-    rating: "R",
-    runtime: "3h 00m",
-    language: "English",
-    comingSoon: false,
-  },
-];
-
-const SHOWTIMES: Showtime[] = [
-  { id: 101, time: "1:15 PM", format: "IMAX 3D" },
-  { id: 102, time: "4:30 PM", format: "Dolby Atmos" },
-  { id: 103, time: "7:45 PM", format: "IMAX 3D" },
-  { id: 104, time: "10:15 PM", format: "Standard 2D" },
-];
+const formatRuntime = (minutes?: number) =>
+  minutes ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : "";
 
 // Reliable Unsplash cinema image placeholders
 const DEFAULT_HERO_IMAGE =
@@ -83,6 +37,13 @@ export default function CinemaDetailPage() {
 
   const { selectedCinema, isLoading, error, getCinemaByIdAction, clearError } =
     useCinemaStore();
+  const {
+    screenings,
+    isLoading: scheduleLoading,
+    error: scheduleError,
+    getPublicScreeningsAction,
+    clearError: clearScreeningError,
+  } = useScreeningStore();
 
   const [activeDay, setActiveDay] = useState(0);
 
@@ -93,6 +54,36 @@ export default function CinemaDetailPage() {
   }, [id, getCinemaByIdAction]);
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
+
+  // Loads the day's screenings for this cinema whenever the cinema or the
+  // selected day changes.
+  useEffect(() => {
+    if (!selectedCinema) return;
+    clearScreeningError();
+    void getPublicScreeningsAction({
+      cinemaId: String(selectedCinema._id),
+      date: format(addDays(new Date(), activeDay), "yyyy-MM-dd"),
+      limit: 100,
+    });
+  }, [
+    selectedCinema,
+    activeDay,
+    getPublicScreeningsAction,
+    clearScreeningError,
+  ]);
+
+  // Groups the day's screenings by movie for the schedule list.
+  const movieGroups = useMemo(() => {
+    const map = new Map<string, IScreening[]>();
+    for (const screening of screenings) {
+      const movie = getMovie(screening);
+      const key = movie ? String(movie._id) : String(screening.movieId);
+      const list = map.get(key) ?? [];
+      list.push(screening);
+      map.set(key, list);
+    }
+    return Array.from(map.values());
+  }, [screenings]);
 
   const galleryImages =
     selectedCinema?.gallery && selectedCinema.gallery.length > 0
@@ -108,21 +99,7 @@ export default function CinemaDetailPage() {
     ? `${selectedCinema.address.street}, ${selectedCinema.address.city}, ${selectedCinema.address.state ? selectedCinema.address.state + " " : ""}${selectedCinema.address.country}`
     : "Address unavailable";
 
-  const amenityIcons: Record<string, React.ReactNode> = {
-    IMAX: <Zap className="w-4 h-4" />,
-    "Dolby Atmos": <Volume2 className="w-4 h-4" />,
-    "4DX": <Zap className="w-4 h-4" />,
-    "VIP Lounge": <Bookmark className="w-4 h-4" />,
-    Parking: <Car className="w-4 h-4" />,
-    Bar: <Coffee className="w-4 h-4" />,
-    "3D": <Film className="w-4 h-4" />,
-    Valet: <Car className="w-4 h-4" />,
-    "Food Court": <Coffee className="w-4 h-4" />,
-    Wifi: <Wifi className="w-4 h-4" />,
-    "2D": <Film className="w-4 h-4" />,
-  };
-
-  if (isLoading) {
+  if (isLoading && !selectedCinema) {
     return (
       <div className="bg-slate-950 min-h-screen text-white flex flex-col items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-red-600 mb-4" />
@@ -181,19 +158,8 @@ export default function CinemaDetailPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-10">
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-2">
-              <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-sm px-2.5 py-1 rounded-md border border-slate-800">
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="text-white font-bold text-sm">
-                  {selectedCinema.rating ?? 4.5}
-                </span>
-                {selectedCinema.reviewsCount !== undefined && (
-                  <span className="text-slate-500 text-xs">
-                    ({selectedCinema.reviewsCount})
-                  </span>
-                )}
-              </div>
               <span className="text-slate-400 text-xs sm:text-sm font-medium">
-                {selectedCinema.totalScreens} screens
+                {selectedCinema.rooms?.length ?? 0} rooms
               </span>
             </div>
 
@@ -234,15 +200,8 @@ export default function CinemaDetailPage() {
               </div>
             )}
 
-            {/* Opening Hours & Contact */}
+            {/* Contact */}
             <div className="bg-slate-900/80 rounded-xl border border-slate-800/90 p-5 flex flex-col gap-3 text-xs text-slate-300">
-              <div className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-red-500 shrink-0" />
-                <span>
-                  <strong>Hours:</strong>{" "}
-                  {selectedCinema.openingHours || "10:00 AM - 11:30 PM"}
-                </span>
-              </div>
               {selectedCinema.socials?.website && (
                 <div className="flex items-center gap-2.5">
                   <Globe className="w-4 h-4 text-red-500 shrink-0" />
@@ -257,29 +216,6 @@ export default function CinemaDetailPage() {
                 </div>
               )}
             </div>
-
-            {/* Amenities Section */}
-            {selectedCinema.amenities &&
-              selectedCinema.amenities.length > 0 && (
-                <div className="bg-slate-900/80 rounded-xl border border-slate-800/90 p-5">
-                  <h3 className="font-display font-bold text-white uppercase tracking-wide mb-4 text-base">
-                    Amenities
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {selectedCinema.amenities.map((a) => (
-                      <div
-                        key={a}
-                        className="flex items-center gap-2.5 text-slate-300 text-xs font-medium"
-                      >
-                        <div className="text-red-500">
-                          {amenityIcons[a] ?? <Check className="w-4 h-4" />}
-                        </div>
-                        <span>{a}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
             {/* Gallery Grid */}
             {galleryImages.length > 0 && (
@@ -340,57 +276,90 @@ export default function CinemaDetailPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              {MOVIES.filter((m) => !m.comingSoon).map((m) => (
-                <div
-                  key={m.id}
-                  className="bg-slate-900/80 rounded-xl border border-slate-800/90 p-4 flex gap-4 hover:border-slate-700 transition-colors"
-                >
-                  <img
-                    src={m.poster}
-                    alt={m.title}
-                    className="w-16 h-24 object-cover rounded-lg shrink-0 bg-slate-950 border border-slate-800/80"
-                  />
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <h4 className="font-display font-bold text-white text-base sm:text-lg uppercase tracking-wide leading-tight truncate">
-                        {m.title}
-                      </h4>
-                      <span className="bg-slate-800 text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded border border-slate-700 shrink-0">
-                        {m.rating}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-slate-400 text-xs mb-3">
-                      <span>{m.runtime}</span>
-                      <span className="w-1 h-1 rounded-full bg-slate-700" />
-                      <span>{m.language}</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {SHOWTIMES.map((st) => (
-                        <button
-                          type="button"
-                          key={st.id}
-                          onClick={() =>
-                            navigate(
-                              `/screenings?movieId=${m.id}&showtimeId=${st.id}&cinemaId=${selectedCinema._id}`,
-                            )
-                          }
-                          className="text-xs border border-slate-800 bg-slate-950/60 hover:border-red-600/60 hover:text-white text-slate-300 px-3 py-1.5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5"
-                        >
-                          <span className="font-bold text-white">
-                            {st.time}
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            {st.format}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {scheduleLoading ? (
+                <div className="flex items-center gap-3 text-slate-400 text-sm py-10">
+                  <Loader2 className="w-5 h-5 animate-spin text-red-600" />
+                  Loading schedule...
                 </div>
-              ))}
+              ) : scheduleError ? (
+                <p className="text-sm text-red-500 py-10">{scheduleError}</p>
+              ) : movieGroups.length === 0 ? (
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-10 text-center">
+                  <Film className="w-10 h-10 mx-auto mb-3 text-slate-600 opacity-60" />
+                  <p className="text-slate-300 text-sm font-semibold mb-1">
+                    No screenings this day
+                  </p>
+                  <p className="text-slate-500 text-xs">
+                    Try another date to see available showtimes.
+                  </p>
+                </div>
+              ) : (
+                movieGroups.map((group) => {
+                  const movie = getMovie(group[0]);
+                  const sorted = [...group].sort(
+                    (a, b) =>
+                      new Date(a.startTime).getTime() -
+                      new Date(b.startTime).getTime(),
+                  );
+                  return (
+                    <div
+                      key={String(movie?._id ?? group[0].movieId)}
+                      className="bg-slate-900/80 rounded-xl border border-slate-800/90 p-4 flex gap-4 hover:border-slate-700 transition-colors"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/movies/${group[0].movieId}`)}
+                        className="shrink-0"
+                      >
+                        <img
+                          src={
+                            movie?.posterUrl ||
+                            "https://via.placeholder.com/100x150?text=No+Poster"
+                          }
+                          alt={movie?.title || "Movie"}
+                          className="w-16 h-24 object-cover rounded-lg shrink-0 bg-slate-950 border border-slate-800/80"
+                        />
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className="font-display font-bold text-white text-base sm:text-lg uppercase tracking-wide leading-tight truncate">
+                            {movie?.title || "Unknown movie"}
+                          </h4>
+                          <span className="bg-slate-800 text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded border border-slate-700 shrink-0">
+                            {movie?.contentRating || "NR"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-slate-400 text-xs mb-3">
+                          <span>{formatRuntime(movie?.durationMinutes)}</span>
+                          <span className="w-1 h-1 rounded-full bg-slate-700" />
+                          <span>{group[0].roomName}</span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {sorted.map((st) => (
+                            <button
+                              type="button"
+                              key={String(st._id)}
+                              onClick={() => navigate(`/book/${st._id}`)}
+                              className="text-xs border border-slate-800 bg-slate-950/60 hover:border-red-600/60 hover:text-white text-slate-300 px-3 py-1.5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5"
+                            >
+                              <Clock className="w-3 h-3 text-red-500" />
+                              <span className="font-bold text-white">
+                                {format(new Date(st.startTime), "h:mm a")}
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                ${st.seats[0]?.price ?? 0}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
