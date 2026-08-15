@@ -16,6 +16,7 @@ import { useMovieStore } from "../stores/movie.store";
 import { useScreeningStore } from "../stores/screening.store";
 import { type IScreening } from "../types/booking.type";
 import { type IMovie } from "../types/movie.type";
+import { formatCurrency } from "../utils/currency";
 
 export interface DetailedMovie {
   id: string;
@@ -37,6 +38,7 @@ export interface DetailedMovie {
 export interface Cinema {
   id: string;
   name: string;
+  currency?: string;
 }
 
 // Maps backend IMovie data to frontend DetailedMovie shape
@@ -128,7 +130,11 @@ export default function MovieDetailPage() {
     for (const screening of list) {
       const cinema =
         typeof screening.cinemaId === "object" && screening.cinemaId
-          ? { id: String(screening.cinemaId._id), name: screening.cinemaId.name }
+          ? {
+              id: String(screening.cinemaId._id),
+              name: screening.cinemaId.name,
+              currency: screening.cinemaId.currency,
+            }
           : { id: String(screening.cinemaId), name: "Cinema" };
       const group = map.get(cinema.id) ?? {
         cinema,
@@ -463,7 +469,7 @@ export default function MovieDetailPage() {
                                     <span>{s.roomName}</span>
                                     <span className="w-1 h-1 rounded-full bg-slate-700" />
                                     <span className="font-bold text-slate-200">
-                                      ${s.seats[0]?.price ?? 0}
+                                      {formatCurrency(s.seats[0]?.price ?? 0, group.cinema.currency)}
                                     </span>
                                   </div>
                                 </button>

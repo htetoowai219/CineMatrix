@@ -39,6 +39,7 @@ export const getTemplatesController = async (req: Request, res: Response) => {
       cinemaId: { $in: cinemaIds },
     })
       .populate("movieId", "title posterUrl durationMinutes")
+      .populate("cinemaId", "name currency")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({

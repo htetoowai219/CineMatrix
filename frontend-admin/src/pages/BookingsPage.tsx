@@ -13,6 +13,7 @@ import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useBookingStore } from "../stores/booking.store";
 import { useCinemaStore } from "../stores/cinema.store";
+import { formatCurrency } from "../utils/currency";
 import type { IBooking } from "../types/booking.type";
 
 type StatusFilter = "ALL" | "pending" | "confirmed" | "rejected" | "cancelled";
@@ -230,7 +231,10 @@ export default function BookingsPage() {
                       </p>
                     </td>
                     <td className="px-5 py-3.5 font-semibold text-white whitespace-nowrap">
-                      ${Number(booking.totalPrice).toFixed(2)}
+                      {formatCurrency(
+                        booking.totalPrice,
+                        booking.screeningId.cinemaId?.currency,
+                      )}
                     </td>
                     <td className="px-5 py-3.5 hidden sm:table-cell">
                       <StatusBadge label={booking.status} />
@@ -293,9 +297,10 @@ export default function BookingsPage() {
       {viewScreenshot && (
         <Modal
           title="Payment Screenshot"
-          subtitle={`${viewScreenshot.userId?.name ?? "Customer"} · $${Number(
+          subtitle={`${viewScreenshot.userId?.name ?? "Customer"} · ${formatCurrency(
             viewScreenshot.totalPrice,
-          ).toFixed(2)}`}
+            viewScreenshot.screeningId.cinemaId?.currency,
+          )}`}
           onClose={() => setViewScreenshot(null)}
           maxWidth="max-w-lg"
         >

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import {
   Clapperboard,
@@ -7,24 +7,83 @@ import {
   Sparkles,
   CalendarClock,
   ChevronRight,
+  TrendingUp,
+  Ticket,
 } from "lucide-react";
 import StatusBadge from "../components/ui/StatusBadge";
+import { HBarList, VerticalBarChart } from "../components/ui/BarCharts";
 import { useMovieStore } from "../stores/movie.store";
 import { useCinemaStore } from "../stores/cinema.store";
+import { useBookingStore } from "../stores/booking.store";
 
 export default function DashboardPage() {
   const { movies, isLoading: moviesLoading, getAllMoviesAction } = useMovieStore();
   const { cinemas, isLoading: cinemasLoading, getAllCinemasAction } = useCinemaStore();
+  const {
+    bookings,
+    isLoading: bookingsLoading,
+    getBookingsAction,
+  } = useBookingStore();
 
   useEffect(() => {
     getAllMoviesAction();
     getAllCinemasAction();
-  }, [getAllMoviesAction, getAllCinemasAction]);
+    getBookingsAction();
+  }, [getAllMoviesAction, getAllCinemasAction, getBookingsAction]);
 
   const nowShowing = movies.filter((m) => m.status === "NOW_SHOWING").length;
   const upcoming = movies.filter((m) => m.status === "UPCOMING").length;
   const activeCinemas = cinemas.filter((c) => c.status === "active").length;
-  const isLoading = moviesLoading || cinemasLoading;
+  const pendingCinemas = cinemas.filter((c) => c.status === "pending").length;
+  const isLoading = moviesLoading || cinemasLoading || bookingsLoading;
+
+  // Bookings per day for the last 7 days.
+  const bookingsLast7Days = useMemo(() => {
+    const days: { label: string; value: number }[] = [];
+    for (let i = 6; i >= 0; i -= 1) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const next = new Date(d.getTime() + 86400000);
+      const count = bookings.filter((b) => {
+        const t = new Date(b.createdAt ?? b.screeningId.startTime);
+        return t.getTime() >= d.getTime() && t.getTime() < next.getTime();
+      }).length;
+      days.push({ label: d.toLocaleDateString("en-US", { weekday: "short" }), value: count });
+    }
+    return days;
+  }, [bookings]);
+
+  // Movies grouped by status.
+  const moviesByStatus = useMemo(() => {
+    const statuses = ["NOW_SHOWING", "UPCOMING", "PENDING_APPROVAL", "ARCHIVED"] as const;
+    const colors: Record<string, string> = {
+      NOW_SHOWING: "#10b981",
+      UPCOMING: "#f59e0b",
+      PENDING_APPROVAL: "#38bdf8",
+      ARCHIVED: "#64748b",
+    };
+    return statuses.map((status) => ({
+      label: status,
+      value: movies.filter((m) => m.status === status).length,
+      color: colors[status],
+    }));
+  }, [movies]);
+
+  // Cinemas grouped by status.
+  const cinemasByStatus = useMemo(() => {
+    const statuses = ["pending", "active", "rejected"] as const;
+    const colors: Record<string, string> = {
+      pending: "#f59e0b",
+      active: "#10b981",
+      rejected: "#ef4444",
+    };
+    return statuses.map((status) => ({
+      label: status,
+      value: cinemas.filter((c) => c.status === status).length,
+      color: colors[status],
+    }));
+  }, [cinemas]);
 
   const stats = [
     {
@@ -188,6 +247,54 @@ export default function DashboardPage() {
                   ))}
                 </ul>
               )}
+            </section>
+          </div>
+
+          {/* Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
+              <div className="flex items-center gap-2 mb-5">
+                <TrendingUp className="w-4 h-4 text-red-500" />
+                <h2 className="font-display font-bold text-white uppercase tracking-wide text-lg">
+                  Network Activity
+                </h2>
+              </div>
+              {bookings.length === 0 ? (
+                <p className="text-slate-400 text-sm py-6 text-center">
+                  Booking data will appear here once customers start booking.
+                </p>
+              ) : (
+                <VerticalBarChart data={bookingsLast7Days} />
+              )}
+              <p className="text-[11px] text-slate-500 mt-3 flex items-center gap-1.5">
+                <Ticket className="w-3 h-3" />
+                Bookings created in the last 7 days
+              </p>
+            </section>
+
+            <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-display font-bold text-white uppercase tracking-wide text-lg">
+                  Catalog Health
+                </h2>
+                <span className="text-[11px] text-slate-500 font-semibold">
+                  {pendingCinemas} cinemas awaiting approval
+                </span>
+              </div>
+              <div className="space-y-5">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    Movies by status
+                  </p>
+                  <HBarList data={moviesByStatus} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    Cinemas by status
+                  </p>
+                  <HBarList data={cinemasByStatus} />
+                </div>
+              </div>
             </section>
           </div>
         </>

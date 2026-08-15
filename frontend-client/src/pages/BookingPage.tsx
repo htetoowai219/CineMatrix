@@ -20,6 +20,7 @@ import { useScreeningStore } from "../stores/screening.store";
 import { useBookingStore } from "../stores/booking.store";
 import { useUserStore } from "../stores/user.store";
 import { type IScreeningSeat, type PaymentMethod } from "../types/booking.type";
+import { formatCurrency } from "../utils/currency";
 
 const LOCK_SECONDS = 10 * 60;
 
@@ -273,7 +274,7 @@ export default function BookingPage() {
                 <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                   Total
                 </span>
-                <span className="text-white font-bold">${submittedBooking.total}</span>
+                <span className="text-white font-bold">{formatCurrency(submittedBooking.total, cinema?.currency)}</span>
               </div>
             </div>
 
@@ -401,7 +402,7 @@ export default function BookingPage() {
                       type="button"
                       disabled={disabled}
                       onClick={() => toggleSeat(seat)}
-                      title={`${seat.label} — $${seat.price}`}
+                      title={`${seat.label} — ${formatCurrency(seat.price, cinema?.currency)}`}
                       className={`rounded-md flex items-center justify-center transition-all active:scale-95 ${
                         seat.isDouble ? "w-9 h-7" : "w-7 h-7"
                       } ${
@@ -410,8 +411,10 @@ export default function BookingPage() {
                           : isHeld
                             ? "bg-amber-950/60 border border-amber-700/50 text-amber-600/70 cursor-not-allowed"
                             : seat.status === "booked"
-                              ? "bg-slate-600/40 border border-slate-600/60 text-slate-600 cursor-not-allowed"
-                              : "bg-slate-800 border border-slate-700 text-slate-400 hover:border-red-600/60 hover:text-white"
+                              ? "bg-slate-700 border border-slate-600 text-slate-500 cursor-not-allowed"
+                              : seat.isDouble
+                                ? "bg-rose-950/50 border border-rose-700/50 text-rose-400/80 hover:border-rose-500/70 hover:text-white"
+                                : "bg-slate-800 border border-slate-700 text-slate-400 hover:border-red-600/60 hover:text-white"
                       }`}
                     >
                       <Armchair className="w-4 h-4" />
@@ -432,6 +435,10 @@ export default function BookingPage() {
               Available
             </span>
             <span className="flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded bg-rose-950/50 border border-rose-700/50" />
+              Double Seat
+            </span>
+            <span className="flex items-center gap-1.5">
               <span className="w-4 h-4 rounded bg-red-600" />
               Selected
             </span>
@@ -440,7 +447,7 @@ export default function BookingPage() {
               Held
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-4 h-4 rounded bg-slate-600/40 border border-slate-600/60" />
+              <span className="w-4 h-4 rounded bg-slate-700 border border-slate-600" />
               Sold
             </span>
           </div>
@@ -497,7 +504,7 @@ export default function BookingPage() {
                     Total
                   </p>
                   <p className="text-white font-bold text-lg">
-                    ${selectedDetails.total}
+                    {formatCurrency(selectedDetails.total, cinema?.currency)}
                   </p>
                 </div>
               </div>

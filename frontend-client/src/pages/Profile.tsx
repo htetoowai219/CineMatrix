@@ -15,6 +15,7 @@ import SectionLabel from "../components/SectionLabel";
 import { useUserStore } from "../stores/user.store";
 import { useBookingStore } from "../stores/booking.store";
 import { type IBooking, type BookingStatus } from "../types/booking.type";
+import { formatCurrency } from "../utils/currency";
 
 const STATUS_STYLES: Record<BookingStatus, { label: string; className: string }> = {
   pending: {
@@ -57,6 +58,7 @@ const flattenBooking = (booking: IBooking) => {
     room: screening?.roomName ?? "",
     seats: booking.seats.map((s) => s.label),
     total: booking.totalPrice,
+    currency: cinema?.currency,
     status: booking.status,
   };
 };
@@ -420,7 +422,7 @@ export default function ProfilePage() {
                               Total
                             </p>
                             <p className="text-white font-bold text-sm sm:text-base">
-                              ${booking.total}
+                              {formatCurrency(booking.total, booking.currency)}
                             </p>
                           </div>
 

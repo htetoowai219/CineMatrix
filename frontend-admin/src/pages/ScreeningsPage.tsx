@@ -14,6 +14,18 @@ import { useScreeningStore } from "../stores/screening.store";
 import { useTemplateStore } from "../stores/template.store";
 import { useCinemaStore } from "../stores/cinema.store";
 import type { IScreening } from "../types/screening.type";
+import type { IScreeningTemplate } from "../types/template.type";
+import { formatCurrency } from "../utils/currency";
+
+const screeningCinemaId = (screening: IScreening): string =>
+  typeof screening.cinemaId === "object"
+    ? screening.cinemaId._id
+    : screening.cinemaId;
+
+const templateCinemaId = (template: IScreeningTemplate): string =>
+  typeof template.cinemaId === "object"
+    ? template.cinemaId._id
+    : template.cinemaId;
 
 const formatDate = (value?: string) => {
   if (!value) return "—";
@@ -76,13 +88,28 @@ export default function ScreeningsPage() {
 
   const filtered = useMemo(() => {
     if (activeFilter === "ALL") return screenings;
-    return screenings.filter((s) => s.cinemaId === activeFilter);
+    return screenings.filter((s) => screeningCinemaId(s) === activeFilter);
   }, [screenings, activeFilter]);
 
   const templateOptions = useMemo(() => {
     if (activeFilter === "ALL") return templates;
-    return templates.filter((t) => t.cinemaId === activeFilter);
+    return templates.filter((t) => templateCinemaId(t) === activeFilter);
   }, [templates, activeFilter]);
+
+  const selectedTemplate = useMemo(
+    () => templates.find((t) => String(t._id) === templateId),
+    [templates, templateId],
+  );
+
+  const priceRange = useMemo(() => {
+    const prices = selectedTemplate
+      ? Object.values(selectedTemplate.rowPrices)
+      : [];
+    if (prices.length === 0) return null;
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return { min, max };
+  }, [selectedTemplate]);
 
   const openCreate = () => {
     setTemplateId("");
@@ -353,6 +380,39 @@ export default function ScreeningsPage() {
                 </p>
               )}
             </div>
+
+            {selectedTemplate && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800">
+                {selectedTemplate.movie?.posterUrl ? (
+                  <img
+                    src={selectedTemplate.movie.posterUrl}
+                    alt={selectedTemplate.movie.title}
+                    className="w-12 h-16 object-cover rounded-md border border-slate-800 shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-16 rounded-md bg-slate-800 flex items-center justify-center shrink-0">
+                    <CalendarClock className="w-4 h-4 text-slate-500" />
+                  </div>
+                )}
+                <div className="min-w-0 text-sm">
+                  <p className="font-semibold text-white truncate">
+                    {selectedTemplate.movie?.title ?? "Unknown movie"}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {selectedTemplate.cinema?.name ?? "Cinema"} ·{" "}
+                    {selectedTemplate.roomName}
+                  </p>
+                  {priceRange && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Tickets{" "}
+                      {formatCurrency(priceRange.min, selectedTemplate.cinema?.currency)}
+                      {priceRange.max !== priceRange.min &&
+                        ` – ${formatCurrency(priceRange.max, selectedTemplate.cinema?.currency)}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">

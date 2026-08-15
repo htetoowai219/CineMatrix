@@ -11,7 +11,7 @@ export interface IScreeningSeat {
 export interface IScreening {
   _id?: string;
   templateId: string;
-  cinemaId: string | { _id: string; name: string; address?: unknown; phone?: string; email?: string; allowPayInPerson?: boolean };
+  cinemaId: string | { _id: string; name: string; address?: unknown; phone?: string; email?: string; allowPayInPerson?: boolean; currency?: string };
   movieId: string | { _id: string; title: string; posterUrl: string; backdropUrl?: string; durationMinutes: number; contentRating?: string };
   roomName: string;
   startTime: Date | string;

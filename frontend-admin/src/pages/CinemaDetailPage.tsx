@@ -23,6 +23,7 @@ import { makeGrid } from "../utils/seatLayout";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { useCinemaStore } from "../stores/cinema.store";
 import { useUserStore } from "../stores/user.store";
+import { CURRENCIES } from "../utils/currency";
 import type {
   ICinema,
   ICinemaAnnouncement,
@@ -261,6 +262,7 @@ function DetailsTab({
   const [allowPayInPerson, setAllowPayInPerson] = useState(
     cinema.allowPayInPerson,
   );
+  const [currency, setCurrency] = useState(cinema.currency ?? "USD");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -281,6 +283,7 @@ function DetailsTab({
         location: location ?? undefined,
         socials: website.trim() ? { website: website.trim() } : undefined,
         allowPayInPerson,
+        currency,
         imageFiles,
       });
     } catch {
@@ -363,6 +366,22 @@ function DetailsTab({
               Allow pay-in-person bookings
             </span>
           </label>
+          <div>
+            <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+              Ticket Currency
+            </label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-600/60 transition-all"
+            >
+              {CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

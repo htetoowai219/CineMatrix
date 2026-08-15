@@ -8,11 +8,24 @@ export interface IScreeningSeat {
   status: ScreeningSeatStatus;
 }
 
+export type ScreeningMovieRef = {
+  _id: string;
+  title: string;
+  posterUrl: string;
+  durationMinutes: number;
+};
+
+export type ScreeningCinemaRef = {
+  _id: string;
+  name: string;
+  currency?: string;
+};
+
 export interface IScreening {
   _id?: string;
   templateId: string;
-  cinemaId: string;
-  movieId: string;
+  cinemaId: string | ScreeningCinemaRef;
+  movieId: string | ScreeningMovieRef;
   roomName: string;
   startTime: string;
   endTime: string;
@@ -20,8 +33,8 @@ export interface IScreening {
   createdBy: string;
   createdAt?: string;
   updatedAt?: string;
-  movie?: { _id: string; title: string; posterUrl: string; durationMinutes: number };
-  cinema?: { _id: string; name: string };
+  movie?: ScreeningMovieRef;
+  cinema?: ScreeningCinemaRef;
 }
 
 export interface CreateScreeningPayload {

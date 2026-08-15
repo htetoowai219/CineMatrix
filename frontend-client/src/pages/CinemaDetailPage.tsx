@@ -13,6 +13,7 @@ import { addDays, format } from "date-fns";
 import { useCinemaStore } from "../stores/cinema.store";
 import { useScreeningStore } from "../stores/screening.store";
 import type { IScreening } from "../types/booking.type";
+import { formatCurrency } from "../utils/currency";
 
 const getMovie = (s: IScreening) =>
   typeof s.movieId === "object" && s.movieId ? s.movieId : null;
@@ -98,6 +99,8 @@ export default function CinemaDetailPage() {
   const formattedAddress = selectedCinema?.address
     ? `${selectedCinema.address.street}, ${selectedCinema.address.city}, ${selectedCinema.address.state ? selectedCinema.address.state + " " : ""}${selectedCinema.address.country}`
     : "Address unavailable";
+
+  const cinemaCurrency = selectedCinema?.currency;
 
   if (isLoading && !selectedCinema) {
     return (
@@ -350,7 +353,7 @@ export default function CinemaDetailPage() {
                                 {format(new Date(st.startTime), "h:mm a")}
                               </span>
                               <span className="text-[10px] text-slate-500 font-medium">
-                                ${st.seats[0]?.price ?? 0}
+                                {formatCurrency(st.seats[0]?.price ?? 0, cinemaCurrency)}
                               </span>
                             </button>
                           ))}

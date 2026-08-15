@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import SectionLabel from "../components/SectionLabel";
 import { useScreeningStore } from "../stores/screening.store";
 import type { IScreening } from "../types/booking.type";
+import { formatCurrency } from "../utils/currency";
 
 const PAGE_SIZE = 12;
 
@@ -74,7 +75,7 @@ const ScreeningCard = ({ screening }: { screening: IScreening }) => {
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800/70">
           <span className="text-sm text-slate-300">
             From{" "}
-            <span className="font-bold text-white">${minPrice.toFixed(2)}</span>
+            <span className="font-bold text-white">{formatCurrency(minPrice, cinema?.currency)}</span>
           </span>
           <button
             type="button"

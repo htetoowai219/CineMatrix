@@ -1,7 +1,12 @@
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMAGE = "https://image.tmdb.org/t/p";
 
-const apiKey = () => {
+// TMDB accepts either a legacy API key (?api_key=...) or a v4 read-access
+// token (Authorization: Bearer ...). The token is preferred when configured.
+const readToken = (): string | undefined =>
+  process.env.TMDB_READ_ACCESS_TOKEN?.trim() || undefined;
+
+const apiKey = (): string => {
   const key = process.env.TMDB_API_KEY;
   if (!key) {
     throw new Error("TMDB_API_KEY is not configured on the server.");
@@ -9,7 +14,21 @@ const apiKey = () => {
   return key;
 };
 
-export const isTmdbConfigured = (): boolean => Boolean(process.env.TMDB_API_KEY);
+export const isTmdbConfigured = (): boolean =>
+  Boolean(process.env.TMDB_API_KEY || process.env.TMDB_READ_ACCESS_TOKEN);
+
+// Fetches a TMDB URL with whichever auth mechanism is available.
+const tmdbFetch = async (url: URL): Promise<Response> => {
+  const token = readToken();
+  if (token) {
+    url.searchParams.delete("api_key");
+    return fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+  url.searchParams.set("api_key", apiKey());
+  return fetch(url.toString());
+};
 
 type TmdbResult = {
   id: number;
@@ -54,12 +73,11 @@ export const searchTmdbMovies = async (
   year?: number,
 ): Promise<TmdbMoviePreview[]> => {
   const url = new URL(`${TMDB_BASE}/search/movie`);
-  url.searchParams.set("api_key", apiKey());
   url.searchParams.set("query", query);
   url.searchParams.set("language", "en-US");
   if (year) url.searchParams.set("year", String(year));
 
-  const response = await fetch(url.toString());
+  const response = await tmdbFetch(url);
   if (!response.ok) {
     throw new Error(`TMDB search failed (${response.status}).`);
   }
@@ -72,14 +90,13 @@ export const searchTmdbMovies = async (
 // Fetches full detail for a TMDB id, including trailer and credits.
 export const getTmdbMovie = async (tmdbId: number) => {
   const url = new URL(`${TMDB_BASE}/movie/${tmdbId}`);
-  url.searchParams.set("api_key", apiKey());
   url.searchParams.set("language", "en-US");
   url.searchParams.set(
     "append_to_response",
     "videos,credits,release_dates,genres",
   );
 
-  const response = await fetch(url.toString());
+  const response = await tmdbFetch(url);
   if (!response.ok) {
     throw new Error(`TMDB fetch failed (${response.status}).`);
   }

@@ -191,7 +191,9 @@ const SeatLayoutBuilder = ({
                     onClick={() => setCell(r, c)}
                     disabled={disabled}
                     title={`${paintLabel(r)}${c + 1} (${cell})`}
-                    className={`w-6 h-6 rounded-sm transition-colors disabled:cursor-default ${CELL_STYLES[cell]}`}
+                    className={`rounded-sm transition-colors disabled:cursor-default ${CELL_STYLES[cell]} ${
+                      cell === "double" ? "w-9 h-6" : "w-6 h-6"
+                    }`}
                   />
                 ))}
               </div>
