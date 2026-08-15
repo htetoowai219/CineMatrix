@@ -19,6 +19,7 @@ import MapPicker, { type MapLocation } from "../components/ui/MapPicker";
 import { makeGrid } from "../utils/seatLayout";
 import { useCinemaStore } from "../stores/cinema.store";
 import { useUserStore } from "../stores/user.store";
+import { CURRENCIES } from "../utils/currency";
 import type {
   ICinemaRoom,
   SeatCellType,
@@ -61,6 +62,7 @@ export default function MyCinemasPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [allowPayInPerson, setAllowPayInPerson] = useState(true);
+  const [currency, setCurrency] = useState<string>("USD");
   const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -95,6 +97,7 @@ export default function MyCinemasPage() {
     setPhone("");
     setEmail("");
     setAllowPayInPerson(true);
+    setCurrency("USD");
     setStreet("");
     setCity("");
     setState("");
@@ -154,6 +157,7 @@ export default function MyCinemasPage() {
       galleryFiles: gallery,
       rooms: validRooms,
       allowPayInPerson,
+      currency,
     };
 
     try {
@@ -382,6 +386,23 @@ export default function MyCinemasPage() {
                     </span>
                   </span>
                 </label>
+                <div>
+                  <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                    Ticket Currency <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
+                  >
+                    {CURRENCIES.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 

@@ -19,7 +19,7 @@ export interface IBooking {
     startTime: string;
     roomName: string;
     movieId: { _id: string; title: string; posterUrl: string; durationMinutes: number };
-    cinemaId: { _id: string; name: string };
+    cinemaId: { _id: string; name: string; currency?: string };
   };
   seats: IBookingSeat[];
   totalPrice: number;

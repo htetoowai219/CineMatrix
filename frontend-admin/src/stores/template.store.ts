@@ -16,6 +16,20 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
   return err instanceof Error ? err.message : fallback;
 };
 
+// The backend populates movieId/cinemaId in place (objects), so map them onto
+// the friendlier `movie`/`cinema` fields the UI reads.
+const normalize = (template: IScreeningTemplate): IScreeningTemplate => {
+  const movie =
+    template.movieId && typeof template.movieId === "object"
+      ? template.movieId
+      : template.movie;
+  const cinema =
+    template.cinemaId && typeof template.cinemaId === "object"
+      ? template.cinemaId
+      : template.cinema;
+  return { ...template, movie, cinema };
+};
+
 interface TemplateState {
   templates: IScreeningTemplate[];
   isLoading: boolean;
@@ -45,7 +59,7 @@ export const useTemplateStore = create<TemplateState>()((set) => ({
       const { data } = await api.get<FetchTemplatesResponse>(
         "/template",
       );
-      set({ templates: data.templates });
+      set({ templates: data.templates.map(normalize) });
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to fetch templates");
       set({ error: message });
@@ -59,13 +73,8 @@ export const useTemplateStore = create<TemplateState>()((set) => ({
   createTemplateAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
-      const { data } = await api.post<TemplateMutationResponse>(
-        "/template",
-        payload,
-      );
-      set((state) => ({
-        templates: [data.template, ...state.templates],
-      }));
+      await api.post<TemplateMutationResponse>("/template", payload);
+      await useTemplateStore.getState().getTemplatesAction();
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to create template");
       set({ error: message });
@@ -79,13 +88,8 @@ export const useTemplateStore = create<TemplateState>()((set) => ({
   updateTemplateAction: async (id, payload) => {
     set({ isSubmitting: true, error: null });
     try {
-      const { data } = await api.patch<TemplateMutationResponse>(
-        `/template/${id}`,
-        payload,
-      );
-      set((state) => ({
-        templates: state.templates.map((t) => (t._id === id ? data.template : t)),
-      }));
+      await api.patch<TemplateMutationResponse>(`/template/${id}`, payload);
+      await useTemplateStore.getState().getTemplatesAction();
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to update template");
       set({ error: message });

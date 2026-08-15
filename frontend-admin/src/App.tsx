@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import ManageMoviesPage from "./pages/ManageMoviesPage";
 import ManageCinemasPage from "./pages/ManageCinemasPage";
+import ReviewCinemaPage from "./pages/ReviewCinemaPage";
 import ManageOwnersPage from "./pages/ManageOwnersPage";
 import MyCinemasPage from "./pages/MyCinemasPage";
 import CinemaDetailPage from "./pages/CinemaDetailPage";
@@ -50,6 +51,7 @@ const App = () => {
             <Route element={<RoleRoute roles={["admin"]} />}>
               <Route path="/movies" element={<ManageMoviesPage />} />
               <Route path="/cinemas" element={<ManageCinemasPage />} />
+              <Route path="/cinemas/:id/review" element={<ReviewCinemaPage />} />
               <Route path="/owners" element={<ManageOwnersPage />} />
             </Route>
 

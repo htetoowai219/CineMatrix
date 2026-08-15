@@ -75,6 +75,11 @@ const cinemaSchema = new Schema<Omit<ICinema, "_id">>(
     announcements: { type: [announcementSchema], default: [] },
     socials: { type: socialsSchema, default: {} },
     allowPayInPerson: { type: Boolean, default: false },
+    currency: {
+      type: String,
+      enum: ["USD", "EUR", "GBP", "MMK", "THB", "SGD", "MYR", "IDR", "PHP", "VND", "INR", "JPY", "KRW", "AUD", "CAD"],
+      default: "USD",
+    },
     status: {
       type: String,
       enum: ["pending", "active", "rejected"],

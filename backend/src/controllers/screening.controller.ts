@@ -83,7 +83,7 @@ export const getScreeningsController = async (req: Request, res: Response) => {
 
     const screenings = await Screening.find({ cinemaId: { $in: cinemaIds } })
       .populate("movieId", "title posterUrl durationMinutes")
-      .populate("cinemaId", "name")
+      .populate("cinemaId", "name currency")
       .sort({ startTime: 1 });
 
     return res.status(200).json({
@@ -158,7 +158,7 @@ export const getPublicScreeningsController = async (
     const [screenings, total] = await Promise.all([
       Screening.find(filter)
         .populate("movieId", "title posterUrl backdropUrl durationMinutes contentRating")
-        .populate("cinemaId", "name address phone email")
+        .populate("cinemaId", "name address phone email currency")
         .sort({ startTime: 1 })
         .skip((page - 1) * limit)
         .limit(limit),
@@ -195,7 +195,7 @@ export const getPublicScreeningByIdController = async (
       startTime: { $gte: new Date() },
     })
       .populate("movieId", "title posterUrl backdropUrl durationMinutes contentRating")
-      .populate("cinemaId", "name address phone email allowPayInPerson");
+      .populate("cinemaId", "name address phone email allowPayInPerson currency");
 
     if (!screening) {
       return res.status(404).json({ message: "Screening not found." });

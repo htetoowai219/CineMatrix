@@ -7,6 +7,8 @@ import {
   ICinemaSocials,
   ICinemaAnnouncement,
   SeatCellType,
+  CURRENCIES,
+  CurrencyCode,
 } from "../types/cinema.type";
 import { AuthUser } from "../types/express";
 import { uploadImageToCloudinary } from "../utils/cloudinary.util";
@@ -44,6 +46,14 @@ const toArray = (value: unknown): string[] => {
 // (multipart FormData serializes booleans as strings).
 const toBoolean = (value: unknown): boolean =>
   value === true || String(value).toLowerCase() === "true";
+
+// Normalizes a currency code, returning undefined for anything unsupported.
+const toCurrency = (value: unknown): CurrencyCode | undefined => {
+  const code = String(value ?? "").trim().toUpperCase();
+  return (CURRENCIES as readonly string[]).includes(code)
+    ? (code as CurrencyCode)
+    : undefined;
+};
 
 // Parses nested objects (address/location/rooms/etc.) sent as JSON strings by
 // the client when it submits multipart FormData.
@@ -136,11 +146,16 @@ export const canManageCinema = (
   return String(cinemaOwnerId) === user.id;
 };
 
-// Fetches all active cinemas from the database with optional filter query parameters.
+// Fetches cinemas from the database. Public callers only see active cinemas;
+// admins see every status so they can review pending/rejected venues.
 export const getAllCinemasController = async (req: Request, res: Response) => {
   try {
     const { city } = req.query;
-    const filter: Record<string, unknown> = { status: "active" };
+    const filter: Record<string, unknown> = {};
+
+    if (req.user?.role !== "admin") {
+      filter.status = "active";
+    }
 
     if (city) filter["address.city"] = new RegExp(String(city), "i");
 
@@ -254,7 +269,8 @@ export const createCinemaController = async (req: Request, res: Response) => {
 
     const files = req.files as CinemaUploadFiles | undefined;
 
-    const { name, description, phone, email, allowPayInPerson } = req.body;
+    const { name, description, phone, email, allowPayInPerson, currency } =
+      req.body;
     const address = parseObject<ICinemaAddress>(req.body.address);
     const location = parseObject<ICinemaLocation>(req.body.location);
     const socials = parseObject<ICinemaSocials>(req.body.socials);
@@ -305,6 +321,7 @@ export const createCinemaController = async (req: Request, res: Response) => {
       announcements: announcements ?? [],
       socials: socials ?? {},
       allowPayInPerson: toBoolean(allowPayInPerson),
+      currency: toCurrency(currency) ?? "USD",
       status: "pending",
     });
 
@@ -332,6 +349,7 @@ const OWNER_EDITABLE_FIELDS = [
   "socials",
   "announcements",
   "allowPayInPerson",
+  "currency",
   "images",
   "gallery",
   "address",
@@ -347,6 +365,7 @@ const STAFF_EDITABLE_FIELDS = [
   "socials",
   "announcements",
   "allowPayInPerson",
+  "currency",
   "images",
   "gallery",
   "address",
@@ -421,6 +440,14 @@ export const updateCinemaController = async (req: Request, res: Response) => {
 
     if (updateData.allowPayInPerson !== undefined) {
       updateData.allowPayInPerson = toBoolean(updateData.allowPayInPerson);
+    }
+
+    if (updateData.currency !== undefined) {
+      const currency = toCurrency(updateData.currency);
+      if (!currency) {
+        return res.status(400).json({ message: "Invalid currency code." });
+      }
+      updateData.currency = currency;
     }
 
     if (Object.keys(updateData).length === 0) {

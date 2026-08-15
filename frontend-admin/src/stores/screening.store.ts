@@ -16,6 +16,20 @@ const getErrorMessage = (err: unknown, fallback: string): string => {
   return err instanceof Error ? err.message : fallback;
 };
 
+// The backend populates movieId/cinemaId in place (objects), so map them onto
+// the friendlier `movie`/`cinema` fields the UI reads.
+const normalize = (screening: IScreening): IScreening => {
+  const movie =
+    screening.movieId && typeof screening.movieId === "object"
+      ? screening.movieId
+      : screening.movie;
+  const cinema =
+    screening.cinemaId && typeof screening.cinemaId === "object"
+      ? screening.cinemaId
+      : screening.cinema;
+  return { ...screening, movie, cinema };
+};
+
 interface ScreeningState {
   screenings: IScreening[];
   isLoading: boolean;
@@ -43,7 +57,7 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
     set({ isLoading: true, error: null });
     try {
       const { data } = await api.get<FetchScreeningsResponse>("/screening");
-      set({ screenings: data.screenings });
+      set({ screenings: data.screenings.map(normalize) });
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to fetch screenings");
       set({ error: message });
@@ -57,13 +71,8 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
   createScreeningAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
-      const { data } = await api.post<ScreeningMutationResponse>(
-        "/screening",
-        payload,
-      );
-      set((state) => ({
-        screenings: [data.screening, ...state.screenings],
-      }));
+      await api.post<ScreeningMutationResponse>("/screening", payload);
+      await useScreeningStore.getState().getScreeningsAction();
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to create screening");
       set({ error: message });
@@ -77,15 +86,8 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
   updateScreeningAction: async (id, payload) => {
     set({ isSubmitting: true, error: null });
     try {
-      const { data } = await api.patch<ScreeningMutationResponse>(
-        `/screening/${id}`,
-        payload,
-      );
-      set((state) => ({
-        screenings: state.screenings.map((s) =>
-          s._id === id ? data.screening : s,
-        ),
-      }));
+      await api.patch<ScreeningMutationResponse>(`/screening/${id}`, payload);
+      await useScreeningStore.getState().getScreeningsAction();
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to update screening");
       set({ error: message });

@@ -49,6 +49,7 @@ export interface ICinema {
   announcements?: ICinemaAnnouncement[];
   socials?: ICinemaSocials;
   allowPayInPerson: boolean;
+  currency?: string;
   status: CinemaStatus;
   createdAt?: Date | string;
   updatedAt?: Date | string;

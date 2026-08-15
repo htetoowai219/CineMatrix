@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import {
   Building2,
@@ -7,12 +7,22 @@ import {
   CalendarClock,
   Clapperboard,
   ChevronRight,
+  TrendingUp,
 } from "lucide-react";
 import StatusBadge from "../components/ui/StatusBadge";
+import { HBarList, VerticalBarChart } from "../components/ui/BarCharts";
 import { useCinemaStore } from "../stores/cinema.store";
 import { useBookingStore } from "../stores/booking.store";
 import { useScreeningStore } from "../stores/screening.store";
 import { useTemplateStore } from "../stores/template.store";
+import { formatCurrency } from "../utils/currency";
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: "#f59e0b",
+  confirmed: "#10b981",
+  rejected: "#ef4444",
+  cancelled: "#64748b",
+};
 
 export default function PartnerDashboardPage() {
   const { myCinemas, isLoading: cinemasLoading, getMyCinemasAction } =
@@ -37,6 +47,57 @@ export default function PartnerDashboardPage() {
   const pendingBookings = bookings.filter((b) => b.status === "pending").length;
   const totalScreenings = screenings.length;
   const pendingCinemas = myCinemas.filter((c) => c.status === "pending").length;
+
+  // Bookings created on each of the last 7 days (falls back to the screening
+  // start time when a booking has no createdAt).
+  const bookingsLast7Days = useMemo(() => {
+    const days: { label: string; value: number }[] = [];
+    for (let i = 6; i >= 0; i -= 1) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const next = new Date(d.getTime() + 86400000);
+      const count = bookings.filter((b) => {
+        const t = new Date(b.createdAt ?? b.screeningId.startTime);
+        return t.getTime() >= d.getTime() && t.getTime() < next.getTime();
+      }).length;
+      days.push({ label: d.toLocaleDateString("en-US", { weekday: "short" }), value: count });
+    }
+    return days;
+  }, [bookings]);
+
+  // Booking status breakdown.
+  const statusBreakdown = useMemo(
+    () =>
+      (["pending", "confirmed", "rejected", "cancelled"] as const).map(
+        (status) => ({
+          label: status,
+          value: bookings.filter((b) => b.status === status).length,
+          color: STATUS_COLORS[status],
+        }),
+      ),
+    [bookings],
+  );
+
+  // Confirmed revenue per cinema, most to least.
+  const revenueByCinema = useMemo(() => {
+    const map = new Map<
+      string,
+      { label: string; value: number; currency?: string }
+    >();
+    for (const b of bookings) {
+      if (b.status !== "confirmed") continue;
+      const cinema = b.screeningId.cinemaId;
+      const id = String(cinema._id);
+      const entry =
+        map.get(id) ?? { label: cinema.name, value: 0, currency: cinema.currency };
+      entry.value += b.totalPrice;
+      map.set(id, entry);
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [bookings]);
 
   const isLoading =
     cinemasLoading || bookingsLoading || screeningsLoading || templatesLoading;
@@ -191,14 +252,74 @@ export default function PartnerDashboardPage() {
                         </p>
                         <p className="text-xs text-slate-500">
                           {booking.userId.name ?? "Customer"} · {booking.seats.length} seat
-                          {booking.seats.length !== 1 ? "s" : ""} · $
-                          {Number(booking.totalPrice).toFixed(2)}
+                          {booking.seats.length !== 1 ? "s" : ""} ·{" "}
+                          {formatCurrency(
+                            booking.totalPrice,
+                            booking.screeningId.cinemaId?.currency,
+                          )}
                         </p>
                       </div>
                       <StatusBadge label={booking.status} />
                     </div>
                   ))}
                 </div>
+              )}
+            </section>
+          </div>
+
+          {/* Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
+              <div className="flex items-center gap-2 mb-5">
+                <TrendingUp className="w-4 h-4 text-red-500" />
+                <h2 className="font-display font-bold text-white uppercase tracking-wide text-lg">
+                  Booking Activity
+                </h2>
+              </div>
+              {bookings.length === 0 ? (
+                <p className="text-slate-400 text-sm py-6 text-center">
+                  Booking data will appear here.
+                </p>
+              ) : (
+                <VerticalBarChart data={bookingsLast7Days} />
+              )}
+            </section>
+
+            <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-display font-bold text-white uppercase tracking-wide text-lg">
+                  Booking Status
+                </h2>
+                <Link
+                  to="/bookings"
+                  className="flex items-center gap-1 text-red-500 text-xs font-bold hover:text-red-400 transition-colors"
+                >
+                  Review <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+              <HBarList data={statusBreakdown} />
+            </section>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-display font-bold text-white uppercase tracking-wide text-lg">
+                  Revenue by Cinema
+                </h2>
+                <span className="text-[11px] text-slate-500 font-semibold">
+                  Confirmed
+                </span>
+              </div>
+              {revenueByCinema.length === 0 ? (
+                <p className="text-slate-400 text-sm py-6 text-center">
+                  No confirmed revenue yet.
+                </p>
+              ) : (
+                <HBarList
+                  data={revenueByCinema}
+                  formatValue={(v, d) => formatCurrency(v, d.currency)}
+                />
               )}
             </section>
           </div>

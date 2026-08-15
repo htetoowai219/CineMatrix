@@ -345,7 +345,7 @@ export const getMyBookingsController = async (req: Request, res: Response) => {
         path: "screeningId",
         populate: [
           { path: "movieId", select: "title posterUrl durationMinutes" },
-          { path: "cinemaId", select: "name address phone email" },
+          { path: "cinemaId", select: "name address phone email currency" },
         ],
       })
       .sort({ createdAt: -1 });
@@ -390,7 +390,7 @@ export const getBookingsController = async (req: Request, res: Response) => {
         path: "screeningId",
         populate: [
           { path: "movieId", select: "title posterUrl durationMinutes" },
-          { path: "cinemaId", select: "name" },
+          { path: "cinemaId", select: "name currency" },
         ],
       })
       .sort({ createdAt: -1 });

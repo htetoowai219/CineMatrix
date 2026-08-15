@@ -42,6 +42,29 @@ export interface ICinemaAnnouncement {
   imageUrl?: string;
 }
 
+// ISO 4217 currency codes the cinema can price tickets in.
+export const CURRENCIES = [
+  "USD",
+  "EUR",
+  "GBP",
+  "MMK",
+  "THB",
+  "SGD",
+  "MYR",
+  "IDR",
+  "PHP",
+  "VND",
+  "INR",
+  "JPY",
+  "KRW",
+  "AUD",
+  "CAD",
+] as const;
+
+export type CurrencyCode = (typeof CURRENCIES)[number];
+
+export const DEFAULT_CURRENCY: CurrencyCode = "USD";
+
 export interface ICinema {
   _id?: Types.ObjectId | string;
   name: string;
@@ -57,6 +80,7 @@ export interface ICinema {
   announcements?: ICinemaAnnouncement[]; // Image slider shown on the cinema page
   socials?: ICinemaSocials;
   allowPayInPerson: boolean; // Whether customers may choose to pay at the cinema
+  currency?: CurrencyCode; // Currency ticket prices are displayed and charged in
   status: CinemaStatus; // pending -> active after admin approval
   createdAt?: Date | string;
   updatedAt?: Date | string;

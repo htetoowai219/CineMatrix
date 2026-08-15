@@ -21,8 +21,9 @@ import {
 
 const router = Router();
 
-// Public routes for browsing active cinemas
-router.get("/", getAllCinemasController);
+// Public route for browsing active cinemas. With a valid token, admins see
+// every status so they can review pending/rejected venues.
+router.get("/", verifyOptionalAccessToken, getAllCinemasController);
 
 // Owner/staff routes: cinemas they own or manage
 router.get("/my", verifyAccessToken, requireRole("admin", "cinema_owner", "cinema_staff"), getMyCinemasController);

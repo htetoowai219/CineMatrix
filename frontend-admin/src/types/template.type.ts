@@ -5,17 +5,23 @@ export type ScreeningTemplateMovieRef = {
   durationMinutes: number;
 };
 
+export type ScreeningTemplateCinemaRef = {
+  _id: string;
+  name: string;
+  currency?: string;
+};
+
 export interface IScreeningTemplate {
   _id?: string;
-  cinemaId: string;
-  movieId: string;
+  cinemaId: string | ScreeningTemplateCinemaRef;
+  movieId: string | ScreeningTemplateMovieRef;
   roomName: string;
   rowPrices: Record<string, number>;
   createdBy: string;
   createdAt?: string;
   updatedAt?: string;
   movie?: ScreeningTemplateMovieRef;
-  cinema?: { _id: string; name: string };
+  cinema?: ScreeningTemplateCinemaRef;
 }
 
 export interface CreateTemplatePayload {

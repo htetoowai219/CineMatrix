@@ -49,6 +49,7 @@ export interface ICinema {
   announcements?: ICinemaAnnouncement[];
   socials?: ICinemaSocials;
   allowPayInPerson: boolean;
+  currency?: string;
   status: CinemaStatus;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -78,6 +79,7 @@ export interface CreateCinemaPayload {
   announcements?: ICinemaAnnouncement[];
   socials?: ICinemaSocials;
   allowPayInPerson?: boolean;
+  currency?: string;
 }
 
 export type UpdateCinemaPayload = Partial<CreateCinemaPayload>;

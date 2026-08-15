@@ -15,8 +15,15 @@ import { useMovieStore } from "../stores/movie.store";
 import { useParams, useNavigate } from "react-router";
 import type { ICinema } from "../types/cinema.type";
 import type { IScreeningTemplate } from "../types/template.type";
+import { formatCurrency, currencySymbol } from "../utils/currency";
 
 const rowLabel = (index: number) => String.fromCharCode(65 + Math.min(index, 25));
+
+const templateCinemaId = (template: IScreeningTemplate): string =>
+  typeof template.cinemaId === "object" ? template.cinemaId._id : template.cinemaId;
+
+const templateMovieId = (template: IScreeningTemplate): string =>
+  typeof template.movieId === "object" ? template.movieId._id : template.movieId;
 
 interface FormState {
   cinemaId: string;
@@ -80,7 +87,7 @@ export default function TemplatesPage() {
 
   const filtered = useMemo(() => {
     if (activeFilter === "ALL") return templates;
-    return templates.filter((t) => t.cinemaId === activeFilter);
+    return templates.filter((t) => templateCinemaId(t) === activeFilter);
   }, [templates, activeFilter]);
 
   const selectedCinema = useMemo<ICinema | undefined>(
@@ -101,8 +108,8 @@ export default function TemplatesPage() {
   const openEdit = (template: IScreeningTemplate) => {
     setEditing(template);
     setForm({
-      cinemaId: template.cinemaId,
-      movieId: template.movieId,
+      cinemaId: templateCinemaId(template),
+      movieId: templateMovieId(template),
       roomName: template.roomName,
       rowPrices: Object.fromEntries(
         Object.entries(template.rowPrices).map(([k, v]) => [k, String(v)]),
@@ -317,7 +324,7 @@ export default function TemplatesPage() {
                         key={row}
                         className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-slate-300"
                       >
-                        Row {row} · ${Number(price).toFixed(2)}
+                        Row {row} · {formatCurrency(Number(price), template.cinema?.currency)}
                       </span>
                     ))}
                   </div>
@@ -441,7 +448,7 @@ export default function TemplatesPage() {
                         Row {label}
                       </span>
                       <div className="flex items-center flex-1">
-                        <span className="text-xs text-slate-500">$</span>
+                        <span className="text-xs text-slate-500">{currencySymbol(selectedCinema?.currency)}</span>
                         <input
                           type="number"
                           step="0.5"

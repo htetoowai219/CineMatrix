@@ -7,15 +7,18 @@ import {
   Trash2,
   AlertCircle,
   Building2,
+  Eye,
 } from "lucide-react";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import StatusBadge from "../components/ui/StatusBadge";
 import { useCinemaStore } from "../stores/cinema.store";
 import type { ICinema } from "../types/cinema.type";
+import { useNavigate } from "react-router";
 
 type StatusFilter = "ALL" | "pending" | "active" | "rejected";
 
 export default function ManageCinemasPage() {
+  const navigate = useNavigate();
   const {
     cinemas,
     count,
@@ -201,6 +204,9 @@ export default function ManageCinemasPage() {
                           <p className="text-xs text-slate-500 truncate max-w-[220px]">
                             Owner ID: {String(cinema.ownerId)}
                           </p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {cinema.currency ?? "USD"}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -225,6 +231,17 @@ export default function ManageCinemasPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
+                        {(cinema.status === "pending" ||
+                          cinema.status === "rejected") && (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/cinemas/${String(cinema._id)}/review`)}
+                            title="Review cinema"
+                            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        )}
                         {cinema.status === "pending" && (
                           <>
                             <button
