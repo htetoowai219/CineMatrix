@@ -46,9 +46,10 @@ const bookingSchema = new Schema<Omit<IBooking, "_id">>(
 );
 
 bookingSchema.index({ screeningId: 1, status: 1 });
-// TTL safety net: pending bookings past their payment window are purged by
-// MongoDB. The sweeper normally releases seats and cancels them first.
-bookingSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Index for the expiry sweeper. This is deliberately NOT a TTL index: the
+// worker must release seats before cancelling, so MongoDB must never delete an
+// expired booking document out from under it.
+bookingSchema.index({ expiresAt: 1 });
 
 export const Booking = model<Omit<IBooking, "_id">>(
   "Booking",

@@ -8,7 +8,7 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 5174
+EXPOSE 5173
 
 # Pass --host flag so Vite listens to network requests inside Docker
 CMD ["npm", "run", "dev", "--", "--host"]

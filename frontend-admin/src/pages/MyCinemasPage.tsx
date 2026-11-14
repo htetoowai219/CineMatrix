@@ -16,7 +16,6 @@ import StatusBadge from "../components/ui/StatusBadge";
 import ImageUpload from "../components/ui/ImageUpload";
 import SeatLayoutBuilder from "../components/ui/SeatLayoutBuilder";
 import MapPicker, { type MapLocation } from "../components/ui/MapPicker";
-import { makeGrid } from "../utils/seatLayout";
 import { useCinemaStore } from "../stores/cinema.store";
 import { useUserStore } from "../stores/user.store";
 import { CURRENCIES } from "../utils/currency";
@@ -117,11 +116,7 @@ export default function MyCinemasPage() {
 
   const resizeRoom = (key: number, rows: number, cols: number) => {
     setRooms((prev) =>
-      prev.map((room) => {
-        if (room.key !== key) return room;
-        const grid = makeGrid(rows, cols);
-        return { ...room, rows, cols, grid };
-      }),
+      prev.map((room) => (room.key === key ? { ...room, rows, cols } : room)),
     );
   };
 

@@ -19,7 +19,6 @@ import StatusBadge from "../components/ui/StatusBadge";
 import ImageUpload from "../components/ui/ImageUpload";
 import SeatLayoutBuilder from "../components/ui/SeatLayoutBuilder";
 import MapPicker, { type MapLocation } from "../components/ui/MapPicker";
-import { makeGrid } from "../utils/seatLayout";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { useCinemaStore } from "../stores/cinema.store";
 import { useUserStore } from "../stores/user.store";
@@ -800,18 +799,10 @@ function RoomsTab({
               setDraft((prev) => prev && { ...prev, grid })
             }
             onChangeRows={(rows) =>
-              setDraft((prev) =>
-                prev
-                  ? { ...prev, rows, grid: makeGrid(rows, prev.cols) }
-                  : prev,
-              )
+              setDraft((prev) => (prev ? { ...prev, rows } : prev))
             }
             onChangeCols={(cols) =>
-              setDraft((prev) =>
-                prev
-                  ? { ...prev, cols, grid: makeGrid(prev.rows, cols) }
-                  : prev,
-              )
+              setDraft((prev) => (prev ? { ...prev, cols } : prev))
             }
           />
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800 mt-4">

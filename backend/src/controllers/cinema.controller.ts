@@ -81,8 +81,9 @@ const uploadImages = async (
   return urls;
 };
 
-// Validates a room's seat layout grid. Returns a human-readable error message
-// describing the first problem found, or null when the room is well-formed.
+// Validates a room's seat layout grid and normalizes legacy unpaired "double"
+// cells to single seats. Returns a human-readable error message describing the
+// first problem found, or null when the room is well-formed.
 const getRoomError = (room: ICinemaRoom, index: number): string | null => {
   if (!room || typeof room !== "object") {
     return `Room ${index + 1} is not a valid object.`;
@@ -111,6 +112,18 @@ const getRoomError = (room: ICinemaRoom, index: number): string | null => {
           r + 1
         }, col ${c + 1}.`;
       }
+    }
+
+    // Double seats must occupy two adjacent cells. Legacy layouts may contain
+    // a single "double" cell; normalize it to a normal seat so the stored grid
+    // keeps the pair invariant after the next save.
+    for (let c = 0; c < row.length; c++) {
+      if (row[c] !== "double") continue;
+      if (row[c + 1] === "double") {
+        c += 1;
+        continue;
+      }
+      row[c] = "seat";
     }
   }
   return null;

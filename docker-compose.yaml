@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # --------------------------------------------------
   # 1. Local MongoDB Database
@@ -7,12 +5,18 @@ services:
   mongodb:
     image: mongo:latest
     container_name: cinematrix_mongodb
-    ports:
-      - "27017:27017" 
+    # No host port: the backend reaches it as mongodb:27017 on the Compose
+    # network. Publishing 27017 also collides with a locally installed mongod.
     volumes:
       - mongo_data:/data/db
     networks:
       - cinematrix_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   # --------------------------------------------------
   # 2. Redis (seat locks + booking timeouts)
@@ -20,10 +24,15 @@ services:
   redis:
     image: redis:7-alpine
     container_name: cinematrix_redis
-    ports:
-      - "6379:6379"
+    # Internal-only: a local Redis commonly owns host port 6379. Add
+    # "6380:6379" under ports if you need host access for debugging.
     networks:
       - cinematrix_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   # --------------------------------------------------
   # 2. Express Backend
@@ -37,23 +46,24 @@ services:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    # Secrets (ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, CLOUDINARY_URL) are
+    # loaded from backend/.env via env_file above. Do not hardcode them here.
     environment:
       - PORT=8000
       - MONGO_URI=mongodb://mongodb:27017/cinematrix
       - FRONTEND_CLIENT=http://localhost:5173
       - FRONTEND_ADMIN=http://localhost:5174
-      - ACCESS_TOKEN_SECRET=XfvCQ0EuXG2SSFglbD85g7ilX22XAr82
       - ACCESS_TOKEN_EXP=1d
-      - REFRESH_TOKEN_SECRET=E34Iygiq78rKFMTYhCpaHmxoG0UlU6fX
       - REFRESH_TOKEN_EXP=7d
-      - CLOUDINARY_URL=cloudinary://418981418793822:R5qV7vPuslG1CHv4pnQ4jNEwRwc@dxmpgnub2
       - REDIS_URL=redis://redis:6379
     volumes:
       - ./backend:/app
       - /app/node_modules
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - cinematrix_network
 

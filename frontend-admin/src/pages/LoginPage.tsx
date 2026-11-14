@@ -133,7 +133,7 @@ export default function LoginPage() {
                     if (error) clearError();
                     setEmail(e.target.value);
                   }}
-                  placeholder="admin@cinematrix.com"
+                  placeholder="admin@gmail.com"
                   className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-red-600/60 transition-all disabled:opacity-50"
                   disabled={isLoading}
                   required
