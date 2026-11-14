@@ -22,7 +22,6 @@ const PAYMENT_SCREENSHOT_FOLDER = "cinematrix/payments";
 const PENDING_BOOKING_TTL_MS =
   (Number(process.env.PENDING_BOOKING_TTL_MINUTES) || 30) * 60 * 1000;
 
-// Releases screening seats back to "available" for a set of labels.
 const releaseSeats = async (screeningId: string, labels: string[]) => {
   if (labels.length === 0) return;
   await Screening.updateMany(
@@ -32,7 +31,6 @@ const releaseSeats = async (screeningId: string, labels: string[]) => {
   );
 };
 
-// Marks a set of screening seats as held (used after a Redis lock is acquired).
 const markSeatsHeld = async (screeningId: string, labels: string[]) => {
   if (labels.length === 0) return;
   await Screening.updateMany(
@@ -42,7 +40,6 @@ const markSeatsHeld = async (screeningId: string, labels: string[]) => {
   );
 };
 
-// Marks held seats back to available (after a lock is released or expires).
 const markSeatsAvailable = async (screeningId: string, labels: string[]) => {
   if (labels.length === 0) return;
   await Screening.updateMany(
@@ -81,7 +78,6 @@ const notifyBookingStatus = async (booking: any, status: string) => {
   }
 };
 
-// Customer-only: uploads a payment screenshot and returns its URL.
 export const uploadPaymentScreenshotController = async (
   req: Request,
   res: Response,
@@ -181,7 +177,6 @@ export const lockSeatsController = async (req: Request, res: Response) => {
   }
 };
 
-// Customer-only: releases a lock the customer holds on a screening's seats.
 export const unlockSeatsController = async (req: Request, res: Response) => {
   try {
     const { screeningId, seats } = req.body || {};
@@ -232,13 +227,17 @@ export const createBookingController = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "This screening has already started." });
     }
 
-    if (paymentMethod === "in_person") {
-      const cinema = await Cinema.findById(screening.cinemaId);
-      if (!cinema?.allowPayInPerson) {
-        return res.status(400).json({
-          message: "This cinema does not accept in-person payment.",
-        });
-      }
+    // Only active cinemas can sell tickets; a pending/rejected venue must not
+    // accept bookings even if its screening id is known.
+    const cinema = await Cinema.findById(screening.cinemaId);
+    if (!cinema || cinema.status !== "active") {
+      return res.status(404).json({ message: "Screening not found." });
+    }
+
+    if (paymentMethod === "in_person" && !cinema.allowPayInPerson) {
+      return res.status(400).json({
+        message: "This cinema does not accept in-person payment.",
+      });
     }
     if (paymentMethod === "screenshot" && !paymentScreenshotUrl) {
       return res
@@ -283,7 +282,10 @@ export const createBookingController = async (req: Request, res: Response) => {
       });
     }
 
-    // Atomically mark each requested seat as booked; roll back on conflict.
+    // Atomically mark each requested seat as booked. Only seats this request
+    // actually claimed are released on conflict, so a failed request can never
+    // free a seat that another booking already owns.
+    const bookedLabels: string[] = [];
     for (const label of requestedSeats) {
       const result = await Screening.updateOne(
         { _id: screeningId, "seats.label": label },
@@ -295,11 +297,12 @@ export const createBookingController = async (req: Request, res: Response) => {
         },
       );
       if (result.modifiedCount === 0) {
-        await releaseSeats(String(screeningId), requestedSeats);
+        await releaseSeats(String(screeningId), bookedLabels);
         return res.status(409).json({
           message: `Seat ${label} was taken by someone else. Please reselect seats.`,
         });
       }
+      bookedLabels.push(label);
     }
 
     const totalPrice = bookingSeats.reduce((sum, seat) => sum + seat.price, 0);
@@ -337,7 +340,6 @@ export const createBookingController = async (req: Request, res: Response) => {
   }
 };
 
-// Customer: lists the requester's bookings.
 export const getMyBookingsController = async (req: Request, res: Response) => {
   try {
     const bookings = await Booking.find({ userId: req.user!.id })
@@ -542,7 +544,7 @@ export const reconcileExpiredSeatLocks = async () => {
 };
 
 // Cancels pending bookings whose payment window elapsed, releasing their seats.
-// The Mongo TTL index also purges any that slip through.
+// This worker is the only expiry path, so the release always runs first.
 export const expirePendingBookings = async () => {
   try {
     const now = new Date();

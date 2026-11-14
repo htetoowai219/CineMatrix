@@ -3,6 +3,7 @@ import { Cinema } from "../models/cinema.model";
 import { Movie } from "../models/movie.model";
 import { ScreeningTemplate } from "../models/template.model";
 import { Screening } from "../models/screening.model";
+import { Booking } from "../models/booking.model";
 import { ICinemaRoom } from "../types/cinema.type";
 import { IScreeningSeat } from "../types/screening.type";
 import { canManageCinema } from "./cinema.controller";
@@ -21,7 +22,8 @@ export const rowLetter = (index: number): string => {
 
 // Creates a fresh seat instance list from a room's seat grid. Each screening
 // gets its own copies, so "A3 at 10am" and "A3 at 3pm" are independent.
-// Seat numbers auto-increment within a row (walkways/stairs/empty are skipped).
+// Seat numbers auto-increment per bookable unit (walkways/stairs/empty and the
+// second cell of a double pair are skipped).
 export const materializeSeats = (
   room: ICinemaRoom,
   rowPrices: Record<string, number> | Map<string, number>,
@@ -34,13 +36,17 @@ export const materializeSeats = (
   for (let r = 0; r < room.rows; r++) {
     const rowLabel = rowLetter(r);
     const rowPrice = prices[rowLabel];
+    const row = room.grid[r];
     let seatNumber = 0;
 
-    for (const cell of room.grid[r]) {
+    for (let c = 0; c < row.length; c += 1) {
+      const cell = row[c];
       if (cell !== "seat" && cell !== "double") continue;
 
-      seatNumber += 1;
       const isDouble = cell === "double";
+      // A double seat is stored as two adjacent "double" cells and becomes one
+      // bookable seat. The fallback keeps legacy one-cell doubles working.
+      const hasPair = isDouble && row[c + 1] === "double";
 
       if (rowPrice === undefined || rowPrice <= 0) {
         return {
@@ -49,6 +55,7 @@ export const materializeSeats = (
         };
       }
 
+      seatNumber += 1;
       seats.push({
         label: `${rowLabel}${seatNumber}`,
         row: rowLabel,
@@ -56,6 +63,8 @@ export const materializeSeats = (
         price: isDouble ? rowPrice * 2 : rowPrice,
         status: "available",
       });
+
+      if (hasPair) c += 1;
     }
   }
 
@@ -72,7 +81,6 @@ const getManagedCinemaIds = async (
   return cinemas.map((c) => c._id);
 };
 
-// Owner/staff: lists screenings for their managed cinemas.
 export const getScreeningsController = async (req: Request, res: Response) => {
   try {
     const cinemaIds = await getManagedCinemaIds(
@@ -195,9 +203,19 @@ export const getPublicScreeningByIdController = async (
       startTime: { $gte: new Date() },
     })
       .populate("movieId", "title posterUrl backdropUrl durationMinutes contentRating")
-      .populate("cinemaId", "name address phone email allowPayInPerson currency");
+      .populate(
+        "cinemaId",
+        "name address phone email allowPayInPerson currency status",
+      );
 
     if (!screening) {
+      return res.status(404).json({ message: "Screening not found." });
+    }
+
+    const populatedCinema = screening.cinemaId as unknown as {
+      status?: string;
+    };
+    if (populatedCinema?.status !== "active") {
       return res.status(404).json({ message: "Screening not found." });
     }
 
@@ -267,6 +285,20 @@ export const createScreeningController = async (req: Request, res: Response) => 
       start.getTime() + movie.durationMinutes * 60 * 1000,
     );
 
+    // A room can only host one screening at a time. The interval-overlap
+    // condition is `existing.start < new.end AND existing.end > new.start`.
+    const clash = await Screening.findOne({
+      cinemaId: template.cinemaId,
+      roomName: template.roomName,
+      startTime: { $lt: endTime },
+      endTime: { $gt: start },
+    }).select("_id");
+    if (clash) {
+      return res
+        .status(409)
+        .json({ message: "This room is already booked for that time." });
+    }
+
     const screening = new Screening({
       templateId,
       cinemaId: template.cinemaId,
@@ -291,7 +323,6 @@ export const createScreeningController = async (req: Request, res: Response) => 
   }
 };
 
-// Owner/staff: reschedules a screening's start time.
 export const updateScreeningController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -318,10 +349,28 @@ export const updateScreeningController = async (req: Request, res: Response) => 
     if (Number.isNaN(start.getTime())) {
       return res.status(400).json({ message: "Invalid startTime." });
     }
+    if (start.getTime() < Date.now()) {
+      return res
+        .status(400)
+        .json({ message: "startTime cannot be in the past." });
+    }
 
     const movie = await Movie.findById(screening.movieId);
     const duration = movie?.durationMinutes ?? 120;
     const endTime = new Date(start.getTime() + duration * 60 * 1000);
+
+    const clash = await Screening.findOne({
+      _id: { $ne: id },
+      cinemaId: screening.cinemaId,
+      roomName: screening.roomName,
+      startTime: { $lt: endTime },
+      endTime: { $gt: start },
+    }).select("_id");
+    if (clash) {
+      return res
+        .status(409)
+        .json({ message: "This room is already booked for that time." });
+    }
 
     const updated = await Screening.findByIdAndUpdate(
       id,
@@ -341,7 +390,6 @@ export const updateScreeningController = async (req: Request, res: Response) => 
   }
 };
 
-// Owner/staff: deletes a screening.
 export const deleteScreeningController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -356,6 +404,19 @@ export const deleteScreeningController = async (req: Request, res: Response) => 
       return res
         .status(403)
         .json({ message: "Access denied. You do not manage this cinema." });
+    }
+
+    // Deleting the screening would orphan its bookings (and break booking
+    // history/population), so require the owner to resolve them first.
+    const activeBookings = await Booking.countDocuments({
+      screeningId: id,
+      status: { $in: ["pending", "confirmed"] },
+    });
+    if (activeBookings > 0) {
+      return res.status(409).json({
+        message:
+          "This screening has pending or confirmed bookings. Cancel them before deleting.",
+      });
     }
 
     await Screening.findByIdAndDelete(id);

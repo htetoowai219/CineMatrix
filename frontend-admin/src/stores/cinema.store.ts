@@ -113,7 +113,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Creates a new cinema (admin-only on the backend).
+  // Creates a cinema owned by the signed-in owner; it starts pending approval.
   createCinemaAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -135,7 +135,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Updates an existing cinema by ID (admin-only on the backend).
+  // Updates a cinema owned by the signed-in owner or their staff.
   updateCinemaAction: async (id, payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -158,7 +158,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Deletes a cinema by ID (admin-only on the backend).
+  // Deletes a cinema (admin, or the owner of that cinema).
   deleteCinemaAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {

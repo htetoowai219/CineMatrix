@@ -5,10 +5,21 @@ export const LOCK_TTL_SECONDS = 10 * 60; // 10-minute payment timeout
 let client: RedisClientType | null = null;
 let connectPromise: Promise<unknown> | null = null;
 
+const RECONNECT_ATTEMPTS = 5;
+
 const getClient = (): RedisClientType => {
   if (!client) {
     client = createClient({
       url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+      socket: {
+        connectTimeout: 3_000,
+        // Bound the retries so a Redis outage fails fast instead of blocking
+        // the whole API process during startup.
+        reconnectStrategy: (retries) =>
+          retries >= RECONNECT_ATTEMPTS
+            ? new Error("Redis unavailable")
+            : Math.min(retries * 200, 1_000),
+      },
     });
     client.on("error", (err) => {
       console.error("Redis error:", err.message);
@@ -17,13 +28,17 @@ const getClient = (): RedisClientType => {
   return client;
 };
 
-// Connects lazily and caches the connect promise so a brief Redis outage does
-// not trigger a cascade of reconnect attempts.
+// Connects lazily and caches the connect promise so a burst of requests does
+// not trigger a cascade of connect attempts. A failed attempt is cleared so
+// the next request can retry.
 export const connectRedis = async (): Promise<RedisClientType> => {
   const current = getClient();
   if (!current.isOpen) {
     if (!connectPromise) {
-      connectPromise = current.connect();
+      connectPromise = current.connect().catch((error) => {
+        connectPromise = null;
+        throw error;
+      });
     }
     await connectPromise;
   }

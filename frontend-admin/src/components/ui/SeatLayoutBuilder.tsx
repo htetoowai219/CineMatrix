@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Eraser, PaintBucket, MousePointerClick, Minus, Plus } from "lucide-react";
 import type { SeatCellType } from "../../types/cinema.type";
-import { makeGrid } from "../../utils/seatLayout";
+import {
+  applyPaint,
+  makeGrid,
+  normalizeDoublePairs,
+  resizeGrid,
+} from "../../utils/seatLayout";
 
 const paintLabel = (row: number): string =>
   String.fromCharCode(65 + Math.min(row, 25));
@@ -50,23 +55,30 @@ const SeatLayoutBuilder = ({
 
   const setCell = (r: number, c: number) => {
     if (disabled) return;
-    const next = grid.map((rowArr) => [...rowArr]);
-    next[r][c] = paint;
-    onChangeGrid(next);
+    onChangeGrid(applyPaint(grid, r, c, paint));
   };
 
   const paintAll = () => {
     if (disabled) return;
-    onChangeGrid(makeGrid(rows, cols).map((rowArr) => rowArr.map(() => paint)));
+    const filled = makeGrid(rows, cols).map((rowArr) =>
+      rowArr.map(() => paint),
+    );
+    // Painting "double" across an odd column count leaves the final cell as
+    // a normal seat instead of an orphaned half-pair.
+    onChangeGrid(normalizeDoublePairs(filled));
   };
 
   const resizeRows = (delta: number) => {
     const nextRows = Math.max(1, Math.min(30, rows + delta));
+    if (nextRows === rows) return;
+    onChangeGrid(resizeGrid(grid, nextRows, cols));
     onChangeRows(nextRows);
   };
 
   const resizeCols = (delta: number) => {
     const nextCols = Math.max(1, Math.min(30, cols + delta));
+    if (nextCols === cols) return;
+    onChangeGrid(resizeGrid(grid, rows, nextCols));
     onChangeCols(nextCols);
   };
 
@@ -112,6 +124,11 @@ const SeatLayoutBuilder = ({
           <Eraser className="w-3.5 h-3.5" />
           Clear
         </button>
+        {paint === "double" && cols < 2 && (
+          <span className="text-[10px] font-semibold text-amber-500/80">
+            Double seats need at least 2 columns.
+          </span>
+        )}
       </div>
 
       {/* Size controls */}
@@ -179,25 +196,64 @@ const SeatLayoutBuilder = ({
             <span className="w-full max-w-md mx-3 h-1 rounded-full bg-slate-800" />
           </div>
           <div className="flex flex-col items-start gap-1">
-            {grid.map((rowArr, r) => (
-              <div key={r} className="flex items-center gap-1">
-                <span className="w-5 text-right text-[10px] font-bold text-slate-600 pr-1">
-                  {paintLabel(r)}
-                </span>
-                {rowArr.map((cell, c) => (
+            {grid.map((rowArr, r) => {
+              const cells: ReactNode[] = [];
+
+              for (let c = 0; c < rowArr.length; c += 1) {
+                const cell = rowArr[c];
+
+                // A pair is rendered as one merged control spanning exactly
+                // two grid columns, so every row keeps the same column pitch.
+                if (cell === "double" && rowArr[c + 1] === "double") {
+                  const start = c;
+                  cells.push(
+                    <button
+                      key={`double-${r}-${start}`}
+                      type="button"
+                      onClick={() => setCell(r, start)}
+                      disabled={disabled}
+                      title={`${paintLabel(r)}${start + 1}-${start + 2} (double)`}
+                      className={`col-span-2 flex h-6 w-[calc(4rem_+_0.375rem)] items-center justify-center rounded-sm transition-colors disabled:cursor-default ${CELL_STYLES.double}`}
+                    >
+                      <span className="flex items-center justify-center gap-0.5">
+                        <span className="h-3 w-2 rounded-[2px] bg-rose-200/70" />
+                        <span className="h-3 w-px bg-rose-950/70" />
+                        <span className="h-3 w-2 rounded-[2px] bg-rose-200/70" />
+                      </span>
+                    </button>,
+                  );
+                  c += 1;
+                  continue;
+                }
+
+                cells.push(
                   <button
-                    key={c}
+                    key={`cell-${r}-${c}`}
                     type="button"
                     onClick={() => setCell(r, c)}
                     disabled={disabled}
                     title={`${paintLabel(r)}${c + 1} (${cell})`}
-                    className={`rounded-sm transition-colors disabled:cursor-default ${CELL_STYLES[cell]} ${
-                      cell === "double" ? "w-9 h-6" : "w-6 h-6"
-                    }`}
-                  />
-                ))}
-              </div>
-            ))}
+                    className={`h-6 w-8 rounded-sm transition-colors disabled:cursor-default ${CELL_STYLES[cell]}`}
+                  />,
+                );
+              }
+
+              return (
+                <div key={r} className="flex items-center gap-1.5">
+                  <span className="w-5 text-right text-[10px] font-bold text-slate-600 pr-1">
+                    {paintLabel(r)}
+                  </span>
+                  <div
+                    className="inline-grid gap-1.5"
+                    style={{
+                      gridTemplateColumns: `repeat(${cols}, 2rem)`,
+                    }}
+                  >
+                    {cells}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

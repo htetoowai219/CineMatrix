@@ -20,6 +20,7 @@
 **/dist/
 **/out/
 .next/
+*.tsbuildinfo
 
 # ==========================================
 # 4. Logs & Debugging

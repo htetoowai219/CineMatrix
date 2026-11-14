@@ -43,11 +43,11 @@ router.post(
   createCinemaController,
 );
 
-// Owner/staff: edit cinema details
+// Owner/staff: edit cinema details (admins may also update any cinema)
 router.patch(
   "/:id",
   verifyAccessToken,
-  requireRole("cinema_owner", "cinema_staff"),
+  requireRole("admin", "cinema_owner", "cinema_staff"),
   uploadCinemaImages,
   handleMulterError,
   updateCinemaController,

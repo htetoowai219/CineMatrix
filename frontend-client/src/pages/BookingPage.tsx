@@ -404,7 +404,9 @@ export default function BookingPage() {
                       onClick={() => toggleSeat(seat)}
                       title={`${seat.label} — ${formatCurrency(seat.price, cinema?.currency)}`}
                       className={`rounded-md flex items-center justify-center transition-all active:scale-95 ${
-                        seat.isDouble ? "w-9 h-7" : "w-7 h-7"
+                        seat.isDouble
+                          ? "w-[calc(3.5rem_+_0.375rem)] h-7"
+                          : "w-7 h-7"
                       } ${
                         isSelected
                           ? "bg-red-600 border-red-500 text-white shadow-md shadow-red-600/30"

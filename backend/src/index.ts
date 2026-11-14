@@ -52,8 +52,8 @@ app.use("/booking", bookingRoutes);
 const start = async () => {
   await connectDb();
 
-  // Best-effort Redis warm-up (seat locks). The lock endpoints tolerate a
-  // missing Redis by surfacing 503, so a cold start never blocks the server.
+  // Best-effort Redis warm-up for seat locks. A Redis outage must not prevent
+  // the API from starting; lock requests will fail until Redis reconnects.
   try {
     await connectRedis();
     if (isRedisAvailable()) {
