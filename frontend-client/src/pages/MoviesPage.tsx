@@ -4,9 +4,14 @@ import MovieCard, { type Movie } from "../components/movies/MovieCard";
 import SectionLabel from "../components/SectionLabel";
 import { useMovieStore } from "../stores/movie.store";
 import { type IMovie } from "../types/movie.type";
+import {
+  buildFilterOptions,
+  getLanguageLabel,
+  normalizeGenre,
+} from "../utils/movieFilters";
 
 export interface FilterableMovie extends Movie {
-  language?: string;
+  language: string;
   formats: string[];
 }
 
@@ -26,8 +31,8 @@ const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
     poster: movie.posterUrl,
     rating: movie.contentRating,
     runtime: `${movie.durationMinutes}m`,
-    genres: movie.genres || [],
-    language: movie.originalLanguage,
+    genres: Array.from(new Set((movie.genres || []).map(normalizeGenre))),
+    language: getLanguageLabel(movie.originalLanguage),
     formats: ["2D"],
     comingSoon: isUpcoming,
     releaseLabel:
@@ -48,22 +53,15 @@ export default function MoviesPage() {
     getAllMoviesAction();
   }, [getAllMoviesAction]);
 
-  const allGenres = [
-    "All",
-    "Action",
-    "Sci-Fi",
-    "Drama",
-    "Comedy",
-    "Horror",
-    "Animation",
-    "Thriller",
-    "Adventure",
-    "Superhero",
-  ];
-  const langs = ["All", "English", "Spanish", "Hindi", "French", "Japanese"];
-  const fmts = ["All", "2D", "3D", "IMAX"];
-
   const mappedMovies = movies.map(mapMovieToFilterable);
+
+  const allGenres = buildFilterOptions(
+    mappedMovies.flatMap((movie) => movie.genres),
+  );
+  const langs = buildFilterOptions(mappedMovies.map((movie) => movie.language));
+  const fmts = buildFilterOptions(
+    mappedMovies.flatMap((movie) => movie.formats),
+  );
 
   const isFiltering =
     search !== "" || genre !== "All" || lang !== "All" || fmt !== "All";
@@ -71,7 +69,9 @@ export default function MoviesPage() {
   const matchesFilters = (m: FilterableMovie) => {
     const matchSearch = m.title.toLowerCase().includes(search.toLowerCase());
     const matchGenre = genre === "All" || m.genres.includes(genre);
-    const matchLang = lang === "All" || m.language === lang;
+    const matchLang =
+      lang === "All" ||
+      m.language.localeCompare(lang, undefined, { sensitivity: "base" }) === 0;
     const matchFmt = fmt === "All" || m.formats.includes(fmt);
     return matchSearch && matchGenre && matchLang && matchFmt;
   };
