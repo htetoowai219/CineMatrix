@@ -35,7 +35,6 @@ export const useBookingStore = create<BookingState>()((set) => ({
   isSubmitting: false,
   error: null,
 
-  // Fetches bookings across the signed-in partner's cinemas.
   getBookingsAction: async (status) => {
     set({ isLoading: true, error: null });
     try {
@@ -52,7 +51,6 @@ export const useBookingStore = create<BookingState>()((set) => ({
     }
   },
 
-  // Approves or rejects a booking (owner/staff only).
   updateBookingStatusAction: async (id, action) => {
     set({ isSubmitting: true, error: null });
     try {

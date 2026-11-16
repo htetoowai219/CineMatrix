@@ -11,11 +11,9 @@ import { verifyAccessToken, requireRole } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-// Public: browse screenings of active cinemas
 router.get("/public", getPublicScreeningsController);
 router.get("/public/:id", getPublicScreeningByIdController);
 
-// Owner/staff: manage screenings
 router.get(
   "/",
   verifyAccessToken,

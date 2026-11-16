@@ -5,7 +5,6 @@ import { Cinema } from "../models/cinema.model";
 import { Movie } from "../models/movie.model";
 import { User } from "../models/user.model";
 import { uploadImageToCloudinary } from "../utils/cloudinary.util";
-import { canManageCinema } from "./cinema.controller";
 import {
   acquireSeatLocks,
   releaseSeatLocks,
@@ -21,6 +20,19 @@ const PAYMENT_SCREENSHOT_FOLDER = "cinematrix/payments";
 // How long a pending booking keeps its seats before being auto-cancelled.
 const PENDING_BOOKING_TTL_MS =
   (Number(process.env.PENDING_BOOKING_TTL_MINUTES) || 30) * 60 * 1000;
+
+// Tenant booking management is limited to owners and their staff. Admins are
+// intentionally excluded, so this must not use the broader cinema helper.
+const getTenantOwnerId = (user: Request["user"]): string | undefined =>
+  user?.role === "cinema_staff" ? user.managedByOwnerId : user?.id;
+
+const canManageTenantCinema = (
+  user: Request["user"],
+  cinemaOwnerId: unknown,
+): boolean => {
+  const ownerId = getTenantOwnerId(user);
+  return Boolean(ownerId && String(cinemaOwnerId) === String(ownerId));
+};
 
 const releaseSeats = async (screeningId: string, labels: string[]) => {
   if (labels.length === 0) return;
@@ -365,24 +377,24 @@ export const getMyBookingsController = async (req: Request, res: Response) => {
   }
 };
 
-// Admin/owner/staff: lists bookings. Admin sees every cinema's bookings,
-// while owners and staff are scoped to their own cinemas (optional status filter).
+// Owner/staff: lists bookings scoped to the caller's own cinemas.
 export const getBookingsController = async (req: Request, res: Response) => {
   try {
-    const filter: Record<string, unknown> = {};
-
-    if (req.user!.role !== "admin") {
-      const ownerId =
-        req.user!.role === "cinema_staff"
-          ? req.user!.managedByOwnerId
-          : req.user!.id;
-      const cinemas = await Cinema.find({ ownerId }).select("_id");
-      const cinemaIds = cinemas.map((c) => c._id);
-      const screenings = await Screening.find({
-        cinemaId: { $in: cinemaIds },
-      }).select("_id");
-      filter.screeningId = { $in: screenings.map((s) => s._id) };
+    const ownerId = getTenantOwnerId(req.user);
+    if (!ownerId) {
+      return res
+        .status(403)
+        .json({ message: "Access denied. You do not manage any cinemas." });
     }
+
+    const cinemas = await Cinema.find({ ownerId }).select("_id");
+    const cinemaIds = cinemas.map((c) => c._id);
+    const screenings = await Screening.find({
+      cinemaId: { $in: cinemaIds },
+    }).select("_id");
+    const filter: Record<string, unknown> = {
+      screeningId: { $in: screenings.map((s) => s._id) },
+    };
 
     if (req.query.status) filter.status = req.query.status;
 
@@ -435,7 +447,7 @@ export const updateBookingStatusController = async (
       return res.status(404).json({ message: "Screening not found." });
     }
     const cinema = await Cinema.findById(screening.cinemaId);
-    if (!cinema || !canManageCinema(req.user, cinema.ownerId)) {
+    if (!cinema || !canManageTenantCinema(req.user, cinema.ownerId)) {
       return res
         .status(403)
         .json({ message: "Access denied. You do not manage this cinema." });
@@ -476,7 +488,6 @@ export const updateBookingStatusController = async (
   }
 };
 
-// Customer: cancels a pending booking and frees its seats.
 export const cancelBookingController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

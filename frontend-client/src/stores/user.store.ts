@@ -84,7 +84,6 @@ export const useUserStore = create<UserState>()(
       isLoading: false,
       error: null,
 
-      // Registers a new user account without auto-login
       registerAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
@@ -102,7 +101,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Authenticates user and stores non-sensitive user details and tokens
       loginAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
@@ -127,7 +125,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Revokes session on backend and clears auth state
       logoutAction: async () => {
         set({ isLoading: true });
         try {
@@ -146,7 +143,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Fetches user profile data using current access token
       getProfileAction: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -168,7 +164,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Updates user profile details and syncs local state
       updateProfileAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
@@ -198,7 +193,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Updates user account password
       updatePasswordAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
@@ -212,10 +206,8 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Resets store error message
       clearError: () => set({ error: null }),
 
-      // Performs local auth state cleanup without backend call
       logout: () =>
         set({
           user: null,

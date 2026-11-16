@@ -17,7 +17,6 @@ const apiKey = (): string => {
 export const isTmdbConfigured = (): boolean =>
   Boolean(process.env.TMDB_API_KEY || process.env.TMDB_READ_ACCESS_TOKEN);
 
-// Fetches a TMDB URL with whichever auth mechanism is available.
 const tmdbFetch = async (url: URL): Promise<Response> => {
   const token = readToken();
   if (token) {
@@ -66,8 +65,7 @@ const toPreview = (m: TmdbResult, genres: Map<number, string>): TmdbMoviePreview
   genres: (m.genre_ids || []).map((id) => genres.get(id)).filter(Boolean) as string[],
 });
 
-// Searches TMDB and returns normalized previews (image URLs are direct TMDB
-// CDN links; no Cloudinary round-trip required).
+// Returns normalized previews using direct TMDB CDN image URLs (no upload).
 export const searchTmdbMovies = async (
   query: string,
   year?: number,
@@ -87,7 +85,6 @@ export const searchTmdbMovies = async (
   return results.map((m) => toPreview(m, new Map()));
 };
 
-// Fetches full detail for a TMDB id, including trailer and credits.
 export const getTmdbMovie = async (tmdbId: number) => {
   const url = new URL(`${TMDB_BASE}/movie/${tmdbId}`);
   url.searchParams.set("language", "en-US");

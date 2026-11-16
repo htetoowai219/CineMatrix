@@ -17,7 +17,6 @@ import {
 
 const router = Router();
 
-// Customer: payment screenshot upload + seat locking + booking creation
 router.post(
   "/upload",
   verifyAccessToken,
@@ -45,7 +44,6 @@ router.post(
   createBookingController,
 );
 
-// Customer: their own bookings
 router.get(
   "/my",
   verifyAccessToken,
@@ -59,17 +57,16 @@ router.post(
   cancelBookingController,
 );
 
-// Owner/staff: bookings for their cinemas (admin sees all cinemas' bookings)
 router.get(
   "/",
   verifyAccessToken,
-  requireRole("admin", "cinema_owner", "cinema_staff"),
+  requireRole("cinema_owner", "cinema_staff"),
   getBookingsController,
 );
 router.patch(
   "/:id",
   verifyAccessToken,
-  requireRole("admin", "cinema_owner", "cinema_staff"),
+  requireRole("cinema_owner", "cinema_staff"),
   updateBookingStatusController,
 );
 

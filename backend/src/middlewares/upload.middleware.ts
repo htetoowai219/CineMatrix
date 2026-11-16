@@ -26,22 +26,18 @@ const upload = multer({
   limits: { fileSize: MAX_IMAGE_SIZE },
 });
 
-// Single optional image under a named field (e.g. profileImage).
 export const uploadSingleImage = (field: string) => upload.single(field);
 
-// Movie create/update: poster + backdrop images.
 export const uploadMovieImages = upload.fields([
   { name: "posterImage", maxCount: 1 },
   { name: "backdropImage", maxCount: 1 },
 ]);
 
-// Cinema create/update: hero images + gallery photos.
 export const uploadCinemaImages = upload.fields([
   { name: "images", maxCount: 10 },
   { name: "gallery", maxCount: 10 },
 ]);
 
-// Converts multer failures (invalid type / file too large) into JSON errors.
 export const handleMulterError = (
   error: unknown,
   _req: Request,

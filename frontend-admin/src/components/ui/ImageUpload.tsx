@@ -6,13 +6,10 @@ interface ImageUploadProps {
   hint?: string;
   required?: boolean;
   multiple?: boolean;
-  // Existing stored image URL shown as the "Current" preview (edit mode).
   currentSrc?: string;
-  // Newly selected files to upload.
   files: File[];
   onChange: (files: File[]) => void;
   disabled?: boolean;
-  // Aspect classes for the preview tiles (defaults to a portrait poster).
   previewClassName?: string;
 }
 

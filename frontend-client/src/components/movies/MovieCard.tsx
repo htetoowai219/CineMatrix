@@ -1,16 +1,15 @@
 import { useNavigate } from "react-router";
-import { Play, Clock, Ticket, Bell } from "lucide-react";
+import { Clock, Ticket, Bell } from "lucide-react";
 
-// Flexible Interface matching your movie data model
 export interface Movie {
   id: string;
   title: string;
   poster: string;
-  rating: string; // e.g., "PG-13"
+  rating: string;
   genres: string[];
-  runtime: string; // e.g., "2h 15m"
+  runtime: string;
   comingSoon?: boolean;
-  releaseLabel?: string; // e.g., "Releasing Nov 24"
+  releaseLabel?: string;
 }
 
 interface MovieCardProps {
@@ -34,7 +33,6 @@ const MovieCard = ({ movie }: MovieCardProps) => {
       onClick={handleCardClick}
       className="group relative rounded-lg overflow-hidden bg-slate-900 border border-slate-800 cursor-pointer hover:border-slate-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/60 flex flex-col h-full"
     >
-      {/* Poster Container */}
       <div className="relative aspect-[2/3] overflow-hidden bg-slate-800">
         <img
           src={movie.poster}
@@ -42,20 +40,10 @@ const MovieCard = ({ movie }: MovieCardProps) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Hover Overlay with Play Icon */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-            <Play className="w-4 h-4 sm:w-5 sm:h-5 text-white fill-white ml-0.5" />
-          </div>
-        </div>
-
-        {/* Rating Badge */}
         <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 bg-slate-950/80 backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-slate-300 border border-slate-700/50 uppercase">
           {movie.rating}
         </div>
 
-        {/* Coming Soon Label */}
         {movie.comingSoon && (
           <div className="absolute bottom-2 left-2 right-2 sm:bottom-2.5 sm:left-2.5 sm:right-2.5">
             <div className="bg-red-600/90 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-1.5 py-1 rounded text-center uppercase tracking-wider truncate">
@@ -65,14 +53,12 @@ const MovieCard = ({ movie }: MovieCardProps) => {
         )}
       </div>
 
-      {/* Card Info */}
       <div className="p-2.5 sm:p-3.5 flex flex-col flex-1 justify-between">
         <div>
           <h3 className="font-display font-bold text-white text-sm sm:text-base leading-tight mb-1.5 sm:mb-2 uppercase tracking-wide truncate">
             {movie.title}
           </h3>
 
-          {/* Genres */}
           <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3">
             {movie.genres.slice(0, 2).map((g) => (
               <span
@@ -85,7 +71,6 @@ const MovieCard = ({ movie }: MovieCardProps) => {
           </div>
         </div>
 
-        {/* Actions / Footer */}
         <div className="flex items-center justify-between gap-1 mt-auto pt-1">
           {!movie.comingSoon ? (
             <>

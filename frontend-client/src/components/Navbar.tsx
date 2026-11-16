@@ -8,7 +8,6 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Zustand User Store
   const { user, isAuthenticated, logoutAction } = useUserStore();
 
   useEffect(() => {
@@ -45,7 +44,6 @@ const Navbar = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* Brand / Logo */}
         <Link
           to="/"
           className="flex items-center gap-2 font-bold text-xl text-red-600 shrink-0"
@@ -54,7 +52,6 @@ const Navbar = () => {
           <span>CineMatrix</span>
         </Link>
 
-        {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <NavLink
@@ -73,7 +70,6 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Desktop Search Input */}
         <div className="hidden md:flex flex-1 max-w-xs">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -85,9 +81,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Actions & CTA */}
         <div className="flex items-center gap-3 md:gap-4 shrink-0">
-          {/* Primary CTA: Buy Tickets */}
           <Link
             to="/screenings"
             className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs md:text-sm px-3 md:px-4 py-2 rounded-lg shadow-md hover:shadow-red-600/20 active:scale-95 transition-all"
@@ -97,10 +91,8 @@ const Navbar = () => {
             <span className="sm:hidden">Tickets</span>
           </Link>
 
-          {/* Conditional Auth Actions (Desktop) */}
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
-              {/* Username Link */}
               <Link
                 to="/profile"
                 className="hidden sm:block text-sm font-semibold text-white hover:text-red-500 transition-colors max-w-[120px] truncate"
@@ -109,7 +101,6 @@ const Navbar = () => {
                 {user?.name}
               </Link>
 
-              {/* Profile Icon Button */}
               <Link
                 to="/profile"
                 className="p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 transition-colors backdrop-blur-sm"
@@ -126,7 +117,6 @@ const Navbar = () => {
                 )}
               </Link>
 
-              {/* Sign Out Button (Right of Profile) */}
               <button
                 type="button"
                 onClick={handleLogout}
@@ -153,7 +143,6 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors"
@@ -168,10 +157,8 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden pt-4 pb-2 px-2 flex flex-col gap-4 border-t border-slate-800/80 mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-          {/* Mobile Search */}
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
@@ -181,7 +168,6 @@ const Navbar = () => {
             />
           </div>
 
-          {/* Mobile Nav Links */}
           <div className="flex flex-col gap-2">
             {navLinks.map((link) => (
               <NavLink
@@ -201,7 +187,6 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Mobile Conditional Auth Drawer */}
           <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between px-3">
             {isAuthenticated ? (
               <>

@@ -131,7 +131,6 @@ export default function ScreeningsPage() {
       setTemplateId("");
       setStartTime("");
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -141,7 +140,6 @@ export default function ScreeningsPage() {
       await updateScreeningAction(String(rescheduling._id), { startTime });
       setRescheduling(null);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -151,7 +149,6 @@ export default function ScreeningsPage() {
       await deleteScreeningAction(String(deleteTarget._id));
       setDeleteTarget(null);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -204,7 +201,6 @@ export default function ScreeningsPage() {
         </div>
       )}
 
-      {/* Cinema filter */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 scrollbar-none">
         <button
           type="button"
@@ -344,7 +340,6 @@ export default function ScreeningsPage() {
         </div>
       )}
 
-      {/* Create modal */}
       {showCreate && (
         <Modal
           title="New Screening"
@@ -452,7 +447,6 @@ export default function ScreeningsPage() {
         </Modal>
       )}
 
-      {/* Reschedule modal */}
       {rescheduling && (
         <Modal
           title="Reschedule Screening"

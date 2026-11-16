@@ -57,7 +57,6 @@ export default function ManageOwnersPage() {
       setForm({ name: "", email: "", password: "", phone: "" });
       setShowCreate(false);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -83,7 +82,6 @@ export default function ManageOwnersPage() {
       setDeleteTarget(null);
       setAdminPassword("");
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 

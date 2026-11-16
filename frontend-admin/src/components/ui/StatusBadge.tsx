@@ -1,4 +1,3 @@
-// Colored pill badges used across admin tables.
 const StatusBadge = ({ label }: { label: string }) => {
   const base = "inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border";
 

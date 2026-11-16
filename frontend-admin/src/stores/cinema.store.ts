@@ -64,7 +64,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
   isSubmitting: false,
   error: null,
 
-  // Fetches all cinemas with optional city/amenity filters.
   getAllCinemasAction: async (params) => {
     set({ isLoading: true, error: null });
     try {
@@ -81,7 +80,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Fetches the cinemas owned/managed by the signed-in partner.
   getMyCinemasAction: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -96,7 +94,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Fetches a single cinema by its unique database ID.
   getCinemaByIdAction: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -113,7 +110,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Creates a cinema owned by the signed-in owner; it starts pending approval.
   createCinemaAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -135,7 +131,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Updates a cinema owned by the signed-in owner or their staff.
   updateCinemaAction: async (id, payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -158,7 +153,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Deletes a cinema (admin, or the owner of that cinema).
   deleteCinemaAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -177,7 +171,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Approves a pending cinema (admin-only on the backend).
   approveCinemaAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -199,7 +192,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Rejects a pending cinema (admin-only on the backend).
   rejectCinemaAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -221,9 +213,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Clears the currently selected cinema from state.
   clearSelectedCinema: () => set({ selectedCinema: null }),
 
-  // Resets the store error message.
   clearError: () => set({ error: null }),
 }));

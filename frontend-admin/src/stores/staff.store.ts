@@ -31,7 +31,6 @@ export const useStaffStore = create<StaffState>()((set) => ({
   isSubmitting: false,
   error: null,
 
-  // Fetches the staff members of the signed-in owner's cinemas.
   getStaffAction: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -46,7 +45,6 @@ export const useStaffStore = create<StaffState>()((set) => ({
     }
   },
 
-  // Creates a new staff member for the signed-in owner (owner-only).
   createStaffAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -69,7 +67,6 @@ export const useStaffStore = create<StaffState>()((set) => ({
     }
   },
 
-  // Deletes a staff member by ID (owner-only on the backend).
   deleteStaffAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {

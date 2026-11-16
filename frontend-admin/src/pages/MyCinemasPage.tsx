@@ -155,12 +155,8 @@ export default function MyCinemasPage() {
       currency,
     };
 
-    try {
       await createCinemaAction(payload);
       closeCreate();
-    } catch {
-      // Error is stored in the Zustand store state
-    }
   };
 
   return (
@@ -303,7 +299,6 @@ export default function MyCinemasPage() {
               </div>
             )}
 
-            {/* Basics */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
                 Basic details
@@ -401,7 +396,6 @@ export default function MyCinemasPage() {
               </div>
             </div>
 
-            {/* Address */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
                 Address & location
@@ -467,7 +461,6 @@ export default function MyCinemasPage() {
               </div>
             </div>
 
-            {/* Images */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <ImageUpload
                 label="Main Image"
@@ -486,7 +479,6 @@ export default function MyCinemasPage() {
               />
             </div>
 
-            {/* Socials */}
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
                 Website
@@ -500,7 +492,6 @@ export default function MyCinemasPage() {
               />
             </div>
 
-            {/* Rooms */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">

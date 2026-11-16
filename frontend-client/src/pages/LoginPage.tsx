@@ -20,10 +20,8 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Zustand Store Hooks
   const { loginAction, isLoading, error, clearError } = useUserStore();
 
-  // Form State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -37,13 +35,12 @@ export default function LoginPage() {
         (location.state as { from?: string } | null)?.from || "/profile";
       navigate(from);
     } catch {
-      // Error is caught and stored in Zustand store state
+
     }
   };
 
   return (
     <div className="h-screen w-screen overflow-hidden grid grid-cols-1 md:grid-cols-2 bg-slate-950 text-white selection:bg-red-600 selection:text-white relative">
-      {/* Top-Left Back to Home Link */}
       <button
         type="button"
         onClick={() => {
@@ -55,7 +52,6 @@ export default function LoginPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Home
       </button>
 
-      {/* Left: Cinematic Branding Side */}
       <div className="hidden md:block relative h-full overflow-hidden bg-slate-900">
         <img
           src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=900&h=1200&fit=crop&auto=format"
@@ -66,7 +62,6 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
 
         <div className="absolute inset-0 flex flex-col items-start justify-end p-10 lg:p-14 z-10">
-          {/* Logo Branding */}
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-600/30">
               <Film className="w-4 h-4 text-white" />
@@ -89,7 +84,6 @@ export default function LoginPage() {
             experiences at top venues across the city.
           </p>
 
-          {/* Social Proof Stats */}
           <div className="flex items-center gap-8 mt-6 pt-6 border-t border-slate-800/80 w-full max-w-md">
             {[
               ["500K+", "Happy Guests"],
@@ -109,10 +103,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right: Authentication Form Side */}
       <div className="h-full flex items-center justify-center px-6 sm:px-12 py-6 bg-slate-950 overflow-y-auto">
         <div className="w-full max-w-md my-auto">
-          {/* Mobile Logo Header */}
           <div className="md:hidden flex items-center gap-2 mb-6 mt-10">
             <div className="w-7 h-7 bg-red-600 rounded-lg flex items-center justify-center shadow-md shadow-red-600/20">
               <Film className="w-3.5 h-3.5 text-white" />
@@ -122,7 +114,6 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Header */}
           <div className="mb-6">
             <SectionLabel>Welcome Back</SectionLabel>
             <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-wide">
@@ -143,7 +134,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Social Login Buttons */}
           <div className="flex gap-3 mb-4">
             {[
               { label: "Google", icon: <Globe className="w-4 h-4" /> },
@@ -159,7 +149,6 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* Divider */}
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-slate-800/80" />
             <span className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
@@ -168,7 +157,6 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-slate-800/80" />
           </div>
 
-          {/* Error Banner */}
           {error && (
             <div className="mb-4 p-3 bg-red-950/50 border border-red-600/50 rounded-lg flex items-center gap-2 text-red-400 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
@@ -176,9 +164,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-            {/* Email Field */}
             <div>
               <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
                 Email Address
@@ -200,7 +186,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password Field */}
             <div>
               <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
                 Password
@@ -233,7 +218,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Actions Row */}
             <div className="flex items-center justify-between text-xs pt-0.5">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <button
@@ -262,7 +246,6 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}

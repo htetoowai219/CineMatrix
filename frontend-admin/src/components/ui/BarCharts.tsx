@@ -9,7 +9,6 @@ export interface BarDatumValue extends BarDatum {
   color: string;
 }
 
-// Horizontal bar list, used for distributions and top-N breakdowns.
 export function HBarList({
   data,
   formatValue,
@@ -43,7 +42,6 @@ export function HBarList({
   );
 }
 
-// Vertical bar chart for time-series (e.g. bookings per day).
 export function VerticalBarChart({
   data,
   formatValue,

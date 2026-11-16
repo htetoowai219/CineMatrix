@@ -47,7 +47,6 @@ const toArray = (value: unknown): string[] => {
 const toBoolean = (value: unknown): boolean =>
   value === true || String(value).toLowerCase() === "true";
 
-// Normalizes a currency code, returning undefined for anything unsupported.
 const toCurrency = (value: unknown): CurrencyCode | undefined => {
   const code = String(value ?? "").trim().toUpperCase();
   return (CURRENCIES as readonly string[]).includes(code)
@@ -68,7 +67,6 @@ const parseObject = <T>(value: unknown): T | undefined => {
   return value as T;
 };
 
-// Uploads an array of image buffers and returns their Cloudinary URLs.
 const uploadImages = async (
   files: Express.Multer.File[],
   folder: string,
@@ -81,9 +79,8 @@ const uploadImages = async (
   return urls;
 };
 
-// Validates a room's seat layout grid and normalizes legacy unpaired "double"
-// cells to single seats. Returns a human-readable error message describing the
-// first problem found, or null when the room is well-formed.
+// Returns the first validation error for a room grid, or null. Legacy unpaired
+// "double" cells are normalized to single seats in place.
 const getRoomError = (room: ICinemaRoom, index: number): string | null => {
   if (!room || typeof room !== "object") {
     return `Room ${index + 1} is not a valid object.`;
@@ -129,8 +126,6 @@ const getRoomError = (room: ICinemaRoom, index: number): string | null => {
   return null;
 };
 
-// Returns an error message when the rooms list has no room or any room fails
-// validation, otherwise null.
 const getRoomsError = (rooms: unknown): string | null => {
   if (!Array.isArray(rooms)) {
     return "rooms must be an array of room objects.";
@@ -489,7 +484,6 @@ export const updateCinemaController = async (req: Request, res: Response) => {
   }
 };
 
-// Approves a pending cinema, making it publicly visible.
 export const approveCinemaController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -516,7 +510,6 @@ export const approveCinemaController = async (req: Request, res: Response) => {
   }
 };
 
-// Rejects a pending cinema.
 export const rejectCinemaController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -543,7 +536,6 @@ export const rejectCinemaController = async (req: Request, res: Response) => {
   }
 };
 
-// Removes a cinema record from the database by ID. Admins or the owning owner.
 export const deleteCinemaController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

@@ -43,8 +43,8 @@ export interface ICinema {
   location?: ICinemaLocation;
   phone: string;
   email: string;
-  images?: string[]; // Hero & banner images
-  gallery?: string[]; // Additional interior / exterior gallery photos
+  images?: string[];
+  gallery?: string[];
   rooms: ICinemaRoom[];
   announcements?: ICinemaAnnouncement[];
   socials?: ICinemaSocials;

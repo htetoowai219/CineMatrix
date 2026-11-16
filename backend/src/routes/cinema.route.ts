@@ -25,7 +25,6 @@ const router = Router();
 // every status so they can review pending/rejected venues.
 router.get("/", verifyOptionalAccessToken, getAllCinemasController);
 
-// Owner/staff routes: cinemas they own or manage
 router.get("/my", verifyAccessToken, requireRole("admin", "cinema_owner", "cinema_staff"), getMyCinemasController);
 
 // Single-cinema route: active cinemas are public; non-active cinemas are
@@ -33,7 +32,6 @@ router.get("/my", verifyAccessToken, requireRole("admin", "cinema_owner", "cinem
 // lets an anonymous browser still read active cinemas).
 router.get("/:id", verifyOptionalAccessToken, getCinemaByIdController);
 
-// Owner-only: submit a new cinema for approval
 router.post(
   "/",
   verifyAccessToken,
@@ -43,7 +41,6 @@ router.post(
   createCinemaController,
 );
 
-// Owner/staff: edit cinema details (admins may also update any cinema)
 router.patch(
   "/:id",
   verifyAccessToken,
@@ -53,7 +50,6 @@ router.patch(
   updateCinemaController,
 );
 
-// Admin-only: review pending cinemas
 router.patch(
   "/:id/approve",
   verifyAccessToken,
@@ -67,7 +63,6 @@ router.patch(
   rejectCinemaController,
 );
 
-// Admin or owning owner: delete a cinema
 router.delete(
   "/:id",
   verifyAccessToken,

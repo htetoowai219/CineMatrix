@@ -35,7 +35,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
   isLoading: false,
   error: null,
 
-  // Fetches all cinemas with optional city and amenity filters
   getAllCinemasAction: async (params) => {
     set({ isLoading: true, error: null });
     try {
@@ -55,7 +54,6 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Fetches a single cinema by its unique database ID
   getCinemaByIdAction: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -70,9 +68,7 @@ export const useCinemaStore = create<CinemaState>()((set) => ({
     }
   },
 
-  // Clears the currently selected cinema details from state
   clearSelectedCinema: () => set({ selectedCinema: null }),
 
-  // Resets store error message
   clearError: () => set({ error: null }),
 }));

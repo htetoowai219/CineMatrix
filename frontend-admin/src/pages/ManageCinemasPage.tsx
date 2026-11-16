@@ -60,7 +60,6 @@ export default function ManageCinemasPage() {
     try {
       await approveCinemaAction(String(cinema._id));
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -69,7 +68,6 @@ export default function ManageCinemasPage() {
     try {
       await rejectCinemaAction(String(cinema._id));
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -79,13 +77,11 @@ export default function ManageCinemasPage() {
       await deleteCinemaAction(String(deleteTarget._id));
       setDeleteTarget(null);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
         <div>
           <p className="text-red-500 text-xs font-bold uppercase tracking-widest mb-1">
@@ -101,7 +97,6 @@ export default function ManageCinemasPage() {
         </div>
       </div>
 
-      {/* Toolbar */}
       <div className="flex flex-col md:flex-row gap-3 mb-6">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -132,7 +127,6 @@ export default function ManageCinemasPage() {
         </div>
       </div>
 
-      {/* Error banner */}
       {error && (
         <div className="mb-6 p-4 bg-red-950/50 border border-red-800 rounded-lg flex items-center justify-between text-red-200 text-sm">
           <span className="flex items-center gap-2">
@@ -149,7 +143,6 @@ export default function ManageCinemasPage() {
         </div>
       )}
 
-      {/* Loading */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 text-slate-500">
           <Loader2 className="w-10 h-10 animate-spin text-red-600 mb-4" />
@@ -167,7 +160,6 @@ export default function ManageCinemasPage() {
           </p>
         </div>
       ) : (
-        /* Table */
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -282,7 +274,6 @@ export default function ManageCinemasPage() {
         </div>
       )}
 
-      {/* Delete confirmation */}
       {deleteTarget && (
         <ConfirmDialog
           title="Delete Cinema"

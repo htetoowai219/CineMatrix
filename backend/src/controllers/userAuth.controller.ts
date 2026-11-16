@@ -10,7 +10,6 @@ import { uploadImageToCloudinary } from "../utils/cloudinary.util";
 
 const PROFILE_IMAGE_FOLDER = "cinematrix/profiles";
 
-// Handles new user registration and returns authentication tokens along with basic user details.
 export const registerUserController = async (req: Request, res: Response) => {
   try {
     const { name, email, password, phone } = req.body;
@@ -36,7 +35,6 @@ export const registerUserController = async (req: Request, res: Response) => {
       role: "customer",
     });
 
-    // Optional profile picture uploaded to Cloudinary.
     if (req.file) {
       const { secure_url } = await uploadImageToCloudinary(
         req.file,
@@ -74,7 +72,6 @@ export const registerUserController = async (req: Request, res: Response) => {
   }
 };
 
-// Authenticates existing users via email and password, issuing access and refresh tokens.
 export const loginUserController = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -124,7 +121,6 @@ export const loginUserController = async (req: Request, res: Response) => {
   }
 };
 
-// Invalidates the current user session by clearing the stored refresh token in the database.
 export const logoutUserController = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -144,7 +140,6 @@ export const logoutUserController = async (req: Request, res: Response) => {
   }
 };
 
-// Updates editable user profile fields such as name and phone number.
 export const updateUserProfileController = async (
   req: Request,
   res: Response,
@@ -165,7 +160,6 @@ export const updateUserProfileController = async (
     if (name) updateData.name = name;
     if (phone) updateData.phone = phone;
 
-    // Optional new profile picture uploaded to Cloudinary.
     if (req.file) {
       const { secure_url } = await uploadImageToCloudinary(
         req.file,
@@ -202,7 +196,6 @@ export const updateUserProfileController = async (
   }
 };
 
-// Validates current password and updates it with a newly hashed password.
 export const updateUserPasswordController = async (
   req: Request,
   res: Response,
@@ -252,7 +245,6 @@ export const updateUserPasswordController = async (
   }
 };
 
-// Fetches the authenticated user's non-sensitive profile details.
 export const getProfileController = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;

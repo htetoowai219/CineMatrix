@@ -4,11 +4,8 @@ import { User } from "../models/user.model";
 import { hashPassword } from "../utils/userAuth.util";
 import type { UserRole } from "../types/user.type";
 
-// Dev-only seed script.
-// Creates exactly one demo account for each role. Nothing else (movies,
-// cinemas, screenings, bookings, etc.) is seeded. Safe to re-run: existing
-// accounts with the same email are updated in place.
-//
+// Dev-only: seeds one demo account per role and touches no other collections.
+// Idempotent: existing accounts with the same email are updated in place.
 // Usage: npm run seed:admin
 
 dotenv.config();
@@ -35,8 +32,7 @@ const upsertUser = async (input: SeedUser) => {
   const existing = await User.findOne({ email: input.email });
 
   if (existing) {
-    // Idempotent seed: keep the documented credentials working even if the
-    // account already exists with a stale password.
+    // Keep the documented credentials valid even if the account already exists.
     existing.set({
       name: input.name,
       phone: input.phone,

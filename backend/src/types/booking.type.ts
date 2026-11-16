@@ -4,8 +4,8 @@ export type BookingPaymentMethod = "screenshot" | "in_person";
 export type BookingStatus = "pending" | "confirmed" | "rejected" | "cancelled";
 
 export interface IBookingSeat {
-  label: string; // e.g. "A3"
-  row: string; // e.g. "A"
+  label: string;
+  row: string;
   isDouble: boolean;
   price: number;
 }

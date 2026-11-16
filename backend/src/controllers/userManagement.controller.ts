@@ -6,7 +6,6 @@ import { Screening } from "../models/screening.model";
 import { Booking } from "../models/booking.model";
 import { hashPassword, verifyPassword } from "../utils/userAuth.util";
 
-// Admin-only: creates a cinema owner account.
 export const createOwnerController = async (req: Request, res: Response) => {
   try {
     const { name, email, password, phone } = req.body || {};
@@ -49,7 +48,6 @@ export const createOwnerController = async (req: Request, res: Response) => {
   }
 };
 
-// Admin-only: lists all cinema owner accounts.
 export const getOwnersController = async (req: Request, res: Response) => {
   try {
     const owners = await User.find({ role: "cinema_owner" })
@@ -114,7 +112,6 @@ export const createStaffController = async (req: Request, res: Response) => {
   }
 };
 
-// Owner-only: lists the staff accounts linked to the requesting owner.
 export const getStaffController = async (req: Request, res: Response) => {
   try {
     const staff = await User.find({
@@ -137,7 +134,6 @@ export const getStaffController = async (req: Request, res: Response) => {
   }
 };
 
-// Owner-only: removes a staff account linked to the requesting owner.
 export const deleteStaffController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

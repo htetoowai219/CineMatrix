@@ -27,13 +27,11 @@ export default function LoginPage() {
       await loginAction({ email, password });
       navigate("/");
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex selection:bg-red-600 selection:text-white relative">
-      {/* Back link */}
       <button
         type="button"
         onClick={() => navigate("/login")}
@@ -43,7 +41,6 @@ export default function LoginPage() {
         Back
       </button>
 
-      {/* Left: Branding panel */}
       <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-slate-900">
         <img
           src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=900&h=1200&fit=crop&auto=format"
@@ -84,10 +81,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right: Login form */}
       <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-10">
         <div className="w-full max-w-md">
-          {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center shadow-md shadow-red-600/25">
               <Film className="w-4 h-4 text-white" />

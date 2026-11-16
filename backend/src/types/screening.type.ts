@@ -3,8 +3,8 @@ import { Types } from "mongoose";
 export type ScreeningSeatStatus = "available" | "held" | "booked";
 
 export interface IScreeningSeat {
-  label: string; // e.g. "A3"
-  row: string; // e.g. "A"
+  label: string;
+  row: string;
   isDouble: boolean;
   price: number;
   status: ScreeningSeatStatus;

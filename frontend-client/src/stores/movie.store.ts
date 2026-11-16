@@ -35,7 +35,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
   isLoading: false,
   error: null,
 
-  // Fetches all movies with optional status and genre filters
   getAllMoviesAction: async (params) => {
     set({ isLoading: true, error: null });
     try {
@@ -55,7 +54,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Fetches a single movie by its unique database ID
   getMovieByIdAction: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -70,9 +68,7 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Clears the currently selected movie details from state
   clearSelectedMovie: () => set({ selectedMovie: null }),
 
-  // Resets store error message
   clearError: () => set({ error: null }),
 }));

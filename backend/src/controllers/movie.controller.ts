@@ -28,7 +28,6 @@ const toArray = (value: unknown): string[] => {
   return [];
 };
 
-// Fetches all movies from the database with optional filter query parameters.
 export const getAllMoviesController = async (req: Request, res: Response) => {
   try {
     const { status, genre } = req.query;
@@ -52,7 +51,6 @@ export const getAllMoviesController = async (req: Request, res: Response) => {
   }
 };
 
-// Retrieves a single movie by its unique database ID.
 export const getMovieByIdController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -75,7 +73,6 @@ export const getMovieByIdController = async (req: Request, res: Response) => {
   }
 };
 
-// Creates and saves a new movie record in the database.
 export const createMovieController = async (req: Request, res: Response) => {
   try {
     if (req.user?.role !== "admin") {
@@ -173,7 +170,6 @@ export const createMovieController = async (req: Request, res: Response) => {
   }
 };
 
-// Admin: searches TMDB for movies to import.
 export const tmdbSearchController = async (req: Request, res: Response) => {
   try {
     if (req.user?.role !== "admin") {
@@ -208,7 +204,6 @@ export const tmdbSearchController = async (req: Request, res: Response) => {
   }
 };
 
-// Admin: imports a movie (with metadata + trailer) from TMDB into the database.
 export const tmdbImportController = async (req: Request, res: Response) => {
   try {
     if (req.user?.role !== "admin") {
@@ -266,7 +261,6 @@ export const tmdbImportController = async (req: Request, res: Response) => {
   }
 };
 
-// Updates an existing movie's details by ID.
 export const updateMovieController = async (req: Request, res: Response) => {
   try {
     if (req.user?.role !== "admin") {
@@ -336,7 +330,6 @@ export const updateMovieController = async (req: Request, res: Response) => {
   }
 };
 
-// Removes a movie record from the database by ID.
 export const deleteMovieController = async (req: Request, res: Response) => {
   try {
     if (req.user?.role !== "admin") {

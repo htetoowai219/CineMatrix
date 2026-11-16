@@ -84,7 +84,6 @@ const SeatLayoutBuilder = ({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           <MousePointerClick className="w-3.5 h-3.5" />
@@ -131,7 +130,6 @@ const SeatLayoutBuilder = ({
         )}
       </div>
 
-      {/* Size controls */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
@@ -183,7 +181,6 @@ const SeatLayoutBuilder = ({
         </div>
       </div>
 
-      {/* Grid */}
       <div className="overflow-x-auto">
         <div
           className="inline-block p-4 rounded-xl bg-slate-950 border border-slate-800"

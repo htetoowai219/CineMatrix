@@ -14,18 +14,15 @@ import { useCinemaStore } from "../stores/cinema.store";
 export default function CinemasPage() {
   const navigate = useNavigate();
 
-  // Store bindings
   const { cinemas, isLoading, error, getAllCinemasAction, clearError } =
     useCinemaStore();
 
   const [search, setSearch] = useState("");
 
-  // Fetch cinemas on mount
   useEffect(() => {
     getAllCinemasAction();
   }, [getAllCinemasAction]);
 
-  // Client-side search based on response from the backend
   const filtered = cinemas.filter((cinema) => {
     const fullAddress = `${cinema.address?.street || ""} ${cinema.address?.city || ""} ${cinema.address?.state || ""}`;
     return (
@@ -44,7 +41,6 @@ export default function CinemasPage() {
   return (
     <div className="bg-slate-950 min-h-screen text-white pt-24 pb-20 selection:bg-red-600 selection:text-white">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Header */}
         <div className="mb-8">
           <SectionLabel>Find a Location</SectionLabel>
           <h1 className="font-display font-black text-4xl sm:text-5xl text-white uppercase tracking-wide">
@@ -52,7 +48,6 @@ export default function CinemasPage() {
           </h1>
         </div>
 
-        {/* Search Bar & Filter Chips */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
           <div className="relative flex-1 max-w-lg">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -85,7 +80,6 @@ export default function CinemasPage() {
           </div>
         </div>
 
-        {/* Error Banner */}
         {error && (
           <div className="mb-6 p-4 bg-red-950/50 border border-red-800 rounded-lg flex items-center justify-between text-red-200 text-sm">
             <span>{error}</span>
@@ -98,7 +92,6 @@ export default function CinemasPage() {
           </div>
         )}
 
-        {/* Loading Indicator */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 text-slate-500">
             <Loader2 className="w-10 h-10 animate-spin text-red-600 mb-4" />
@@ -106,7 +99,6 @@ export default function CinemasPage() {
           </div>
         ) : (
           <>
-            {/* Results Counter */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-slate-500 text-xs sm:text-sm font-medium">
                 Showing{" "}
@@ -116,7 +108,6 @@ export default function CinemasPage() {
               </p>
             </div>
 
-            {/* Cinema Grid / Empty State */}
             {filtered.length === 0 ? (
               <div className="text-center py-24 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
                 <Film className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-60" />
@@ -149,7 +140,6 @@ export default function CinemasPage() {
                       onClick={() => navigate(`/cinemas/${cinemaId}`)}
                       className="group bg-slate-900/80 rounded-xl overflow-hidden border border-slate-800/90 hover:border-slate-700 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/60 flex flex-col"
                     >
-                      {/* Media Banner */}
                       <div className="relative h-52 overflow-hidden bg-slate-900 shrink-0">
                         <img
                           src={displayImage}
@@ -158,7 +148,6 @@ export default function CinemasPage() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-90" />
 
-                        {/* Room Count Badge */}
                         <div className="absolute bottom-3 left-3">
                           <span className="text-white text-xs font-bold bg-red-600 px-2.5 py-1 rounded-md shadow-md">
                             {cinema.rooms?.length ?? 0} Rooms
@@ -166,7 +155,6 @@ export default function CinemasPage() {
                         </div>
                       </div>
 
-                      {/* Details Section */}
                       <div className="p-5 flex flex-col flex-1 justify-between">
                         <div>
                           <h3 className="font-display font-bold text-white text-xl uppercase tracking-wide mb-1.5 group-hover:text-red-500 transition-colors">
@@ -181,7 +169,6 @@ export default function CinemasPage() {
                           </div>
                         </div>
 
-                        {/* Card Footer */}
                         <div className="flex items-center justify-between pt-3.5 border-t border-slate-800/80">
                           <span className="text-slate-400 text-xs font-medium">
                             Available Now

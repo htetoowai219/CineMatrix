@@ -19,7 +19,6 @@ const ADMIN_NAV_ITEMS = [
   { label: "Movies", to: "/movies", icon: Clapperboard },
   { label: "Cinemas", to: "/cinemas", icon: Building2 },
   { label: "Owners", to: "/owners", icon: Users },
-  { label: "Bookings", to: "/bookings", icon: Ticket },
 ];
 
 const PARTNER_NAV_ITEMS = [
@@ -63,7 +62,6 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
 
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm lg:hidden"
@@ -71,13 +69,11 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed lg:static inset-y-0 left-0 z-50 w-64 shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 transition-transform duration-300 lg:translate-x-0 lg:h-full ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Brand */}
         <div className="px-5 pt-6 pb-5 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-600/25">
@@ -95,7 +91,6 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
           <p className="px-3.5 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-600">
             Manage
@@ -108,7 +103,6 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
           ))}
         </nav>
 
-        {/* User card + logout */}
         <div className="p-3 border-t border-slate-800">
           <button
             type="button"

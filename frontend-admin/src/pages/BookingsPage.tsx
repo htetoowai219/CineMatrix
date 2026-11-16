@@ -98,7 +98,6 @@ export default function BookingsPage() {
       );
       setActionTarget(null);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -135,7 +134,6 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3 mb-6">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           {STATUS_TABS.map((status) => (
@@ -293,7 +291,6 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {/* Screenshot modal */}
       {viewScreenshot && (
         <Modal
           title="Payment Screenshot"
@@ -316,7 +313,6 @@ export default function BookingsPage() {
         </Modal>
       )}
 
-      {/* Approve/reject confirmation */}
       {actionTarget && (
         <ConfirmDialog
           title={actionTarget.action === "approve" ? "Confirm Booking" : "Reject Booking"}

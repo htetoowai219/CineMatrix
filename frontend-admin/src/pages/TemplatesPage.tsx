@@ -187,7 +187,6 @@ export default function TemplatesPage() {
       setShowCreate(false);
       setEditing(null);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -197,7 +196,6 @@ export default function TemplatesPage() {
       await deleteTemplateAction(String(deleteTarget._id));
       setDeleteTarget(null);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -247,7 +245,6 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {/* Cinema filter */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 scrollbar-none">
         <button
           type="button"
@@ -353,7 +350,6 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {/* Create / edit modal */}
       {(showCreate || editing) && (
         <Modal
           title={editing ? "Edit Template" : "New Screening Template"}

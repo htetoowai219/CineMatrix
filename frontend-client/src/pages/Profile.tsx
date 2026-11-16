@@ -128,7 +128,6 @@ export default function ProfilePage() {
       await updateProfileAction(tempInfo);
       setIsEditInfoOpen(false);
     } catch {
-      // Error state handled inside Zustand store
     }
   };
 
@@ -139,7 +138,6 @@ export default function ProfilePage() {
       setPassData({ currentPassword: "", newPassword: "" });
       setIsEditPassOpen(false);
     } catch {
-      // Error state handled inside Zustand store
     }
   };
 
@@ -149,7 +147,6 @@ export default function ProfilePage() {
     try {
       await updateProfileAction({ profileImage: file });
     } catch {
-      // Error state handled inside Zustand store
     }
   };
 
@@ -163,7 +160,6 @@ export default function ProfilePage() {
           </h1>
         </div>
 
-        {/* Profile Header Card */}
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-xl">
           <div className="relative w-20 h-20 shrink-0">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center border border-red-500/30 shadow-lg shadow-red-600/20 overflow-hidden">
@@ -208,25 +204,18 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex gap-6 sm:gap-8 text-center border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-8 w-full md:w-auto justify-around md:justify-start">
-            {[
-              [String(myBookings.length), "Bookings"],
-              ["2", "Watchlist"],
-              ["14", "Reviews"],
-            ].map(([n, l]) => (
-              <div key={l}>
-                <div className="font-display font-black text-2xl text-white">
-                  {n}
-                </div>
-                <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider">
-                  {l}
-                </div>
+          <div className="flex gap-6 sm:gap-8 text-center border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-8 w-full md:w-auto justify-center md:justify-start">
+            <div>
+              <div className="font-display font-black text-2xl text-white">
+                {myBookings.length}
               </div>
-            ))}
+              <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                Bookings
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex gap-1 bg-slate-900/90 border border-slate-800/90 rounded-xl p-1 mb-8 w-full sm:w-fit overflow-x-auto scrollbar-none">
           {(["bookings", "info", "security"] as const).map((t) => (
             <button
@@ -247,7 +236,6 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {/* Personal Info Tab */}
         {tab === "info" && (
           <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 max-w-2xl shadow-xl">
             <div className="flex items-center justify-between mb-6">
@@ -293,7 +281,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Security Tab */}
         {tab === "security" && (
           <div className="max-w-2xl">
             <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl">
@@ -331,7 +318,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Bookings Tab */}
         {tab === "bookings" && (
           <div className="flex flex-col gap-6">
             {(bookingsError || error) && (
@@ -461,7 +447,6 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Edit Personal Info Modal */}
       {isEditInfoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 w-full max-w-lg shadow-2xl relative">
@@ -544,7 +529,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Edit Password Modal */}
       {isEditPassOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl relative">

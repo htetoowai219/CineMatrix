@@ -55,7 +55,6 @@ export default function StaffPage() {
       setForm({ name: "", email: "", password: "", phone: "" });
       setShowCreate(false);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -65,7 +64,6 @@ export default function StaffPage() {
       await deleteStaffAction(deleteTarget._id);
       setDeleteTarget(null);
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
