@@ -9,7 +9,6 @@ import { verifyAccessToken, requireRole } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-// Owner/staff only: screening templates for their cinemas
 router.get(
   "/",
   verifyAccessToken,

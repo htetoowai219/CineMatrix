@@ -21,12 +21,8 @@ export interface ICinemaSocials {
   twitter?: string;
 }
 
-// Cell types in a room's seat grid.
-// - seat   : single seat (1 ticket)
-// - double : loveseat (2 tickets, priced at 2x the row's single price)
-// - walkway: aisle / walking path (not bookable)
-// - stairs : staircase (not bookable)
-// - empty  : unused cell (not bookable)
+// Persisted seat-grid cell types. Only "seat" and "double" are bookable;
+// "double" is a loveseat priced at 2x the row's single ticket price.
 export type SeatCellType = "seat" | "double" | "walkway" | "stairs" | "empty";
 
 export interface ICinemaRoom {
@@ -74,14 +70,14 @@ export interface ICinema {
   location?: ICinemaLocation;
   phone: string;
   email: string;
-  images?: string[]; // Hero & banner images
-  gallery?: string[]; // Additional interior / exterior gallery photos
+  images?: string[];
+  gallery?: string[];
   rooms: ICinemaRoom[];
-  announcements?: ICinemaAnnouncement[]; // Image slider shown on the cinema page
+  announcements?: ICinemaAnnouncement[];
   socials?: ICinemaSocials;
-  allowPayInPerson: boolean; // Whether customers may choose to pay at the cinema
-  currency?: CurrencyCode; // Currency ticket prices are displayed and charged in
-  status: CinemaStatus; // pending -> active after admin approval
+  allowPayInPerson: boolean;
+  currency?: CurrencyCode;
+  status: CinemaStatus;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

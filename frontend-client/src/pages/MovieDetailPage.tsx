@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 import SectionLabel from "../components/SectionLabel";
+import TrailerModal from "../components/movies/TrailerModal";
 import { useMovieStore } from "../stores/movie.store";
 import { useScreeningStore } from "../stores/screening.store";
 import { type IScreening } from "../types/booking.type";
 import { type IMovie } from "../types/movie.type";
 import { formatCurrency } from "../utils/currency";
+import { getYouTubeVideoId } from "../utils/youtube";
 
 export interface DetailedMovie {
   id: string;
@@ -24,6 +26,7 @@ export interface DetailedMovie {
   tagline: string;
   poster: string;
   backdrop: string;
+  trailerUrl?: string;
   rating: string;
   runtime: string;
   releaseDate: string;
@@ -41,7 +44,6 @@ export interface Cinema {
   currency?: string;
 }
 
-// Maps backend IMovie data to frontend DetailedMovie shape
 const mapMovieToDetailed = (movie: IMovie): DetailedMovie => {
   const isUpcoming = movie.status === "UPCOMING";
   const releaseDateObj = movie.releaseDate ? new Date(movie.releaseDate) : null;
@@ -59,6 +61,7 @@ const mapMovieToDetailed = (movie: IMovie): DetailedMovie => {
     tagline: movie.tagline || "",
     poster: movie.posterUrl,
     backdrop: movie.backdropUrl,
+    trailerUrl: movie.trailerUrl,
     rating: movie.contentRating,
     runtime: `${movie.durationMinutes}m`,
     releaseDate: formattedDate,
@@ -75,7 +78,6 @@ export default function MovieDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Zustand Movie Store
   const {
     selectedMovie,
     isLoading,
@@ -91,6 +93,7 @@ export default function MovieDetailPage() {
   } = useScreeningStore();
 
   const [selectedDay, setSelectedDay] = useState("");
+  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -123,7 +126,6 @@ export default function MovieDetailPage() {
 
   const visibleDays = selectedDay ? [selectedDay] : days;
 
-  // Groups a day's screenings by cinema, sorted by start time.
   const groupsForDay = (day: string) => {
     const list = screeningsByDay.get(day) ?? [];
     const map = new Map<string, { cinema: Cinema; screenings: IScreening[] }>();
@@ -195,6 +197,7 @@ export default function MovieDetailPage() {
   }
 
   const movie = mapMovieToDetailed(selectedMovie);
+  const trailerVideoId = getYouTubeVideoId(movie.trailerUrl);
 
   const handleBookTickets = (showtimeId?: string | number) => {
     const stId = showtimeId ?? screenings[0]?._id;
@@ -204,7 +207,6 @@ export default function MovieDetailPage() {
 
   return (
     <div className="bg-slate-950 min-h-screen text-white selection:bg-red-600 selection:text-white">
-      {/* Backdrop Hero */}
       <div className="relative h-[45vh] sm:h-[55vh] min-h-[320px] max-h-[600px] overflow-hidden bg-slate-900">
         <img
           src={movie.backdrop}
@@ -214,7 +216,6 @@ export default function MovieDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/70 to-transparent" />
 
-        {/* Back Button */}
         <button
           type="button"
           onClick={() => navigate("/movies")}
@@ -223,21 +224,22 @@ export default function MovieDetailPage() {
           <ArrowLeft className="w-4 h-4" /> Back to Movies
         </button>
 
-        {/* Trailer Play Button */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <button
-            type="button"
-            className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/25 transition-all group active:scale-95 shadow-2xl"
-          >
-            <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
-          </button>
-        </div>
+        {trailerVideoId && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => setIsTrailerOpen(true)}
+              aria-label={`Play ${movie.title} trailer`}
+              className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/25 transition-all group active:scale-95 shadow-2xl"
+            >
+              <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Main Detail Content Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-24 sm:-mt-44 relative z-10 pb-20">
         <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 sm:gap-8 lg:gap-12 items-start">
-          {/* Elongated Poster Container */}
           <div className="shrink-0 mx-auto md:mx-0">
             <img
               src={movie.poster}
@@ -246,9 +248,7 @@ export default function MovieDetailPage() {
             />
           </div>
 
-          {/* Info Column */}
           <div className="pt-0 md:pt-28 text-center md:text-left">
-            {/* Genres */}
             <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-3">
               {movie.genres.map((g) => (
                 <span
@@ -260,19 +260,16 @@ export default function MovieDetailPage() {
               ))}
             </div>
 
-            {/* Title */}
             <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-white uppercase tracking-tight leading-none mb-2 sm:mb-3">
               {movie.title}
             </h1>
 
-            {/* Tagline */}
             {movie.tagline && (
               <p className="text-slate-400 italic text-sm sm:text-lg mb-4">
                 &ldquo;{movie.tagline}&rdquo;
               </p>
             )}
 
-            {/* Meta Row */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-5 mb-5">
               <span className="bg-slate-800 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-700">
                 {movie.rating}
@@ -288,12 +285,10 @@ export default function MovieDetailPage() {
               </span>
             </div>
 
-            {/* Synopsis */}
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mb-6 mx-auto md:mx-0">
               {movie.synopsis}
             </p>
 
-            {/* Clean Director, Language & Cast Layout */}
             <div className="grid grid-cols-2 gap-y-4 gap-x-6 sm:gap-x-8 mb-8 max-w-lg text-left mx-auto md:mx-0">
               <div>
                 <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mb-1">
@@ -323,7 +318,6 @@ export default function MovieDetailPage() {
               </div>
             </div>
 
-            {/* Action Bar */}
             <div className="flex items-center justify-center md:justify-start gap-3">
               {!movie.comingSoon && (
                 <button
@@ -338,7 +332,6 @@ export default function MovieDetailPage() {
           </div>
         </div>
 
-        {/* Showtimes & Booking Section */}
         {!movie.comingSoon && (
           <div className="mt-12 sm:mt-16 pt-8 sm:pt-12 border-t border-slate-800/80">
             <div className="flex items-end justify-between gap-4 mb-6">
@@ -359,14 +352,11 @@ export default function MovieDetailPage() {
               </Link>
             </div>
 
-            {/* Day Filter Chips with Fade Gradients */}
             {!isScreeningsLoading && days.length > 0 && (
               <div className="relative mb-6 -mx-4 sm:mx-0">
-                {/* Fade Overlays */}
                 <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
                 <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none sm:hidden" />
 
-                {/* Scroll Container */}
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none px-4 sm:px-0">
                   <button
                     type="button"
@@ -407,7 +397,6 @@ export default function MovieDetailPage() {
               </div>
             )}
 
-            {/* Screening List Grouped by Day, Then Cinema */}
             {isScreeningsLoading ? (
               <div className="flex items-center justify-center py-16 text-slate-500">
                 <Loader2 className="w-6 h-6 animate-spin text-red-600 mr-3" />
@@ -486,6 +475,14 @@ export default function MovieDetailPage() {
           </div>
         )}
       </div>
+
+      {isTrailerOpen && trailerVideoId && (
+        <TrailerModal
+          videoId={trailerVideoId}
+          title={movie.title}
+          onClose={() => setIsTrailerOpen(false)}
+        />
+      )}
     </div>
   );
 }

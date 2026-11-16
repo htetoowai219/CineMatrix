@@ -8,7 +8,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Attach the stored access token to every outgoing request.
 api.interceptors.request.use(
   (config) => {
     const token = useUserStore.getState().accessToken;

@@ -63,7 +63,6 @@ const mapMovieToCardFormat = (m: IMovie) => {
   };
 };
 
-// Helper to transform store/backend IMovie to Featured Movie shape
 const mapMovieToFeatured = (m: IMovie): FeaturedMovie => {
   return {
     id: String(m._id || ""),
@@ -82,7 +81,6 @@ const mapMovieToFeatured = (m: IMovie): FeaturedMovie => {
 export default function HomePage() {
   const navigate = useNavigate();
 
-  // Zustand Movie Store
   const { movies, isLoading, error, getAllMoviesAction } = useMovieStore();
   const {
     cinemas,
@@ -120,7 +118,6 @@ export default function HomePage() {
     "Animation",
   ];
 
-  // Derive movie sections from store state
   const rawNowShowing = movies.filter((m) => m.status === "NOW_SHOWING");
   const rawComingSoon = movies.filter((m) => m.status === "UPCOMING");
 
@@ -137,7 +134,6 @@ export default function HomePage() {
 
   return (
     <div className="bg-slate-950 min-h-screen text-white selection:bg-red-600 selection:text-white">
-      {/* Loading state */}
       {isLoading && (
         <div className="flex flex-col items-center justify-center pt-32 pb-12">
           <Loader2 className="w-10 h-10 animate-spin text-red-600 mb-4" />
@@ -147,7 +143,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Error state */}
       {!isLoading && error && (
         <div className="max-w-7xl mx-auto px-6 pt-24 pb-8">
           <div className="bg-red-950/20 border border-red-800/50 rounded-xl p-4 text-center text-red-400 text-sm">
@@ -156,7 +151,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Empty state */}
       {!isLoading && !error && movies.length === 0 && (
         <div className="flex flex-col items-center justify-center pt-32 pb-24 text-center px-6">
           <Film className="w-12 h-12 text-slate-600 mb-4" />
@@ -169,10 +163,8 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Hero Section */}
       {!isLoading && featured && (
         <section className="relative h-[88vh] min-h-[640px] max-h-[780px] flex items-end pb-16 md:pb-20 pt-20 overflow-hidden">
-          {/* Background Backdrop Image */}
           <div className="absolute inset-0 bg-slate-900">
             <img
               src={featured.backdrop}
@@ -181,11 +173,9 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Gradient Overlays */}
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-slate-950/40" />
 
-          {/* Hero Content Grid */}
           <div className="relative z-10 max-w-7xl mx-auto px-6 w-full grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
             <div className="md:col-span-7 lg:col-span-7">
               <SectionLabel>Featured Tonight</SectionLabel>
@@ -198,7 +188,6 @@ export default function HomePage() {
                 </p>
               )}
 
-              {/* Meta badges */}
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-5">
                 <span className="bg-slate-800/80 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-700">
                   {featured.rating}
@@ -209,7 +198,6 @@ export default function HomePage() {
                 </span>
               </div>
 
-              {/* Genres & Formats */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {featured.genres.map((g) => (
                   <span
@@ -229,7 +217,6 @@ export default function HomePage() {
                 ))}
               </div>
 
-              {/* Hero Action Buttons */}
               <div className="flex flex-wrap gap-3.5">
                 <Link
                   to={`/screenings?movieId=${featured.id}`}
@@ -247,7 +234,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Hero Side Poster */}
             <div className="hidden md:flex md:col-span-5 lg:col-span-5 justify-end items-end">
               <Link
                 to={`/movies/${featured.id}`}
@@ -269,7 +255,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Scroll Indicator */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-slate-500 opacity-80">
             <span className="text-[10px] font-bold uppercase tracking-widest">
               Scroll
@@ -279,7 +264,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Now Showing Section */}
       {!isLoading && movies.length > 0 && (
         <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16">
           <div className="flex items-end justify-between mb-8">
@@ -298,7 +282,6 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Genre Filter Tabs */}
           <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-none">
             {genres.map((g) => (
               <button
@@ -316,7 +299,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Movie Cards Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
             {filteredMovies.map((movie) => (
               <MovieCard key={movie.id} movie={movie} />
@@ -325,7 +307,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Coming Soon Section */}
       {!isLoading && comingSoonCardMovies.length > 0 && (
         <section className="bg-slate-900/50 border-y border-slate-800/80 py-12 sm:py-16 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-6">
@@ -346,7 +327,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Nearby Cinemas Section */}
       <section className="max-w-7xl mx-auto px-6 py-12 sm:py-16">
         <div className="mb-8">
           <SectionLabel>Find a Cinema</SectionLabel>
@@ -355,7 +335,6 @@ export default function HomePage() {
           </h2>
         </div>
 
-        {/* Location Search Bar */}
         <form onSubmit={handleCinemaSearch} className="flex gap-3 mb-10 max-w-md">
           <div className="relative flex-1">
             <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -379,7 +358,6 @@ export default function HomePage() {
           <p className="mb-6 text-sm text-red-500">{cinemasError}</p>
         )}
 
-        {/* Cinema Cards */}
         {cinemasLoading ? (
           <div className="flex items-center gap-3 text-slate-400 text-sm py-12">
             <Loader2 className="w-5 h-5 animate-spin text-red-600" />

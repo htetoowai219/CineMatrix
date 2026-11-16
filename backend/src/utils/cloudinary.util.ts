@@ -35,7 +35,6 @@ export interface CloudinaryUploadResult {
   public_id: string;
 }
 
-// Uploads a single image buffer to Cloudinary and resolves with the stored URL.
 export const uploadImageToCloudinary = (
   file: Express.Multer.File,
   folder: string,

@@ -44,10 +44,8 @@ export const verifyAccessToken = (
       return res.status(500).json({ message: "Internal server error." });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, secret) as DecodedToken;
 
-    // Attach user payload to request
     req.user = {
       id: decoded.userId,
       role: decoded.role,

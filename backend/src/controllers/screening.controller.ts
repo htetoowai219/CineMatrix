@@ -107,13 +107,9 @@ export const getScreeningsController = async (req: Request, res: Response) => {
   }
 };
 
-// Escapes regex special characters so user search terms are matched literally.
 const escapeRegExp = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// Public: lists upcoming screenings of active cinemas. Supports filtering by
-// cinema/date/movie, free-text search across movie title and cinema name, and
-// pagination (page/limit) so the client can load a few at a time.
 export const getPublicScreeningsController = async (
   req: Request,
   res: Response,
@@ -149,7 +145,6 @@ export const getPublicScreeningsController = async (
       filter.startTime = { $gte: new Date() };
     }
 
-    // Free-text search across movie titles and cinema names.
     if (q && String(q).trim()) {
       const term = String(q).trim();
       const regex = new RegExp(escapeRegExp(term), "i");
@@ -190,7 +185,6 @@ export const getPublicScreeningsController = async (
   }
 };
 
-// Public: returns one upcoming screening (from an active cinema) with seats.
 export const getPublicScreeningByIdController = async (
   req: Request,
   res: Response,
@@ -231,7 +225,6 @@ export const getPublicScreeningByIdController = async (
   }
 };
 
-// Owner/staff: creates a screening from a template at a given time.
 // Each screening materializes its own seat instances from the room layout.
 export const createScreeningController = async (req: Request, res: Response) => {
   try {

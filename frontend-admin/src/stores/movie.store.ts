@@ -68,7 +68,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
   isSubmitting: false,
   error: null,
 
-  // Fetches all movies with optional status/genre filters.
   getAllMoviesAction: async (params) => {
     set({ isLoading: true, error: null });
     try {
@@ -83,7 +82,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Fetches a single movie by its unique database ID.
   getMovieByIdAction: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -100,7 +98,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Creates a new movie (admin-only on the backend).
   createMovieAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -118,7 +115,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Updates an existing movie by ID (admin-only on the backend).
   updateMovieAction: async (id, payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -138,7 +134,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Deletes a movie by ID (admin-only on the backend).
   deleteMovieAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -156,7 +151,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Admin: searches TMDB for movies to import (metadata + trailer).
   tmdbSearchAction: async (query, year) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -173,7 +167,6 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Admin: imports a movie (with trailer, credits, and images) from TMDB.
   tmdbImportAction: async (tmdbId) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -194,10 +187,8 @@ export const useMovieStore = create<MovieState>()((set) => ({
     }
   },
 
-  // Clears the currently selected movie from state.
   clearSelectedMovie: () => set({ selectedMovie: null }),
 
-  // Resets the store error message.
   clearError: () => set({ error: null }),
 }));
 

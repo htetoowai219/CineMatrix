@@ -125,7 +125,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Revokes the session on the backend and clears auth state.
       logoutAction: async () => {
         const { accessToken } = get();
         set({ isLoading: true });
@@ -175,7 +174,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Fetches the signed-in admin's profile details.
       getProfileAction: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -197,7 +195,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Updates the signed-in admin's profile details and syncs local state.
       updateProfileAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
@@ -227,7 +224,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Updates the signed-in admin's account password.
       updatePasswordAction: async (payload) => {
         set({ isLoading: true, error: null });
         try {
@@ -241,10 +237,8 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // Resets the store error message.
       clearError: () => set({ error: null }),
 
-      // Local auth state cleanup without a backend call.
       logout: () =>
         set({
           user: null,

@@ -21,7 +21,6 @@ const getMovie = (s: IScreening) =>
 const formatRuntime = (minutes?: number) =>
   minutes ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : "";
 
-// Reliable Unsplash cinema image placeholders
 const DEFAULT_HERO_IMAGE =
   "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1600&q=80";
 
@@ -56,8 +55,6 @@ export default function CinemaDetailPage() {
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
-  // Loads the day's screenings for this cinema whenever the cinema or the
-  // selected day changes.
   useEffect(() => {
     if (!selectedCinema) return;
     clearScreeningError();
@@ -73,7 +70,6 @@ export default function CinemaDetailPage() {
     clearScreeningError,
   ]);
 
-  // Groups the day's screenings by movie for the schedule list.
   const movieGroups = useMemo(() => {
     const map = new Map<string, IScreening[]>();
     for (const screening of screenings) {
@@ -137,7 +133,6 @@ export default function CinemaDetailPage() {
 
   return (
     <div className="bg-slate-950 min-h-screen text-white selection:bg-red-600 selection:text-white">
-      {/* Hero Header Image */}
       <div className="relative h-[35vh] sm:h-[45vh] min-h-[280px] max-h-[500px] overflow-hidden bg-slate-900">
         <img
           src={heroImage}
@@ -156,7 +151,6 @@ export default function CinemaDetailPage() {
         </button>
       </div>
 
-      {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-20 sm:-mt-32 relative z-10 pb-20">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-10">
           <div>
@@ -188,10 +182,8 @@ export default function CinemaDetailPage() {
           </button>
         </div>
 
-        {/* Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 flex flex-col gap-6">
-            {/* Description */}
             {selectedCinema.description && (
               <div className="bg-slate-900/80 rounded-xl border border-slate-800/90 p-5">
                 <h3 className="font-display font-bold text-white uppercase tracking-wide mb-2 text-base">
@@ -203,7 +195,6 @@ export default function CinemaDetailPage() {
               </div>
             )}
 
-            {/* Contact */}
             <div className="bg-slate-900/80 rounded-xl border border-slate-800/90 p-5 flex flex-col gap-3 text-xs text-slate-300">
               {selectedCinema.socials?.website && (
                 <div className="flex items-center gap-2.5">
@@ -220,7 +211,6 @@ export default function CinemaDetailPage() {
               )}
             </div>
 
-            {/* Gallery Grid */}
             {galleryImages.length > 0 && (
               <div>
                 <h3 className="font-display font-bold text-white uppercase tracking-wide mb-3 text-base">
@@ -244,7 +234,6 @@ export default function CinemaDetailPage() {
             )}
           </div>
 
-          {/* Daily Schedule Column */}
           <div id="daily-schedule" className="lg:col-span-2">
             <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-white uppercase tracking-wide mb-5">
               Daily Schedule

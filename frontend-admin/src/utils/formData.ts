@@ -1,11 +1,6 @@
-// Converts a payload object into multipart FormData for image uploads.
-// - `imageFiles` / `galleryFiles` File[] are re-keyed to `images` / `gallery`
-//   so they land in the right multer field on the backend.
-// - Arrays of primitives (e.g. image URLs, genres) are joined as
-//   comma-separated strings so the backend `toArray` can split them.
-// - Nested objects and arrays-of-objects (e.g. cinema `rooms`, whose each room
-//   contains a nested `grid` array, and `announcements`) are JSON-stringified
-//   and parsed back on the server.
+// Builds multipart FormData for image uploads. File arrays are re-keyed to
+// their multer field names, primitive arrays are comma-joined for `toArray`,
+// and nested objects/arrays are JSON-stringified for server-side parsing.
 export const toFormData = (payload: Record<string, unknown>): FormData => {
   const fd = new FormData();
 

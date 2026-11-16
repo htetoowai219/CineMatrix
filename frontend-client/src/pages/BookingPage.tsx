@@ -24,7 +24,6 @@ import { formatCurrency } from "../utils/currency";
 
 const LOCK_SECONDS = 10 * 60;
 
-// Groups seats by row so the room layout renders as rows of seats.
 const groupByRow = (seats: IScreeningSeat[]) => {
   const rows: { row: string; seats: IScreeningSeat[] }[] = [];
   for (const seat of seats) {
@@ -94,14 +93,12 @@ export default function BookingPage() {
     };
   }, [screeningId, getPublicScreeningByIdAction, clearSelectedScreening, clearError]);
 
-  // Redirect to login when the user tries to book while signed out.
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login", { state: { from: `/book/${screeningId}` } });
     }
   }, [isAuthenticated, navigate, screeningId]);
 
-  // Countdown tied to the lock's 10-minute expiry.
   useEffect(() => {
     if (!lockedAt) return;
     const tick = () => {
@@ -176,7 +173,6 @@ export default function BookingPage() {
       setLockedAt(Date.now());
       setTimeLeft(LOCK_SECONDS);
     } catch {
-      // Error stored in the booking store.
     }
   };
 
@@ -220,7 +216,6 @@ export default function BookingPage() {
         total: booking.totalPrice,
       });
     } catch {
-      // Error stored in the booking store.
     }
   };
 
@@ -230,7 +225,6 @@ export default function BookingPage() {
     return `${m}:${String(s).padStart(2, "0")}`;
   };
 
-  // ---- Success screen ----
   if (submittedBooking) {
     return (
       <div className="bg-slate-950 min-h-screen text-white pt-32 pb-20 selection:bg-red-600 selection:text-white">
@@ -300,7 +294,6 @@ export default function BookingPage() {
     );
   }
 
-  // ---- Loading ----
   if (isScreeningLoading || !screening) {
     return (
       <div className="bg-slate-950 min-h-screen text-white flex flex-col items-center justify-center pt-24 pb-20">
@@ -331,7 +324,6 @@ export default function BookingPage() {
 
   const startTime = new Date(screening.startTime);
 
-  // ---- Seat selection / checkout ----
   return (
     <div className="bg-slate-950 min-h-screen text-white pt-24 pb-20 selection:bg-red-600 selection:text-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -343,7 +335,6 @@ export default function BookingPage() {
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <SectionLabel>Select Your Seats</SectionLabel>
@@ -379,7 +370,6 @@ export default function BookingPage() {
           )}
         </div>
 
-        {/* Seat map */}
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 mb-6 shadow-xl overflow-x-auto">
           <div className="max-w-md mx-auto h-2.5 bg-slate-700/60 rounded-t-full mb-8" />
           <div className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mb-8">
@@ -430,7 +420,6 @@ export default function BookingPage() {
             ))}
           </div>
 
-          {/* Legend */}
           <div className="flex flex-wrap items-center justify-center gap-4 mt-8 text-[11px] text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-4 h-4 rounded bg-slate-800 border border-slate-700" />
@@ -464,10 +453,8 @@ export default function BookingPage() {
           </div>
         )}
 
-        {/* Checkout card */}
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl">
           <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-            {/* Selected seats summary */}
             <div className="flex-1">
               <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">
                 Your Selection
@@ -512,7 +499,6 @@ export default function BookingPage() {
               </div>
             </div>
 
-            {/* Payment / actions */}
             <div className="flex-1 border-t lg:border-t-0 lg:border-l border-slate-800 lg:pl-6 pt-5 lg:pt-0">
               {lockedAt === null ? (
                 <button
@@ -532,7 +518,6 @@ export default function BookingPage() {
                 </button>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Payment method */}
                   <div>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2">
                       Payment Method
@@ -572,7 +557,6 @@ export default function BookingPage() {
                     </div>
                   </div>
 
-                  {/* Screenshot upload */}
                   {paymentMethod === "screenshot" && (
                     <label className="flex items-center gap-3 bg-slate-950/60 border border-dashed border-slate-700 hover:border-red-600/50 rounded-lg px-4 py-3 cursor-pointer transition-colors">
                       <Upload className="w-4 h-4 text-slate-500 shrink-0" />
@@ -595,7 +579,6 @@ export default function BookingPage() {
                     </label>
                   )}
 
-                  {/* Actions */}
                   <div className="flex items-center gap-3">
                     <button
                       type="button"

@@ -52,7 +52,6 @@ export const useTemplateStore = create<TemplateState>()((set) => ({
   isSubmitting: false,
   error: null,
 
-  // Fetches screening templates for the signed-in partner's cinemas.
   getTemplatesAction: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -69,7 +68,6 @@ export const useTemplateStore = create<TemplateState>()((set) => ({
     }
   },
 
-  // Creates a new screening template for one of the managed cinemas.
   createTemplateAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -84,7 +82,6 @@ export const useTemplateStore = create<TemplateState>()((set) => ({
     }
   },
 
-  // Updates an existing screening template.
   updateTemplateAction: async (id, payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -99,7 +96,6 @@ export const useTemplateStore = create<TemplateState>()((set) => ({
     }
   },
 
-  // Deletes a screening template by ID.
   deleteTemplateAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {

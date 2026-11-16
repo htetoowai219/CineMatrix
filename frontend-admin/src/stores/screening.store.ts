@@ -52,7 +52,6 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
   isSubmitting: false,
   error: null,
 
-  // Fetches screenings for the signed-in partner's cinemas.
   getScreeningsAction: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -67,7 +66,6 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
     }
   },
 
-  // Creates a screening from a template at a given start time.
   createScreeningAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -82,7 +80,6 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
     }
   },
 
-  // Reschedules an existing screening.
   updateScreeningAction: async (id, payload) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -97,7 +94,6 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
     }
   },
 
-  // Deletes a screening by ID.
   deleteScreeningAction: async (id: string) => {
     set({ isSubmitting: true, error: null });
     try {

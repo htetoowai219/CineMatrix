@@ -35,19 +35,15 @@ const App = () => {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
-            {/* Shared: dashboard, bookings, profile */}
             <Route
               element={
                 <RoleRoute roles={["admin", "cinema_owner", "cinema_staff"]} />
               }
             >
               <Route path="/" element={<RoleDashboard />} />
-              <Route path="/bookings" element={<BookingsPage />} />
-              <Route path="/bookings/:cinemaId" element={<BookingsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
 
-            {/* Admin: catalog & network management */}
             <Route element={<RoleRoute roles={["admin"]} />}>
               <Route path="/movies" element={<ManageMoviesPage />} />
               <Route path="/cinemas" element={<ManageCinemasPage />} />
@@ -55,7 +51,6 @@ const App = () => {
               <Route path="/owners" element={<ManageOwnersPage />} />
             </Route>
 
-            {/* Owner/staff: partner portal */}
             <Route
               element={<RoleRoute roles={["cinema_owner", "cinema_staff"]} />}
             >
@@ -64,6 +59,8 @@ const App = () => {
               <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/screenings" element={<ScreeningsPage />} />
               <Route path="/screenings/:cinemaId" element={<ScreeningsPage />} />
+              <Route path="/bookings" element={<BookingsPage />} />
+              <Route path="/bookings/:cinemaId" element={<BookingsPage />} />
               <Route path="/staff" element={<StaffPage />} />
             </Route>
           </Route>

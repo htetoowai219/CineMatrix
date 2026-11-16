@@ -86,7 +86,6 @@ export default function CinemaDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Back link */}
       <button
         type="button"
         onClick={() => navigate("/my-cinemas")}
@@ -126,7 +125,6 @@ export default function CinemaDetailPage() {
         </div>
       ) : (
         <>
-          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div className="flex items-center gap-4">
               {selectedCinema.images && selectedCinema.images.length > 0 ? (
@@ -183,7 +181,6 @@ export default function CinemaDetailPage() {
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 scrollbar-none">
             {TABS.map(({ key, label }) => (
               <button
@@ -228,10 +225,6 @@ export default function CinemaDetailPage() {
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Details tab                                                          */
-/* ------------------------------------------------------------------ */
 
 function DetailsTab({
   cinema,
@@ -286,7 +279,6 @@ function DetailsTab({
         imageFiles,
       });
     } catch {
-      // Error is stored in the Zustand store state
     } finally {
       setSaving(false);
     }
@@ -474,10 +466,6 @@ function DetailsTab({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Announcements tab                                                    */
-/* ------------------------------------------------------------------ */
-
 function AnnouncementsTab({
   cinema,
   isSubmitting,
@@ -512,7 +500,6 @@ function AnnouncementsTab({
         }));
       await onSave(String(cinema._id), { announcements });
     } catch {
-      // Error is stored in the Zustand store state
     } finally {
       setSaving(false);
     }
@@ -616,10 +603,6 @@ function AnnouncementsTab({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Rooms tab                                                           */
-/* ------------------------------------------------------------------ */
-
 interface RoomEditDraft {
   name: string;
   rows: number;
@@ -680,7 +663,6 @@ function RoomsTab({
       setEditIndex(null);
       setDraft(null);
     } catch {
-      // Error is stored in the Zustand store state
     } finally {
       setSaving(false);
     }
@@ -694,7 +676,6 @@ function RoomsTab({
       await onSave(String(cinema._id), { rooms: nextRooms });
       setRemoveIndex(null);
     } catch {
-      // Error is stored in the Zustand store state
     } finally {
       setSaving(false);
     }

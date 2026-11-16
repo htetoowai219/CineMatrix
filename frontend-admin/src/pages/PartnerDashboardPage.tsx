@@ -66,7 +66,6 @@ export default function PartnerDashboardPage() {
     return days;
   }, [bookings]);
 
-  // Booking status breakdown.
   const statusBreakdown = useMemo(
     () =>
       (["pending", "confirmed", "rejected", "cancelled"] as const).map(
@@ -79,7 +78,6 @@ export default function PartnerDashboardPage() {
     [bookings],
   );
 
-  // Confirmed revenue per cinema, most to least.
   const revenueByCinema = useMemo(() => {
     const map = new Map<
       string,
@@ -173,7 +171,6 @@ export default function PartnerDashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* My cinemas */}
             <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -219,7 +216,6 @@ export default function PartnerDashboardPage() {
               )}
             </section>
 
-            {/* Pending bookings */}
             <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -267,7 +263,6 @@ export default function PartnerDashboardPage() {
             </section>
           </div>
 
-          {/* Analytics */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <section className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-xl">
               <div className="flex items-center gap-2 mb-5">

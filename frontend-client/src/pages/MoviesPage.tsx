@@ -10,7 +10,6 @@ export interface FilterableMovie extends Movie {
   formats: string[];
 }
 
-// Maps backend IMovie data to frontend FilterableMovie shape
 const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
   const isUpcoming = movie.status === "UPCOMING";
   const releaseDateObj = movie.releaseDate ? new Date(movie.releaseDate) : null;
@@ -29,7 +28,7 @@ const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
     runtime: `${movie.durationMinutes}m`,
     genres: movie.genres || [],
     language: movie.originalLanguage,
-    formats: ["2D"], // Default format array if omitted in database model
+    formats: ["2D"],
     comingSoon: isUpcoming,
     releaseLabel:
       isUpcoming && formattedDate ? `Releasing ${formattedDate}` : undefined,
@@ -37,7 +36,6 @@ const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
 };
 
 export default function MoviesPage() {
-  // Zustand Movie Store
   const { movies, isLoading, error, getAllMoviesAction } = useMovieStore();
 
   const [search, setSearch] = useState("");
@@ -95,9 +93,7 @@ export default function MoviesPage() {
 
   return (
     <div className="bg-slate-950 min-h-screen text-white pt-24 pb-20 selection:bg-red-600 selection:text-white">
-      {/* Header & Filter Controls Container */}
       <div className="max-w-7xl mx-auto px-6 mb-8">
-        {/* Header */}
         <div className="mb-8">
           <SectionLabel>Browse Catalog</SectionLabel>
           <h1 className="font-display font-black text-4xl sm:text-5xl text-white uppercase tracking-wide">
@@ -105,7 +101,6 @@ export default function MoviesPage() {
           </h1>
         </div>
 
-        {/* Search & Filter Trigger Bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1 max-w-lg">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -152,7 +147,6 @@ export default function MoviesPage() {
           </div>
         </div>
 
-        {/* Expandable Filter Panel */}
         {showFilters && (
           <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 mb-6 grid grid-cols-1 md:grid-cols-3 gap-6 backdrop-blur-sm">
             {[
@@ -190,7 +184,6 @@ export default function MoviesPage() {
           </div>
         )}
 
-        {/* Results Counter when filtering */}
         {isFiltering && !isLoading && (
           <p className="text-slate-500 text-xs sm:text-sm font-medium mb-4">
             Showing{" "}
@@ -200,7 +193,6 @@ export default function MoviesPage() {
         )}
       </div>
 
-      {/* Loading State */}
       {isLoading && (
         <div className="max-w-7xl mx-auto px-6 py-24 text-center">
           <Loader2 className="w-10 h-10 animate-spin mx-auto text-red-600 mb-4" />
@@ -210,7 +202,6 @@ export default function MoviesPage() {
         </div>
       )}
 
-      {/* Error State */}
       {!isLoading && error && (
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center py-16 bg-red-950/20 border border-red-900/50 rounded-2xl">
@@ -226,7 +217,6 @@ export default function MoviesPage() {
         </div>
       )}
 
-      {/* Empty State (Filtered or No Movies Available) */}
       {!isLoading &&
         !error &&
         (mappedMovies.length === 0 || (isFiltering && totalFiltered === 0)) && (
@@ -253,10 +243,8 @@ export default function MoviesPage() {
           </div>
         )}
 
-      {/* Content Rendering */}
       {!isLoading && !error && (
         <>
-          {/* Now Showing Section */}
           {nowShowing.length > 0 && (
             <section className="max-w-7xl mx-auto px-6 mb-16">
               <div className="flex items-end justify-between mb-6">
@@ -279,7 +267,6 @@ export default function MoviesPage() {
             </section>
           )}
 
-          {/* Coming Soon Section */}
           {comingSoon.length > 0 && (
             <section className="bg-slate-900/40 border-y border-slate-800/80 py-16">
               <div className="max-w-7xl mx-auto px-6">

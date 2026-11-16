@@ -16,7 +16,6 @@ import {
 
 const router = Router();
 
-// Public routes for browsing movies
 router.get("/", getAllMoviesController);
 
 // Admin: TMDB import tooling (must precede the /:id route below)
@@ -25,7 +24,6 @@ router.post("/tmdb/import", verifyAccessToken, tmdbImportController);
 
 router.get("/:id", getMovieByIdController);
 
-// Protected routes for managing movies (accepts optional poster/backdrop files)
 router.post(
   "/",
   verifyAccessToken,

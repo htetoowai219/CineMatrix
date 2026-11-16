@@ -50,7 +50,6 @@ router.patch(
 
 router.get("/profile", verifyAccessToken, getProfileController);
 
-// Admin-only: cinema owner management
 router.get("/owners", verifyAccessToken, requireRole("admin"), getOwnersController);
 router.post("/owners", verifyAccessToken, requireRole("admin"), createOwnerController);
 router.delete(
@@ -60,7 +59,6 @@ router.delete(
   deleteOwnerController,
 );
 
-// Owner-only: cinema staff management
 router.get("/staff", verifyAccessToken, requireRole("cinema_owner"), getStaffController);
 router.post("/staff", verifyAccessToken, requireRole("cinema_owner"), createStaffController);
 router.delete(

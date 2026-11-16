@@ -73,7 +73,6 @@ export const useBookingStore = create<BookingState>()((set) => ({
     }
   },
 
-  // Releases a lock the customer holds on a screening's seats.
   unlockSeatsAction: async (screeningId, seats) => {
     try {
       await api.post("/booking/unlock", { screeningId, seats });
@@ -82,7 +81,6 @@ export const useBookingStore = create<BookingState>()((set) => ({
     }
   },
 
-  // Uploads a payment screenshot and returns its hosted URL.
   uploadPaymentScreenshotAction: async (file) => {
     set({ isUploading: true, error: null });
     try {
@@ -117,7 +115,6 @@ export const useBookingStore = create<BookingState>()((set) => ({
     }
   },
 
-  // Fetches the current user's bookings (newest first).
   getMyBookingsAction: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -132,7 +129,6 @@ export const useBookingStore = create<BookingState>()((set) => ({
     }
   },
 
-  // Cancels one of the user's pending bookings and frees its seats.
   cancelBookingAction: async (id) => {
     set({ isBooking: true, error: null });
     try {

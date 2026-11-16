@@ -4,7 +4,6 @@ import { Movie } from "../models/movie.model";
 import { ScreeningTemplate } from "../models/template.model";
 import { canManageCinema } from "./cinema.controller";
 
-// Returns the ids of cinemas the requesting owner/staff can manage.
 const getManagedCinemaIds = async (
   userId: string,
   role: string,
@@ -26,7 +25,6 @@ const validateRowPrices = (rowPrices: unknown): rowPrices is Record<string, numb
   );
 };
 
-// Lists all screening templates for the cinemas managed by the requester.
 export const getTemplatesController = async (req: Request, res: Response) => {
   try {
     const cinemaIds = await getManagedCinemaIds(
@@ -55,7 +53,6 @@ export const getTemplatesController = async (req: Request, res: Response) => {
   }
 };
 
-// Creates a screening template (movie + room + price per row).
 export const createTemplateController = async (req: Request, res: Response) => {
   try {
     const { cinemaId, movieId, roomName, rowPrices } = req.body || {};
@@ -113,7 +110,6 @@ export const createTemplateController = async (req: Request, res: Response) => {
   }
 };
 
-// Updates a screening template.
 export const updateTemplateController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -178,7 +174,6 @@ export const updateTemplateController = async (req: Request, res: Response) => {
   }
 };
 
-// Deletes a screening template.
 export const deleteTemplateController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

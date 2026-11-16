@@ -33,7 +33,6 @@ export const useOwnerStore = create<OwnerState>()((set) => ({
   isDeleting: false,
   error: null,
 
-  // Fetches all registered cinema owners (admin-only on the backend).
   getOwnersAction: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -48,7 +47,6 @@ export const useOwnerStore = create<OwnerState>()((set) => ({
     }
   },
 
-  // Creates a new cinema owner account (admin-only on the backend).
   createOwnerAction: async (payload) => {
     set({ isSubmitting: true, error: null });
     try {

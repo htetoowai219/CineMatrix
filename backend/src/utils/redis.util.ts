@@ -87,7 +87,7 @@ export const acquireSeatLocks = async (
       try {
         await c.del(acquired);
       } catch {
-        // best effort rollback
+        // Best-effort rollback; the lock expires on its own if this fails.
       }
     }
     throw error;
@@ -113,7 +113,6 @@ export const releaseSeatLocks = async (
   }
 };
 
-// Returns true when a live lock exists for the seat that belongs to another user.
 export const isSeatLockedByOther = async (
   screeningId: string,
   label: string,
@@ -124,7 +123,6 @@ export const isSeatLockedByOther = async (
   return holder !== null && holder !== ownerId;
 };
 
-// Returns the owner id currently holding a seat lock, or null when not locked.
 export const getSeatLockHolder = async (
   screeningId: string,
   label: string,

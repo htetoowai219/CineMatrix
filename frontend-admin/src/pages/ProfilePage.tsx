@@ -55,7 +55,6 @@ export default function ProfilePage() {
       await updateProfileAction(tempInfo);
       setIsEditInfoOpen(false);
     } catch {
-      // Error state handled inside the store
     }
   };
 
@@ -66,7 +65,6 @@ export default function ProfilePage() {
       setPassData({ currentPassword: "", newPassword: "" });
       setIsEditPassOpen(false);
     } catch {
-      // Error state handled inside the store
     }
   };
 
@@ -76,13 +74,11 @@ export default function ProfilePage() {
     try {
       await updateProfileAction({ profileImage: file });
     } catch {
-      // Error state handled inside the store
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <p className="text-red-500 text-xs font-bold uppercase tracking-widest mb-1">
           Account
@@ -95,7 +91,6 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Profile header card */}
       <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 mb-8 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-xl">
         <div className="relative w-20 h-20 shrink-0">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-950 flex items-center justify-center border border-red-500/30 shadow-lg shadow-red-600/20 overflow-hidden">
@@ -142,7 +137,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Tab navigation */}
       <div className="flex gap-1 bg-slate-900/90 border border-slate-800/90 rounded-xl p-1 mb-8 w-full sm:w-fit overflow-x-auto scrollbar-none">
         {(["info", "security"] as const).map((t) => (
           <button
@@ -159,7 +153,6 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Personal Info Tab */}
       {tab === "info" && (
         <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 max-w-2xl shadow-xl">
           <div className="flex items-center justify-between mb-6">
@@ -205,7 +198,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Security Tab */}
       {tab === "security" && (
         <div className="max-w-2xl">
           <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl">
@@ -243,7 +235,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Edit Personal Info Modal */}
       {isEditInfoOpen && (
         <Modal
           title="Update Personal Info"
@@ -315,7 +306,6 @@ export default function ProfilePage() {
         </Modal>
       )}
 
-      {/* Edit Password Modal */}
       {isEditPassOpen && (
         <Modal
           title="Change Password"

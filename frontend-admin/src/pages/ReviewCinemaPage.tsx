@@ -94,7 +94,6 @@ export default function ReviewCinemaPage() {
       await approveCinemaAction(String(cinema._id));
       navigate("/cinemas");
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -104,7 +103,6 @@ export default function ReviewCinemaPage() {
       await rejectCinemaAction(String(cinema._id));
       navigate("/cinemas");
     } catch {
-      // Error is stored in the Zustand store state
     }
   };
 
@@ -151,7 +149,6 @@ export default function ReviewCinemaPage() {
         </div>
       ) : (
         <>
-          {/* Header */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl mb-6">
             <div className="h-40 sm:h-52 relative">
               {cinema.images && cinema.images.length > 0 ? (
@@ -214,7 +211,6 @@ export default function ReviewCinemaPage() {
             </div>
           </div>
 
-          {/* Details */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 mb-6">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">
               Cinema details
@@ -245,7 +241,6 @@ export default function ReviewCinemaPage() {
             </div>
           </div>
 
-          {/* Rooms & layouts */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 mb-6">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">
               Room layouts
@@ -274,7 +269,6 @@ export default function ReviewCinemaPage() {
             )}
           </div>
 
-          {/* Gallery */}
           {(cinema.gallery && cinema.gallery.length > 0) ||
           (cinema.images && cinema.images.length > 1) ? (
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6">

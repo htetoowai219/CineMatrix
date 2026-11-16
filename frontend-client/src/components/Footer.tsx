@@ -34,7 +34,6 @@ const Footer = () => {
     <footer className="bg-slate-900 text-white border-t border-slate-800 mt-24">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-          {/* Brand & Description */}
           <div className="col-span-2 md:col-span-1">
             <Link
               to="/"
@@ -59,7 +58,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Navigation Columns */}
           {footerSections.map((col) => (
             <div key={col.title}>
               <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-4">
@@ -81,7 +79,6 @@ const Footer = () => {
           ))}
         </div>
 
-        {/* Bottom Bar */}
         <div className="mt-12 pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-slate-500 text-xs">
             © {new Date().getFullYear()} CineMatrix Inc. All rights reserved.

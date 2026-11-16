@@ -124,7 +124,6 @@ export default function ScreeningsPage() {
     fetchPage(1, submittedQuery, false);
   }, [submittedQuery, fetchPage]);
 
-  // Infinite scroll: load the next page when the sentinel becomes visible.
   useEffect(() => {
     if (!hasMore || isLoading || isLoadingMore) return;
     const node = loadMoreRef.current;
@@ -160,7 +159,6 @@ export default function ScreeningsPage() {
           </p>
         </div>
 
-        {/* Search */}
         <form onSubmit={handleSearch} className="flex gap-3 mb-8 max-w-xl">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
