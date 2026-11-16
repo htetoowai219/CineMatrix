@@ -14,10 +14,7 @@ import cinemaRoutes from "./routes/cinema.route";
 import templateRoutes from "./routes/template.route";
 import screeningRoutes from "./routes/screening.route";
 import bookingRoutes from "./routes/booking.route";
-import {
-  reconcileExpiredSeatLocks,
-  expirePendingBookings,
-} from "./controllers/booking.controller";
+import { reconcileExpiredSeatLocks } from "./controllers/booking.controller";
 import { connectRedis, isRedisAvailable } from "./utils/redis.util";
 
 dotenv.config();
@@ -63,11 +60,10 @@ const start = async () => {
     console.error("Redis warm-up failed:", error);
   }
 
-  // Periodic maintenance: release seats whose 10-minute lock expired and cancel
-  // pending bookings that outlived their payment window.
+  // Periodic cleanup: release seats whose 10-minute Redis hold expired.
+  // Pending bookings are intentionally left for staff or the customer to resolve.
   setInterval(() => {
     void reconcileExpiredSeatLocks();
-    void expirePendingBookings();
   }, 30_000);
 
   app.listen(PORT, () => {

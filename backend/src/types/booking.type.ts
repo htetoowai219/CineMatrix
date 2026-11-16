@@ -20,7 +20,6 @@ export interface IBooking {
   paymentScreenshotUrl?: string;
   status: BookingStatus;
   notes?: string;
-  expiresAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

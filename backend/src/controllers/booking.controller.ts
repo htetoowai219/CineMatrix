@@ -17,10 +17,6 @@ import { sendBookingStatusEmail } from "../utils/mailer.util";
 
 const PAYMENT_SCREENSHOT_FOLDER = "cinematrix/payments";
 
-// How long a pending booking keeps its seats before being auto-cancelled.
-const PENDING_BOOKING_TTL_MS =
-  (Number(process.env.PENDING_BOOKING_TTL_MINUTES) || 30) * 60 * 1000;
-
 // Tenant booking management is limited to owners and their staff. Admins are
 // intentionally excluded, so this must not use the broader cinema helper.
 const getTenantOwnerId = (user: Request["user"]): string | undefined =>
@@ -328,7 +324,6 @@ export const createBookingController = async (req: Request, res: Response) => {
       paymentScreenshotUrl,
       notes,
       status: "pending",
-      expiresAt: new Date(Date.now() + PENDING_BOOKING_TTL_MS),
     });
     await booking.save();
 
@@ -468,7 +463,6 @@ export const updateBookingStatusController = async (
     }
 
     booking.status = nextStatus;
-    booking.expiresAt = undefined; // resolved before the payment window ended
     await booking.save();
 
     void notifyBookingStatus(booking, nextStatus);
@@ -509,7 +503,6 @@ export const cancelBookingController = async (req: Request, res: Response) => {
     );
 
     booking.status = "cancelled";
-    booking.expiresAt = undefined;
     await booking.save();
 
     void notifyBookingStatus(booking, "cancelled");
@@ -527,7 +520,7 @@ export const cancelBookingController = async (req: Request, res: Response) => {
 };
 
 // Reverts seats whose Redis lock expired (key gone) but which are still marked
-// "held" in Mongo. Runs periodically so the seat map stays accurate.
+// "held" in Mongo. Runs periodically so temporary checkout holds stay accurate.
 export const reconcileExpiredSeatLocks = async () => {
   try {
     if (!isRedisAvailable()) return;
@@ -551,33 +544,5 @@ export const reconcileExpiredSeatLocks = async () => {
     }
   } catch (error) {
     console.error("Reconcile expired seat locks error:", error);
-  }
-};
-
-// Cancels pending bookings whose payment window elapsed, releasing their seats.
-// This worker is the only expiry path, so the release always runs first.
-export const expirePendingBookings = async () => {
-  try {
-    const now = new Date();
-    const expired = await Booking.find({
-      status: "pending",
-      expiresAt: { $lte: now },
-    });
-
-    for (const booking of expired) {
-      await releaseSeats(
-        String(booking.screeningId),
-        booking.seats.map((s) => s.label),
-      );
-      booking.status = "cancelled";
-      booking.expiresAt = undefined;
-      await booking.save();
-    }
-
-    if (expired.length > 0) {
-      console.log(`Expired ${expired.length} pending booking(s).`);
-    }
-  } catch (error) {
-    console.error("Expire pending bookings error:", error);
   }
 };

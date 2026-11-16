@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Loader2,
   AlertCircle,
@@ -13,7 +13,7 @@ import { useTemplateStore } from "../stores/template.store";
 import { useCinemaStore } from "../stores/cinema.store";
 import { useMovieStore } from "../stores/movie.store";
 import { useParams, useNavigate } from "react-router";
-import type { ICinema } from "../types/cinema.type";
+import type { ICinema, SeatCellType } from "../types/cinema.type";
 import type { IScreeningTemplate } from "../types/template.type";
 import { formatCurrency, currencySymbol } from "../utils/currency";
 
@@ -38,6 +38,79 @@ const emptyForm = (cinemaId: string): FormState => ({
   roomName: "",
   rowPrices: {},
 });
+
+const PREVIEW_CELL_STYLES: Record<SeatCellType, string> = {
+  seat: "border-red-500/50 bg-red-600/70",
+  double: "border-rose-400/60 bg-rose-500/70",
+  walkway: "border-slate-700/60 bg-slate-700/40",
+  stairs: "border-amber-400/50 bg-amber-500/60",
+  empty: "border-transparent bg-transparent",
+};
+
+const PREVIEW_CELL_LABELS: Record<SeatCellType, string> = {
+  seat: "seat",
+  double: "double seat",
+  walkway: "walkway",
+  stairs: "stairs",
+  empty: "empty space",
+};
+
+const SeatPreviewRow = ({
+  row,
+  cols,
+  rowIndex,
+}: {
+  row: SeatCellType[];
+  cols: number;
+  rowIndex: number;
+}) => {
+  const rowName = rowLabel(rowIndex);
+  const cells: ReactNode[] = [];
+
+  for (let c = 0; c < row.length; c += 1) {
+    const cell = row[c];
+
+    // Match the builder and real seat map: an adjacent double pair renders as
+    // one wider loveseat spanning two columns.
+    if (cell === "double" && row[c + 1] === "double") {
+      cells.push(
+        <span
+          key={`double-${c}`}
+          title={`Row ${rowName}, columns ${c + 1}-${c + 2}: double seat`}
+          className={`col-span-2 h-3 rounded-[3px] border ${PREVIEW_CELL_STYLES.double}`}
+        />,
+      );
+      c += 1;
+      continue;
+    }
+
+    cells.push(
+      <span
+        key={`cell-${c}`}
+        title={`Row ${rowName}, column ${c + 1}: ${PREVIEW_CELL_LABELS[cell]}`}
+        className={`h-3 rounded-[3px] border ${PREVIEW_CELL_STYLES[cell]}`}
+      />,
+    );
+  }
+
+  return (
+    <div
+      role="img"
+      aria-label={`Row ${rowName} seat layout`}
+      className="grid w-max gap-[2px]"
+      style={{ gridTemplateColumns: `repeat(${cols}, 0.625rem)` }}
+    >
+      {cells}
+    </div>
+  );
+};
+
+const LAYOUT_LEGEND: { label: string; cell: SeatCellType }[] = [
+  { label: "Seat", cell: "seat" },
+  { label: "Double ×2", cell: "double" },
+  { label: "Walkway", cell: "walkway" },
+  { label: "Stairs", cell: "stairs" },
+];
 
 export default function TemplatesPage() {
   const { cinemaId: routeCinemaId } = useParams<{ cinemaId: string }>();
@@ -100,6 +173,9 @@ export default function TemplatesPage() {
     [selectedCinema, form.roomName],
   );
 
+  const currencyAfterInput =
+    (selectedCinema?.currency ?? "USD").toUpperCase() === "MMK";
+
   const openCreate = () => {
     setForm(emptyForm(activeFilter !== "ALL" ? activeFilter : myCinemas[0]?._id ?? ""));
     setShowCreate(true);
@@ -127,7 +203,7 @@ export default function TemplatesPage() {
     const next: Record<string, string> = {};
     for (let i = 0; i < room.rows; i += 1) {
       const label = rowLabel(i);
-      next[label] = current[label] ?? "12";
+      next[label] = current[label] ?? "";
     }
     return next;
   };
@@ -153,9 +229,12 @@ export default function TemplatesPage() {
   };
 
   const setPrice = (label: string, value: string) => {
+    const [whole, ...decimals] = value.replace(/[^\d.]/g, "").split(".");
+    const normalized =
+      decimals.length > 0 ? `${whole}.${decimals.join("")}` : whole;
     setForm((prev) => ({
       ...prev,
-      rowPrices: { ...prev.rowPrices, [label]: value },
+      rowPrices: { ...prev.rowPrices, [label]: normalized },
     }));
   };
 
@@ -431,31 +510,98 @@ export default function TemplatesPage() {
 
             {selectedRoom && (
               <div>
-                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                <label className="mb-2 block text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                   Price per row <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {Object.keys(form.rowPrices).map((label) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800"
-                    >
-                      <span className="text-[10px] font-bold text-slate-500 w-8">
-                        Row {label}
+
+                <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/70">
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-800/80 bg-slate-900/50 px-3 py-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                        Room layout
                       </span>
-                      <div className="flex items-center flex-1">
-                        <span className="text-xs text-slate-500">{currencySymbol(selectedCinema?.currency)}</span>
-                        <input
-                          type="number"
-                          step="0.5"
-                          min="0"
-                          value={form.rowPrices[label]}
-                          onChange={(e) => setPrice(label, e.target.value)}
-                          className="w-full bg-transparent px-1.5 py-1 text-sm text-white focus:outline-none"
-                        />
-                      </div>
+                      <span className="text-[9px] text-slate-700">/</span>
+                      <span className="truncate text-[9px] text-slate-500">
+                        {selectedRoom.rows} rows × {selectedRoom.cols} cols
+                      </span>
                     </div>
-                  ))}
+                    <span className="shrink-0 text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                      Price ({selectedCinema?.currency || "USD"})
+                    </span>
+                  </div>
+
+                  <div className="p-3 sm:p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-slate-800" />
+                      <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-600">
+                        Screen
+                      </span>
+                      <span className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-700 to-slate-800" />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      {Object.keys(form.rowPrices).map((label, rowIndex) => {
+                        const rowLayout = selectedRoom.grid[rowIndex] ?? [];
+
+                        return (
+                          <div
+                            key={label}
+                            className="grid grid-cols-[2.5rem_minmax(0,1fr)_7rem] items-center gap-2 rounded-lg px-1 py-1 transition-colors hover:bg-slate-900/60 sm:gap-3"
+                          >
+                            <span className="text-[10px] font-bold text-slate-500">
+                              Row {label}
+                            </span>
+
+                            <div className="min-w-0 overflow-x-auto">
+                              <SeatPreviewRow
+                                row={rowLayout}
+                                cols={selectedRoom.cols}
+                                rowIndex={rowIndex}
+                              />
+                            </div>
+
+                            <div className="flex items-center gap-1 rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 focus-within:border-red-600/60">
+                              {!currencyAfterInput && (
+                                <span className="shrink-0 text-xs text-slate-500">
+                                  {currencySymbol(selectedCinema?.currency)}
+                                </span>
+                              )}
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                autoComplete="off"
+                                spellCheck={false}
+                                value={form.rowPrices[label]}
+                                onChange={(e) => setPrice(label, e.target.value)}
+                                placeholder="0.00"
+                                aria-label={`Price for row ${label}`}
+                                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums text-white focus:outline-none"
+                              />
+                              {currencyAfterInput && (
+                                <span className="shrink-0 text-[10px] font-semibold text-slate-500">
+                                  {currencySymbol(selectedCinema?.currency)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-800/80 pt-3">
+                      {LAYOUT_LEGEND.map(({ label, cell }) => (
+                        <span
+                          key={cell}
+                          className="flex items-center gap-1.5 text-[9px] text-slate-500"
+                        >
+                          <span
+                            className={`h-2.5 w-2.5 rounded-[2px] border ${PREVIEW_CELL_STYLES[cell]}`}
+                          />
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { Search, Ticket, MapPin, Clock, Loader2, Film } from "lucide-react";
+import { Search, Ticket, MapPin, Clock, Loader2, Film, X } from "lucide-react";
 import { format } from "date-fns";
 import SectionLabel from "../components/SectionLabel";
 import { useScreeningStore } from "../stores/screening.store";
+import { useMovieStore } from "../stores/movie.store";
+import { useCinemaStore } from "../stores/cinema.store";
 import type { IScreening } from "../types/booking.type";
 import { formatCurrency } from "../utils/currency";
 
@@ -107,10 +109,65 @@ export default function ScreeningsPage() {
     error,
     getPublicScreeningsAction,
   } = useScreeningStore();
+  const { selectedMovie, getMovieByIdAction } = useMovieStore();
+  const { selectedCinema, getCinemaByIdAction } = useCinemaStore();
 
-  const [searchParams] = useSearchParams();
-  const movieId = searchParams.get("movieId") ?? undefined;
-  const cinemaId = searchParams.get("cinemaId") ?? undefined;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const movieId = searchParams.get("movieId") || undefined;
+  const cinemaId = searchParams.get("cinemaId") || undefined;
+
+  useEffect(() => {
+    if (!movieId) return;
+    if (selectedMovie && String(selectedMovie._id) === movieId) return;
+    void getMovieByIdAction(movieId).catch(() => undefined);
+  }, [movieId, selectedMovie, getMovieByIdAction]);
+
+  useEffect(() => {
+    if (!cinemaId) return;
+    if (selectedCinema && String(selectedCinema._id) === cinemaId) return;
+    void getCinemaByIdAction(cinemaId).catch(() => undefined);
+  }, [cinemaId, selectedCinema, getCinemaByIdAction]);
+
+  const filteredMovieTitle = useMemo(() => {
+    if (!movieId) return null;
+    if (selectedMovie && String(selectedMovie._id) === movieId) {
+      return selectedMovie.title;
+    }
+    const match = screenings.find((s) => getMovieId(s) === movieId);
+    return match ? getMovie(match)?.title ?? null : null;
+  }, [movieId, screenings, selectedMovie]);
+
+  const filteredCinemaName = useMemo(() => {
+    if (!cinemaId) return null;
+    if (selectedCinema && String(selectedCinema._id) === cinemaId) {
+      return selectedCinema.name;
+    }
+    const match = screenings.find((s) => {
+      const cinema = getCinema(s);
+      return cinema
+        ? String(cinema._id) === cinemaId
+        : String(s.cinemaId) === cinemaId;
+    });
+    return match ? getCinema(match)?.name ?? null : null;
+  }, [cinemaId, screenings, selectedCinema]);
+
+  const filterDescription = useMemo(() => {
+    if (movieId && cinemaId) {
+      return `${filteredMovieTitle ?? "the selected movie"} at ${
+        filteredCinemaName ?? "the selected cinema"
+      }`;
+    }
+    if (movieId) return filteredMovieTitle ?? "the selected movie";
+    if (cinemaId) return filteredCinemaName ?? "the selected cinema";
+    return null;
+  }, [cinemaId, filteredCinemaName, filteredMovieTitle, movieId]);
+
+  const clearFilters = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("movieId");
+    next.delete("cinemaId");
+    setSearchParams(next, { replace: true });
+  };
 
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
@@ -192,6 +249,27 @@ export default function ScreeningsPage() {
           </button>
         </form>
 
+        {filterDescription && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-600/30 bg-red-950/20 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-red-400">
+                Filtered screenings
+              </p>
+              <p className="mt-0.5 truncate text-sm text-slate-300">
+                Showing screenings for{" "}
+                <span className="font-semibold text-white">{filterDescription}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" /> Clear filter
+            </button>
+          </div>
+        )}
+
         {error && <p className="mb-6 text-sm text-red-500">{error}</p>}
 
         {isLoading ? (
@@ -208,7 +286,9 @@ export default function ScreeningsPage() {
             <p className="text-slate-500 text-xs">
               {submittedQuery
                 ? `Nothing matches "${submittedQuery}". Try another search.`
-                : "There are no upcoming screenings right now."}
+                : filterDescription
+                  ? `No screenings are scheduled for ${filterDescription} yet.`
+                  : "There are no upcoming screenings right now."}
             </p>
           </div>
         ) : (

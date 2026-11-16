@@ -23,7 +23,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
     navigate(`/movies/${movie.id}`);
   };
 
-  const handleBookClick = (e: React.MouseEvent) => {
+  const handleShowtimesClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevents navigating to movie detail page when clicking the button
     navigate(`/screenings?movieId=${movie.id}`);
   };
@@ -78,11 +78,11 @@ const MovieCard = ({ movie }: MovieCardProps) => {
           </div>
           {!movie.comingSoon && (
             <button
-              onClick={handleBookClick}
+              onClick={handleShowtimesClick}
               className="flex items-center justify-center gap-1 sm:gap-1.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-[11px] sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded transition-all shadow-sm shrink-0"
             >
               <Ticket className="w-3 h-3" />
-              <span>Book</span>
+              <span>Showtimes</span>
             </button>
           )}
         </div>

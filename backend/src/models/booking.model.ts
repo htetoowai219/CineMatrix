@@ -40,16 +40,11 @@ const bookingSchema = new Schema<Omit<IBooking, "_id">>(
       index: true,
     },
     notes: { type: String, trim: true },
-    expiresAt: { type: Date },
   },
   { timestamps: true },
 );
 
 bookingSchema.index({ screeningId: 1, status: 1 });
-// Index for the expiry sweeper. This is deliberately NOT a TTL index: the
-// worker must release seats before cancelling, so MongoDB must never delete an
-// expired booking document out from under it.
-bookingSchema.index({ expiresAt: 1 });
 
 export const Booking = model<Omit<IBooking, "_id">>(
   "Booking",

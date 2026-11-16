@@ -62,8 +62,8 @@ export const useScreeningStore = create<ScreeningState>()((set) => ({
   // Fetches a page of public screenings. When `append` is true the result is
   // added to the existing list (used for "load more"); otherwise it replaces it.
   getPublicScreeningsAction: async (params, append = false) => {
-    if (append) set({ isLoadingMore: true });
-    else set({ isLoading: true, error: null });
+    if (append) set({ isLoadingMore: true, error: null });
+    else set({ isLoading: true, error: null, screenings: [] });
     try {
       const { data } = await api.get<FetchPublicScreeningsResponse>(
         "/screening/public",
