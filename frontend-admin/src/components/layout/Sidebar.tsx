@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from "react-router";
 import {
-  Film,
   LayoutDashboard,
   Clapperboard,
   Building2,
@@ -79,9 +78,11 @@ const Sidebar = ({ open, onClose }: SidebarProps) => {
       >
         <div className="px-5 pt-6 pb-5 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-600/25">
-              <Film className="w-4.5 h-4.5 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt=""
+              className="h-10 w-10 shrink-0 object-contain"
+            />
             <div>
               <p className="font-display font-black text-lg text-white uppercase tracking-wider leading-none">
                 CineMatrix

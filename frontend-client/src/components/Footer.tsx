@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import { Film } from "lucide-react";
 
 const Footer = () => {
   const footerSections = [
@@ -39,7 +38,11 @@ const Footer = () => {
               to="/"
               className="flex items-center gap-2 font-bold text-xl text-red-600 mb-4 inline-flex"
             >
-              <Film className="w-6 h-6" />
+              <img
+                src="/logo.png"
+                alt=""
+                className="h-9 w-9 shrink-0 object-contain"
+              />
               <span>CineMatrix</span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
