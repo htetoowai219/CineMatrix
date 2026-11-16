@@ -197,11 +197,6 @@ export default function ProfilePage() {
             <p className="text-slate-400 text-sm mt-0.5">
               {user?.email || "—"}
             </p>
-            <div className="flex flex-wrap gap-2.5 mt-3">
-              <span className="text-xs bg-red-950/40 border border-red-600/40 text-red-500 px-3 py-1 rounded-full font-bold">
-                Premium Member
-              </span>
-            </div>
           </div>
 
           <div className="flex gap-6 sm:gap-8 text-center border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-8 w-full md:w-auto justify-center md:justify-start">

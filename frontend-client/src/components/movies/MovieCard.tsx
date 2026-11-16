@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { Clock, Ticket, Bell } from "lucide-react";
+import { Clock, Ticket } from "lucide-react";
 
 export interface Movie {
   id: string;
@@ -72,27 +72,17 @@ const MovieCard = ({ movie }: MovieCardProps) => {
         </div>
 
         <div className="flex items-center justify-between gap-1 mt-auto pt-1">
-          {!movie.comingSoon ? (
-            <>
-              <div className="flex items-center gap-1 text-slate-400 text-[11px] sm:text-xs shrink-0">
-                <Clock className="w-3 h-3 text-slate-500" />
-                <span>{movie.runtime}</span>
-              </div>
-              <button
-                onClick={handleBookClick}
-                className="flex items-center justify-center gap-1 sm:gap-1.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-[11px] sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded transition-all shadow-sm shrink-0"
-              >
-                <Ticket className="w-3 h-3" />
-                <span>Book</span>
-              </button>
-            </>
-          ) : (
+          <div className="flex items-center gap-1 text-slate-400 text-[11px] sm:text-xs shrink-0">
+            <Clock className="w-3 h-3 text-slate-500" />
+            <span>{movie.runtime}</span>
+          </div>
+          {!movie.comingSoon && (
             <button
-              onClick={(e) => e.stopPropagation()}
-              className="w-full flex items-center justify-center gap-1.5 border border-slate-700 hover:border-slate-500 text-slate-400 hover:text-white text-[11px] sm:text-xs font-semibold py-1.5 rounded transition-colors"
+              onClick={handleBookClick}
+              className="flex items-center justify-center gap-1 sm:gap-1.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-[11px] sm:text-xs font-bold px-2 sm:px-3 py-1.5 rounded transition-all shadow-sm shrink-0"
             >
-              <Bell className="w-3 h-3" />
-              <span>Notify Me</span>
+              <Ticket className="w-3 h-3" />
+              <span>Book</span>
             </button>
           )}
         </div>

@@ -15,6 +15,8 @@ import { useMovieStore } from "../stores/movie.store";
 import { useCinemaStore } from "../stores/cinema.store";
 import { type IMovie } from "../types/movie.type";
 import { type ICinema } from "../types/cinema.type";
+import { buildFilterOptions, normalizeGenre } from "../utils/movieFilters";
+import { getYouTubeVideoId } from "../utils/youtube";
 
 // Fallback artwork for cinemas without uploaded images.
 const FALLBACK_CINEMA_IMAGE =
@@ -40,10 +42,10 @@ interface FeaturedMovie {
   tagline: string;
   poster: string;
   backdrop: string;
+  trailerUrl?: string;
   rating: string;
   runtime: string;
   genres: string[];
-  formats: string[];
   comingSoon: boolean;
 }
 
@@ -54,7 +56,7 @@ const mapMovieToCardFormat = (m: IMovie) => {
     poster: m.posterUrl,
     rating: m.contentRating,
     runtime: `${m.durationMinutes}m`,
-    genres: m.genres || [],
+    genres: Array.from(new Set((m.genres || []).map(normalizeGenre))),
     comingSoon: m.status === "UPCOMING",
     releaseLabel:
       m.status === "UPCOMING" && m.releaseDate
@@ -70,10 +72,10 @@ const mapMovieToFeatured = (m: IMovie): FeaturedMovie => {
     tagline: m.tagline || "",
     poster: m.posterUrl,
     backdrop: m.backdropUrl,
+    trailerUrl: m.trailerUrl,
     rating: m.contentRating,
     runtime: `${m.durationMinutes}m`,
-    genres: m.genres || [],
-    formats: ["IMAX 3D", "Dolby Atmos"],
+    genres: Array.from(new Set((m.genres || []).map(normalizeGenre))),
     comingSoon: m.status === "UPCOMING",
   };
 };
@@ -108,24 +110,18 @@ export default function HomePage() {
 
   const cinemaCards = cinemas.map(mapCinemaToCard);
 
-  const genres = [
-    "All",
-    "Action",
-    "Sci-Fi",
-    "Drama",
-    "Comedy",
-    "Horror",
-    "Animation",
-  ];
-
   const rawNowShowing = movies.filter((m) => m.status === "NOW_SHOWING");
   const rawComingSoon = movies.filter((m) => m.status === "UPCOMING");
 
   const featuredRaw = rawNowShowing[0] || movies[0];
   const featured = featuredRaw ? mapMovieToFeatured(featuredRaw) : null;
+  const featuredTrailerId = getYouTubeVideoId(featured?.trailerUrl);
 
   const nowShowingCardMovies = rawNowShowing.map(mapMovieToCardFormat);
   const comingSoonCardMovies = rawComingSoon.map(mapMovieToCardFormat);
+  const genres = buildFilterOptions(
+    nowShowingCardMovies.flatMap((movie) => movie.genres),
+  );
 
   const filteredMovies =
     activeGenre === "All"
@@ -207,29 +203,28 @@ export default function HomePage() {
                     {g}
                   </span>
                 ))}
-                {featured.formats.map((f) => (
-                  <span
-                    key={f}
-                    className="text-xs font-bold text-red-500 bg-red-950/20 border border-red-600/40 px-3 py-1 rounded-full"
-                  >
-                    {f}
-                  </span>
-                ))}
               </div>
 
               <div className="flex flex-wrap gap-3.5">
-                <Link
-                  to={`/screenings?movieId=${featured.id}`}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm px-6 py-3 rounded-lg transition-all shadow-lg shadow-red-600/25"
-                >
-                  <Ticket className="w-4 h-4" /> Book Tickets
-                </Link>
+                {!featured.comingSoon && (
+                  <Link
+                    to={`/screenings?movieId=${featured.id}`}
+                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm px-6 py-3 rounded-lg transition-all shadow-lg shadow-red-600/25"
+                  >
+                    <Ticket className="w-4 h-4" /> Book Tickets
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={() => navigate(`/movies/${featured.id}`)}
                   className="flex items-center gap-2 border border-slate-700/80 hover:border-slate-500 text-slate-200 hover:text-white font-semibold text-sm px-5 py-3 rounded-lg transition-all bg-slate-900/60 backdrop-blur-md hover:bg-slate-800/80 active:scale-95"
                 >
-                  <Play className="w-4 h-4 fill-current" /> Details & Trailer
+                  {featuredTrailerId ? (
+                    <Play className="w-4 h-4 fill-current" />
+                  ) : (
+                    <Film className="w-4 h-4" />
+                  )}
+                  {featuredTrailerId ? "Details & Trailer" : "View Details"}
                 </button>
               </div>
             </div>

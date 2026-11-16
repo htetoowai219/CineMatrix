@@ -18,6 +18,7 @@ import { useScreeningStore } from "../stores/screening.store";
 import { type IScreening } from "../types/booking.type";
 import { type IMovie } from "../types/movie.type";
 import { formatCurrency } from "../utils/currency";
+import { getLanguageLabel, normalizeGenre } from "../utils/movieFilters";
 import { getYouTubeVideoId } from "../utils/youtube";
 
 export interface DetailedMovie {
@@ -67,9 +68,9 @@ const mapMovieToDetailed = (movie: IMovie): DetailedMovie => {
     releaseDate: formattedDate,
     synopsis: movie.synopsis,
     director: movie.director,
-    language: movie.originalLanguage,
+    language: getLanguageLabel(movie.originalLanguage),
     cast: movie.castMembers || [],
-    genres: movie.genres || [],
+    genres: Array.from(new Set((movie.genres || []).map(normalizeGenre))),
     comingSoon: isUpcoming,
   };
 };
@@ -319,7 +320,7 @@ export default function MovieDetailPage() {
             </div>
 
             <div className="flex items-center justify-center md:justify-start gap-3">
-              {!movie.comingSoon && (
+              {!movie.comingSoon && screenings.length > 0 && (
                 <button
                   type="button"
                   onClick={() => handleBookTickets()}
@@ -328,6 +329,13 @@ export default function MovieDetailPage() {
                   <Ticket className="w-4 h-4" /> Book Tickets
                 </button>
               )}
+              {!movie.comingSoon &&
+                !isScreeningsLoading &&
+                screenings.length === 0 && (
+                  <p className="text-slate-500 text-xs">
+                    Tickets are not on sale yet.
+                  </p>
+                )}
             </div>
           </div>
         </div>
@@ -345,7 +353,7 @@ export default function MovieDetailPage() {
                 Swipe &rarr;
               </span>
               <Link
-                to="/screenings"
+                to={`/screenings?movieId=${movie.id}`}
                 className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-300 border border-red-600/40 bg-red-950/20 hover:bg-red-950/40 px-3.5 py-2 rounded-lg transition-all shrink-0"
               >
                 View all screenings
@@ -451,10 +459,6 @@ export default function MovieDetailPage() {
                                     {format(new Date(s.startTime), "h:mm a")}
                                   </div>
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-xs text-slate-400">
-                                    <span className="font-medium text-slate-300">
-                                      Standard 2D
-                                    </span>
-                                    <span className="w-1 h-1 rounded-full bg-slate-700" />
                                     <span>{s.roomName}</span>
                                     <span className="w-1 h-1 rounded-full bg-slate-700" />
                                     <span className="font-bold text-slate-200">

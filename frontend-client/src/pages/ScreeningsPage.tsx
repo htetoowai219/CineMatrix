@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { Search, Ticket, MapPin, Clock, Loader2, Film } from "lucide-react";
 import { format } from "date-fns";
 import SectionLabel from "../components/SectionLabel";
@@ -11,6 +11,11 @@ const PAGE_SIZE = 12;
 
 const getMovie = (s: IScreening) =>
   typeof s.movieId === "object" && s.movieId ? s.movieId : null;
+const getMovieId = (s: IScreening) => {
+  const movie = getMovie(s);
+  if (movie) return String(movie._id);
+  return typeof s.movieId === "string" ? s.movieId : "";
+};
 const getCinema = (s: IScreening) =>
   typeof s.cinemaId === "object" && s.cinemaId ? s.cinemaId : null;
 
@@ -30,7 +35,10 @@ const ScreeningCard = ({ screening }: { screening: IScreening }) => {
     <div className="flex gap-4 bg-slate-900/80 rounded-xl border border-slate-800/90 p-4 hover:border-slate-700 transition-all hover:-translate-y-0.5">
       <button
         type="button"
-        onClick={() => navigate(`/movies/${screening.movieId}`)}
+        onClick={() => {
+          const movieId = getMovieId(screening);
+          navigate(movieId ? `/movies/${movieId}` : "/movies");
+        }}
         className="shrink-0"
       >
         <img
@@ -100,6 +108,10 @@ export default function ScreeningsPage() {
     getPublicScreeningsAction,
   } = useScreeningStore();
 
+  const [searchParams] = useSearchParams();
+  const movieId = searchParams.get("movieId") ?? undefined;
+  const cinemaId = searchParams.get("cinemaId") ?? undefined;
+
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const pageRef = useRef(1);
@@ -109,6 +121,8 @@ export default function ScreeningsPage() {
     async (pageNum: number, term: string, append: boolean) => {
       await getPublicScreeningsAction(
         {
+          movieId,
+          cinemaId,
           q: term || undefined,
           page: pageNum,
           limit: PAGE_SIZE,
@@ -116,7 +130,7 @@ export default function ScreeningsPage() {
         append,
       );
     },
-    [getPublicScreeningsAction],
+    [cinemaId, getPublicScreeningsAction, movieId],
   );
 
   useEffect(() => {

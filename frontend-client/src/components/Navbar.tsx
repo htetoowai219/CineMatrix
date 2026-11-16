@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Link, NavLink, useNavigate } from "react-router";
 import { Film, Search, Ticket, User, Menu, X, LogOut } from "lucide-react";
 import { useUserStore } from "../stores/user.store";
@@ -7,6 +7,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { user, isAuthenticated, logoutAction } = useUserStore();
 
@@ -27,6 +28,13 @@ const Navbar = () => {
     await logoutAction();
     setMobileMenuOpen(false);
     navigate("/login");
+  };
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const term = searchTerm.trim();
+    navigate(term ? `/movies?search=${encodeURIComponent(term)}` : "/movies");
+    setMobileMenuOpen(false);
   };
 
   const navLinks = [
@@ -70,16 +78,19 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden md:flex flex-1 max-w-xs">
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xs">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
-              type="text"
-              placeholder="Search movies, cinemas..."
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search movies..."
+              aria-label="Search movies"
               className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-600/60 focus:bg-white/8 transition-all"
             />
           </div>
-        </div>
+        </form>
 
         <div className="flex items-center gap-3 md:gap-4 shrink-0">
           <Link
@@ -159,14 +170,17 @@ const Navbar = () => {
 
       {mobileMenuOpen && (
         <div className="md:hidden pt-4 pb-2 px-2 flex flex-col gap-4 border-t border-slate-800/80 mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="relative w-full">
+          <form onSubmit={handleSearch} className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
-              type="text"
-              placeholder="Search movies, cinemas..."
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search movies..."
+              aria-label="Search movies"
               className="w-full bg-slate-900/90 border border-slate-700/60 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-600/60"
             />
-          </div>
+          </form>
 
           <div className="flex flex-col gap-2">
             {navLinks.map((link) => (

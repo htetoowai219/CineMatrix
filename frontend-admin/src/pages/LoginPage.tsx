@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   AlertCircle,
   Loader2,
-  ArrowLeft,
 } from "lucide-react";
 import { useUserStore } from "../stores/user.store";
 
@@ -32,15 +31,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex selection:bg-red-600 selection:text-white relative">
-      <button
-        type="button"
-        onClick={() => navigate("/login")}
-        className="absolute top-5 left-5 flex items-center gap-2 text-slate-400 hover:text-white text-xs font-semibold transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </button>
-
       <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-slate-900">
         <img
           src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=900&h=1200&fit=crop&auto=format"

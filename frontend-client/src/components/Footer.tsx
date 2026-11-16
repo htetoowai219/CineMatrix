@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Film, Globe, Share2, Volume2 } from "lucide-react";
+import { Film } from "lucide-react";
 
 const Footer = () => {
   const footerSections = [
@@ -43,19 +43,9 @@ const Footer = () => {
               <span>CineMatrix</span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
-              The ultimate cinema experience. Book seats, discover movies, and
-              manage your entire cinematic journey in one place.
+              Book seats, discover movies, and manage your cinema visits in one
+              place.
             </p>
-            <div className="flex gap-3 mt-5">
-              {[Globe, Share2, Volume2].map((Icon, i) => (
-                <button
-                  key={i}
-                  className="w-8 h-8 rounded-full border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                </button>
-              ))}
-            </div>
           </div>
 
           {footerSections.map((col) => (

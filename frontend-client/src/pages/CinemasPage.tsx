@@ -169,10 +169,7 @@ export default function CinemasPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-3.5 border-t border-slate-800/80">
-                          <span className="text-slate-400 text-xs font-medium">
-                            Available Now
-                          </span>
+                        <div className="flex items-center justify-end pt-3.5 border-t border-slate-800/80">
                           <button className="flex items-center gap-1 text-red-500 text-xs font-bold group-hover:translate-x-0.5 transition-transform">
                             View Schedule <ChevronRight className="w-4 h-4" />
                           </button>

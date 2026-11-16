@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import BookingPage from "./pages/BookingPage";
 import ScreeningsPage from "./pages/ScreeningsPage";
+import LegalPage from "./pages/LegalPage";
 
 const App = () => {
   return (
@@ -22,6 +23,10 @@ const App = () => {
         <Route path="/cinemas/:id" element={<CinemaDetailPage />} />
         <Route path="/screenings" element={<ScreeningsPage />} />
         <Route path="/book/:screeningId" element={<BookingPage />} />
+        <Route path="/terms" element={<LegalPage />} />
+        <Route path="/privacy" element={<LegalPage />} />
+        <Route path="/cookies" element={<LegalPage />} />
+        <Route path="/refunds" element={<LegalPage />} />
 
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
