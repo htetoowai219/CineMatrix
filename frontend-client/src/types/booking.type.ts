@@ -42,7 +42,6 @@ export interface IBooking {
   paymentScreenshotUrl?: string;
   notes?: string;
   status: BookingStatus;
-  expiresAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

@@ -614,8 +614,8 @@ export default function BookingPage() {
 
         <p className="text-[11px] text-slate-500 mt-4 flex items-center gap-1.5">
           <Lock className="w-3 h-3" />
-          Selected seats are held for 10 minutes while you complete payment. Seats
-          not confirmed before then are released automatically.
+          Selected seats are held for 10 minutes while you complete payment. The
+          hold is released automatically if you do not submit the booking in time.
         </p>
       </div>
     </div>

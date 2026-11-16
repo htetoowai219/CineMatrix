@@ -90,6 +90,7 @@ export default function MovieDetailPage() {
   const {
     screenings,
     isLoading: isScreeningsLoading,
+    error: screeningsError,
     getPublicScreeningsAction,
   } = useScreeningStore();
 
@@ -320,22 +321,30 @@ export default function MovieDetailPage() {
             </div>
 
             <div className="flex items-center justify-center md:justify-start gap-3">
-              {!movie.comingSoon && screenings.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => handleBookTickets()}
-                  className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm px-6 py-3 rounded-lg transition-all shadow-lg shadow-red-600/25"
-                >
-                  <Ticket className="w-4 h-4" /> Book Tickets
-                </button>
-              )}
+              {!movie.comingSoon &&
+                !screeningsError &&
+                screenings.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleBookTickets()}
+                    className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-semibold text-sm px-6 py-3 rounded-lg transition-all shadow-lg shadow-red-600/25"
+                  >
+                    <Ticket className="w-4 h-4" /> Book Tickets
+                  </button>
+                )}
               {!movie.comingSoon &&
                 !isScreeningsLoading &&
+                !screeningsError &&
                 screenings.length === 0 && (
                   <p className="text-slate-500 text-xs">
                     Tickets are not on sale yet.
                   </p>
                 )}
+              {!movie.comingSoon && !isScreeningsLoading && screeningsError && (
+                <p className="text-slate-500 text-xs">
+                  Showtimes are temporarily unavailable.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -409,6 +418,27 @@ export default function MovieDetailPage() {
               <div className="flex items-center justify-center py-16 text-slate-500">
                 <Loader2 className="w-6 h-6 animate-spin text-red-600 mr-3" />
                 <span className="text-sm">Loading screenings...</span>
+              </div>
+            ) : screeningsError ? (
+              <div className="text-center py-16 bg-slate-900/30 border border-slate-800/50 rounded-2xl">
+                <Film className="w-10 h-10 mx-auto mb-3 text-slate-600 opacity-60" />
+                <p className="text-slate-300 text-sm font-semibold mb-1">
+                  Could not load showtimes
+                </p>
+                <p className="text-slate-500 text-xs mb-4">{screeningsError}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!id) return;
+                    void getPublicScreeningsAction({
+                      movieId: id,
+                      limit: 50,
+                    }).catch(() => undefined);
+                  }}
+                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  Try again
+                </button>
               </div>
             ) : screenings.length === 0 ? (
               <div className="text-center py-16 bg-slate-900/30 border border-slate-800/50 rounded-2xl">

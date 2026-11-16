@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import {
-  Film,
   Mail,
   Lock,
   Eye,
@@ -41,9 +40,11 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-600/30">
-              <Film className="w-4 h-4 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt=""
+              className="h-10 w-10 shrink-0 object-contain drop-shadow-lg"
+            />
             <span className="font-display font-black text-xl text-white uppercase tracking-wider">
               CineMatrix
             </span>
@@ -74,9 +75,11 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 sm:px-12 py-10">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center shadow-md shadow-red-600/25">
-              <Film className="w-4 h-4 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt=""
+              className="h-9 w-9 shrink-0 object-contain"
+            />
             <span className="font-display font-black text-lg text-white uppercase tracking-wider">
               CineMatrix Admin
             </span>

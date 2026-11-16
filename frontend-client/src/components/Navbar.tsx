@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { Link, NavLink, useNavigate } from "react-router";
-import { Film, Search, Ticket, User, Menu, X, LogOut } from "lucide-react";
+import { Search, Ticket, User, Menu, X, LogOut } from "lucide-react";
 import { useUserStore } from "../stores/user.store";
 
 const Navbar = () => {
@@ -56,7 +56,11 @@ const Navbar = () => {
           to="/"
           className="flex items-center gap-2 font-bold text-xl text-red-600 shrink-0"
         >
-          <Film className="w-6 h-6" />
+          <img
+            src="/logo.png"
+            alt=""
+            className="h-9 w-9 shrink-0 object-contain"
+          />
           <span>CineMatrix</span>
         </Link>
 

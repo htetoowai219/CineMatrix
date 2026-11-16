@@ -31,7 +31,7 @@ A multi-tenant cinema booking and management platform built with **TypeScript, E
 - **Stateless API** — every request carries a JWT; no server-side sessions.
 - **MongoDB** stores users, movies, cinemas (with embedded room layouts), templates, screenings (with embedded seat instances), and bookings.
 - **Redis** holds short-lived per-seat locks during checkout. MongoDB remains the source of truth.
-- **Maintenance loop** runs every 30 seconds to release expired holds and cancel unpaid bookings.
+- **Maintenance loop** runs every 30 seconds to release expired 10-minute seat holds. Pending bookings are left for staff or the customer to resolve.
 
 ## Tech Stack
 
@@ -92,16 +92,16 @@ available ──lock──▶ held ──create booking──▶ booked/pending
     ▲                 │                          │
     │                 └── lock expires ──────────┘
     │                                            │
-    └── reject / cancel / expire ◀───────────────┘
+    └── reject / cancel ◀────────────────────────┘
                                    approve ──▶ confirmed (seats stay booked)
 ```
 
 1. Customer locks seats → Redis `SET NX EX 600`, Mongo seats become `held`.
 2. Customer uploads a payment receipt (or chooses pay-at-cinema when allowed).
-3. Booking is created as `pending` with a 30-minute payment window; seats become `booked`.
+3. Booking is created as `pending`; seats become `booked`.
 4. Owner approves or rejects after verifying payment.
-5. Rejection, cancellation, or expiry releases seats back to `available`.
-6. Background jobs reconcile stale holds and expired bookings.
+5. Rejection or cancellation releases seats back to `available`.
+6. A background job reconciles stale 10-minute seat holds. Pending bookings are never auto-cancelled; staff or the customer must resolve them.
 
 ## Key Backend Features
 
@@ -110,7 +110,7 @@ available ──lock──▶ held ──create booking──▶ booked/pending
 - **Dynamic seat maps** — owners paint room grids (`seat`, `double`, `walkway`, `stairs`, `empty`); each screening materializes independent seat instances, with double seats priced at 2× the row price.
 - **Concurrency control** — Redis holds prevent races during checkout; conditional Mongo updates (`arrayFilters`) are the final double-booking guard; server-side pricing prevents client tampering.
 - **Admin approval workflows** — cinemas start `pending` and become public only after admin approval.
-- **Maintenance jobs** — expired Redis holds are reconciled and unpaid bookings are cancelled with seats released.
+- **Maintenance job** — expired Redis seat holds are reconciled. Pending bookings are never auto-cancelled; staff approval/rejection or customer cancellation releases their seats.
 - **Media pipeline** — Multer memory storage with MIME/size validation, uploaded to Cloudinary, URLs stored on documents.
 - **Optional integrations** — TMDB import for movie metadata/trailers; SMTP notifications on booking status changes.
 - **Strict tenant booking isolation** — `GET /booking` and `PATCH /booking/:id` are limited to the owner and staff of the cinema. Super admins have no tenant-booking access, and the admin app omits the Bookings tab entirely.
@@ -222,7 +222,6 @@ REFRESH_TOKEN_EXP=7d
 
 CLOUDINARY_URL=cloudinary://<key>:<secret>@<cloud_name>
 REDIS_URL=redis://localhost:6379
-PENDING_BOOKING_TTL_MINUTES=30
 
 # Optional: TMDB metadata + trailer import (set either credential)
 TMDB_API_KEY=
