@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   Film,
   Mail,
@@ -8,10 +8,8 @@ import {
   Eye,
   EyeOff,
   Check,
-  Globe,
   ArrowLeft,
   User,
-  Book,
   Loader2,
   AlertCircle,
   Camera,
@@ -102,26 +100,9 @@ export default function RegisterPage() {
           </h2>
 
           <p className="text-slate-400 text-xs sm:text-sm max-w-sm leading-relaxed">
-            Create your free account and get exclusive access to early ticket
-            sales, member discounts, and personalized recommendations.
+            Create your account to book tickets, choose your seats, and manage
+            your cinema visits.
           </p>
-
-          <div className="flex items-center gap-8 mt-6 pt-6 border-t border-slate-800/80 w-full max-w-md">
-            {[
-              ["500K+", "Happy Guests"],
-              ["120+", "Cinemas"],
-              ["4.9", "App Rating"],
-            ].map(([val, lbl]) => (
-              <div key={lbl}>
-                <div className="font-display font-black text-xl lg:text-2xl text-white">
-                  {val}
-                </div>
-                <div className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5">
-                  {lbl}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -154,29 +135,6 @@ export default function RegisterPage() {
                 Sign in
               </button>
             </p>
-          </div>
-
-          <div className="flex gap-2.5 mb-3">
-            {[
-              { label: "Google", icon: <Globe className="w-3.5 h-3.5" /> },
-              { label: "Facebook", icon: <Book className="w-3.5 h-3.5" /> },
-            ].map(({ label, icon }) => (
-              <button
-                key={label}
-                type="button"
-                className="flex-1 flex items-center justify-center gap-2 border border-slate-800 bg-slate-900/60 hover:bg-slate-900 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold py-2 rounded-xl transition-all active:scale-95"
-              >
-                {icon} {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex-1 h-px bg-slate-800/80" />
-            <span className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
-              or with email
-            </span>
-            <div className="flex-1 h-px bg-slate-800/80" />
           </div>
 
           {error && (
@@ -314,11 +272,12 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <label className="flex items-start gap-2 cursor-pointer select-none pt-1">
+            <div className="flex items-start gap-2 pt-1">
               <button
                 type="button"
                 role="checkbox"
                 aria-checked={agreed}
+                aria-label="Agree to the terms and privacy policy"
                 onClick={() => setAgreed(!agreed)}
                 className={`w-3.5 h-3.5 rounded border mt-0.5 transition-all flex items-center justify-center shrink-0 ${
                   agreed
@@ -330,21 +289,21 @@ export default function RegisterPage() {
               </button>
               <span className="text-slate-400 text-xs leading-tight">
                 I agree to the{" "}
-                <button
-                  type="button"
+                <Link
+                  to="/terms"
                   className="text-red-500 hover:underline font-semibold"
                 >
                   Terms
-                </button>{" "}
+                </Link>{" "}
                 and{" "}
-                <button
-                  type="button"
+                <Link
+                  to="/privacy"
                   className="text-red-500 hover:underline font-semibold"
                 >
                   Privacy Policy
-                </button>
+                </Link>
               </span>
-            </label>
+            </div>
 
             <button
               type="submit"

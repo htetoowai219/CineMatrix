@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { Search, Filter, Film, X, Loader2 } from "lucide-react";
 import MovieCard, { type Movie } from "../components/movies/MovieCard";
 import SectionLabel from "../components/SectionLabel";
@@ -12,7 +13,6 @@ import {
 
 export interface FilterableMovie extends Movie {
   language: string;
-  formats: string[];
 }
 
 const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
@@ -33,7 +33,6 @@ const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
     runtime: `${movie.durationMinutes}m`,
     genres: Array.from(new Set((movie.genres || []).map(normalizeGenre))),
     language: getLanguageLabel(movie.originalLanguage),
-    formats: ["2D"],
     comingSoon: isUpcoming,
     releaseLabel:
       isUpcoming && formattedDate ? `Releasing ${formattedDate}` : undefined,
@@ -42,11 +41,11 @@ const mapMovieToFilterable = (movie: IMovie): FilterableMovie => {
 
 export default function MoviesPage() {
   const { movies, isLoading, error, getAllMoviesAction } = useMovieStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("search") ?? "";
 
-  const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("All");
   const [lang, setLang] = useState("All");
-  const [fmt, setFmt] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -59,12 +58,18 @@ export default function MoviesPage() {
     mappedMovies.flatMap((movie) => movie.genres),
   );
   const langs = buildFilterOptions(mappedMovies.map((movie) => movie.language));
-  const fmts = buildFilterOptions(
-    mappedMovies.flatMap((movie) => movie.formats),
-  );
 
-  const isFiltering =
-    search !== "" || genre !== "All" || lang !== "All" || fmt !== "All";
+  const updateSearch = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) {
+      next.set("search", value);
+    } else {
+      next.delete("search");
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  const isFiltering = search !== "" || genre !== "All" || lang !== "All";
 
   const matchesFilters = (m: FilterableMovie) => {
     const matchSearch = m.title.toLowerCase().includes(search.toLowerCase());
@@ -72,8 +77,7 @@ export default function MoviesPage() {
     const matchLang =
       lang === "All" ||
       m.language.localeCompare(lang, undefined, { sensitivity: "base" }) === 0;
-    const matchFmt = fmt === "All" || m.formats.includes(fmt);
-    return matchSearch && matchGenre && matchLang && matchFmt;
+    return matchSearch && matchGenre && matchLang;
   };
 
   const nowShowing = mappedMovies.filter(
@@ -85,10 +89,9 @@ export default function MoviesPage() {
   const totalFiltered = nowShowing.length + comingSoon.length;
 
   const resetFilters = () => {
-    setSearch("");
+    updateSearch("");
     setGenre("All");
     setLang("All");
-    setFmt("All");
   };
 
   return (
@@ -106,7 +109,7 @@ export default function MoviesPage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => updateSearch(e.target.value)}
               type="text"
               placeholder="Search movies by title..."
               className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-600/60 transition-all"
@@ -114,7 +117,7 @@ export default function MoviesPage() {
             {search && (
               <button
                 type="button"
-                onClick={() => setSearch("")}
+                onClick={() => updateSearch("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
               >
                 <X className="w-4 h-4" />
@@ -148,7 +151,7 @@ export default function MoviesPage() {
         </div>
 
         {showFilters && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 mb-6 grid grid-cols-1 md:grid-cols-3 gap-6 backdrop-blur-sm">
+          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 mb-6 grid grid-cols-1 md:grid-cols-2 gap-6 backdrop-blur-sm">
             {[
               {
                 label: "Genre",
@@ -157,7 +160,6 @@ export default function MoviesPage() {
                 set: setGenre,
               },
               { label: "Language", options: langs, value: lang, set: setLang },
-              { label: "Format", options: fmts, value: fmt, set: setFmt },
             ].map(({ label, options, value, set }) => (
               <div key={label}>
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">

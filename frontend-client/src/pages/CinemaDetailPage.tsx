@@ -300,7 +300,14 @@ export default function CinemaDetailPage() {
                     >
                       <button
                         type="button"
-                        onClick={() => navigate(`/movies/${group[0].movieId}`)}
+                        onClick={() => {
+                          const movieId = movie?._id
+                            ? String(movie._id)
+                            : typeof group[0].movieId === "string"
+                              ? group[0].movieId
+                              : "";
+                          navigate(movieId ? `/movies/${movieId}` : "/movies");
+                        }}
                         className="shrink-0"
                       >
                         <img

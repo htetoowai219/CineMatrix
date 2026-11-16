@@ -44,7 +44,10 @@ interface SidebarProps {
 const Sidebar = ({ open, onClose }: SidebarProps) => {
   const navigate = useNavigate();
   const { user, role, logoutAction } = useUserStore();
-  const navItems = role === "admin" ? ADMIN_NAV_ITEMS : PARTNER_NAV_ITEMS;
+  const partnerNavItems = PARTNER_NAV_ITEMS.filter(
+    (item) => item.to !== "/staff" || role === "cinema_owner",
+  );
+  const navItems = role === "admin" ? ADMIN_NAV_ITEMS : partnerNavItems;
   const brand = ROLE_BRAND[role ?? "admin"] ?? ROLE_BRAND.admin;
 
   const handleLogout = async () => {

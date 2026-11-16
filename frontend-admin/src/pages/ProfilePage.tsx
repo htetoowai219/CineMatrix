@@ -13,9 +13,16 @@ import {
 import { useUserStore } from "../stores/user.store";
 import Modal from "../components/ui/Modal";
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrator",
+  cinema_owner: "Cinema Owner",
+  cinema_staff: "Cinema Staff",
+};
+
 export default function ProfilePage() {
   const {
     user,
+    role,
     isLoading,
     error,
     updateProfileAction,
@@ -36,6 +43,8 @@ export default function ProfilePage() {
 
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
+
+  const roleLabel = ROLE_LABELS[role ?? ""] ?? "Account";
 
   const handleOpenEditInfo = () => {
     clearError();
@@ -84,7 +93,7 @@ export default function ProfilePage() {
           Account
         </p>
         <h1 className="font-display font-black text-3xl sm:text-4xl text-white uppercase tracking-wide">
-          Admin Profile
+          {roleLabel} Profile
         </h1>
         <p className="text-slate-400 text-sm mt-1">
           Manage your personal details and account security.
@@ -131,7 +140,7 @@ export default function ProfilePage() {
           <div className="flex flex-wrap gap-2.5 mt-3">
             <span className="text-xs bg-red-950/40 border border-red-600/40 text-red-500 px-3 py-1 rounded-full font-bold flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
-              Super Admin
+              {roleLabel}
             </span>
           </div>
         </div>

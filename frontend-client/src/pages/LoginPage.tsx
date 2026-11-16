@@ -6,10 +6,7 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Check,
-  Globe,
   ArrowLeft,
-  Book,
   Loader2,
   AlertCircle,
 } from "lucide-react";
@@ -25,7 +22,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
-  const [remember, setRemember] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,26 +76,9 @@ export default function LoginPage() {
           </h2>
 
           <p className="text-slate-400 text-xs sm:text-sm max-w-sm leading-relaxed">
-            Book tickets, choose your seats, and enjoy premium cinema
-            experiences at top venues across the city.
+            Book tickets, choose your seats, and manage your cinema visits in one
+            place.
           </p>
-
-          <div className="flex items-center gap-8 mt-6 pt-6 border-t border-slate-800/80 w-full max-w-md">
-            {[
-              ["500K+", "Happy Guests"],
-              ["120+", "Cinemas"],
-              ["4.9", "App Rating"],
-            ].map(([val, lbl]) => (
-              <div key={lbl}>
-                <div className="font-display font-black text-xl lg:text-2xl text-white">
-                  {val}
-                </div>
-                <div className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5">
-                  {lbl}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -132,29 +111,6 @@ export default function LoginPage() {
                 Register free
               </button>
             </p>
-          </div>
-
-          <div className="flex gap-3 mb-4">
-            {[
-              { label: "Google", icon: <Globe className="w-4 h-4" /> },
-              { label: "facebook", icon: <Book className="w-4 h-4" /> },
-            ].map(({ label, icon }) => (
-              <button
-                key={label}
-                type="button"
-                className="flex-1 flex items-center justify-center gap-2 border border-slate-800 bg-slate-900/60 hover:bg-slate-900 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold py-2.5 rounded-xl transition-all active:scale-95"
-              >
-                {icon} {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px bg-slate-800/80" />
-            <span className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
-              or continue with email
-            </span>
-            <div className="flex-1 h-px bg-slate-800/80" />
           </div>
 
           {error && (
@@ -216,34 +172,6 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={remember}
-                  onClick={() => setRemember(!remember)}
-                  className={`w-4 h-4 rounded border transition-all flex items-center justify-center shrink-0 ${
-                    remember
-                      ? "bg-red-600 border-red-600"
-                      : "border-slate-700 bg-slate-900"
-                  }`}
-                >
-                  {remember && <Check className="w-3 h-3 text-white" />}
-                </button>
-                <span className="text-slate-400 text-xs font-medium">
-                  Remember me
-                </span>
-              </label>
-
-              <button
-                type="button"
-                className="text-red-500 hover:underline text-xs font-semibold"
-              >
-                Forgot password?
-              </button>
             </div>
 
             <button
