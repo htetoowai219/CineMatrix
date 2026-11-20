@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "skills": {
+    "audit": {
+      "source": "htetoowai219/how-skills",
+      "commit": "02cf246c79544545eb2324c1b8e97df29f61ca07",
+      "sourceType": "github",
+      "skillPath": "skills/audit/SKILL.md",
+      "computedHash": "ea08588c5023e7f578190a7900cde5251d86b40eac2b9b11b4635a60b6ae5b3b"
+    },
+    "check": {
+      "source": "htetoowai219/how-skills",
+      "commit": "02cf246c79544545eb2324c1b8e97df29f61ca07",
+      "sourceType": "github",
+      "skillPath": "skills/check/SKILL.md",
+      "computedHash": "4989739341d5814ee94c473847bb8104a62f8da4d167a7365c9cd1e0653b3ab7"
+    },
+    "express-to-nest": {
+      "source": "htetoowai219/how-skills",
+      "commit": "02cf246c79544545eb2324c1b8e97df29f61ca07",
+      "sourceType": "github",
+      "skillPath": "skills/express-to-nest/SKILL.md",
+      "computedHash": "0dd9c185c77ac72059c3fc5ddd35dd5de71ff30cefb9a3afe2b172a9c58b4c60"
+    },
+    "readme-writer": {
+      "source": "htetoowai219/how-skills",
+      "commit": "02cf246c79544545eb2324c1b8e97df29f61ca07",
+      "sourceType": "github",
+      "skillPath": "skills/readme-writer/SKILL.md",
+      "computedHash": "4403fb665584cf7b1fcb7d60b653344e93ecc0f69c22d1b2ca495600a7e3d724"
+    },
+    "sync": {
+      "source": "htetoowai219/how-skills",
+      "commit": "02cf246c79544545eb2324c1b8e97df29f61ca07",
+      "sourceType": "github",
+      "skillPath": "skills/sync/SKILL.md",
+      "computedHash": "7dc71026ed3579406b2a41bb6c80e79ef1e5407dbeb923122797f360e2fc4556"
+    }
+  }
+}

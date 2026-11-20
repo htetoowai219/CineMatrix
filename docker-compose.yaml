@@ -35,19 +35,21 @@ services:
       retries: 20
 
   # --------------------------------------------------
-  # 2. Express Backend
+  # 3. NestJS Backend
   # --------------------------------------------------
-  backend:
+  nest-backend:
     build:
-      context: ./backend
+      context: ./nest-backend
       dockerfile: Dockerfile
-    container_name: cinematrix_backend
+    container_name: cinematrix_nest_backend
     ports:
       - "8000:8000"
+    # Copy nest-backend/.env.example to nest-backend/.env to supply secrets
+    # (JWT, Cloudinary, SMTP, TMDB). The file is optional so Compose can boot
+    # without it for local development.
     env_file:
-      - ./backend/.env
-    # Secrets (ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, CLOUDINARY_URL) are
-    # loaded from backend/.env via env_file above. Do not hardcode them here.
+      - path: ./nest-backend/.env
+        required: false
     environment:
       - PORT=8000
       - MONGO_URI=mongodb://mongodb:27017/cinematrix
@@ -57,7 +59,7 @@ services:
       - REFRESH_TOKEN_EXP=7d
       - REDIS_URL=redis://redis:6379
     volumes:
-      - ./backend:/app
+      - ./nest-backend:/app
       - /app/node_modules
     depends_on:
       mongodb:
@@ -68,7 +70,7 @@ services:
       - cinematrix_network
 
   # --------------------------------------------------
-  # 3. Frontend Client
+  # 4. Frontend Client
   # --------------------------------------------------
   frontend-client:
     build:
@@ -83,12 +85,12 @@ services:
       - ./frontend-client:/app
       - /app/node_modules
     depends_on:
-      - backend
+      - nest-backend
     networks:
       - cinematrix_network
 
   # --------------------------------------------------
-  # 4. Frontend Admin
+  # 5. Frontend Admin
   # --------------------------------------------------
   frontend-admin:
     build:
@@ -103,7 +105,7 @@ services:
       - ./frontend-admin:/app
       - /app/node_modules
     depends_on:
-      - backend
+      - nest-backend
     networks:
       - cinematrix_network
 
